@@ -30,15 +30,18 @@ const validate = (validations) => {
     };
 };
 
-// Validation rules
+// Cập nhật validation rules
 const registerValidation = [
-    body('name').trim().isLength({ min: 1 }).withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+    body('usr_fullname').trim().isLength({ min: 1 }).withMessage('Full name is required'),
+    body('usr_email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('usr_gender').optional().isIn(['male', 'female', 'other']).withMessage('Gender must be male, female or other'),
+    body('usr_age').optional().isInt({ min: 1, max: 120 }).withMessage('Age must be between 1 and 120'),
+    body('usr_budget').optional().isFloat({ min: 0 }).withMessage('Budget must be a positive number')
 ];
 
 const loginValidation = [
-    body('email').isEmail().withMessage('Valid email is required'),
+    body('usr_email').isEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required')
 ];
 
@@ -55,19 +58,38 @@ const loginValidation = [
  *           schema:
  *             type: object
  *             required:
- *               - name
- *               - email
+ *               - usr_fullname
+ *               - usr_email
  *               - password
  *             properties:
- *               name:
+ *               usr_fullname:
  *                 type: string
  *                 example: Hoang Minh Duc
- *               email:
+ *               usr_email:
  *                 type: string
  *                 example: minhduc@example.com
  *               password:
  *                 type: string
  *                 example: 12345678
+ *               usr_gender:
+ *                 type: string
+ *                 enum: [male, female, other]
+ *                 example: male
+ *               usr_age:
+ *                 type: integer
+ *                 example: 25
+ *               usr_job:
+ *                 type: string
+ *                 example: Software Engineer
+ *               usr_preferences:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["biển", "núi", "ẩm thực"]
+ *               usr_budget:
+ *                 type: number
+ *                 format: float
+ *                 example: 5000000.00
  *     responses:
  *       201:
  *         description: Tạo tài khoản thành công
@@ -79,20 +101,87 @@ const loginValidation = [
  *                 status:
  *                   type: string
  *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Profile registered successfully
  *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     profile:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: 71c9e45f-56ab-4f7b-93d7-fb19841e2b2b
+ *                         usr_fullname:
+ *                           type: string
+ *                           example: Hoang Minh Duc
+ *                         usr_email:
+ *                           type: string
+ *                           example: minhduc@example.com
+ *                         usr_gender:
+ *                           type: string
+ *                           example: male
+ *                         usr_age:
+ *                           type: integer
+ *                           example: 25
+ *                         usr_job:
+ *                           type: string
+ *                           example: Software Engineer
+ *                         usr_preferences:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                           example: ["biển", "núi", "ẩm thực"]
+ *                         usr_budget:
+ *                           type: number
+ *                           format: float
+ *                           example: 5000000.00
+ *                         usr_avatar:
+ *                           type: string
+ *                           example: null
+ *                         usr_bio:
+ *                           type: string
+ *                           example: null
+ *                         is_active:
+ *                           type: boolean
+ *                           example: true
+ *                         usr_created_at:
+ *                           type: string
+ *                           format: date-time
+ *                     token:
  *                       type: string
- *                       example: 71c9e45f-56ab-4f7b-93d7-fb19841e2b2b
- *                     name:
- *                       type: string
- *                       example: Hoang Minh Duc
- *                     email:
- *                       type: string
- *                       example: minhduc@example.com
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
  *         description: Dữ liệu không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Validation failed
+ *                 errors:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       409:
+ *         description: Email đã tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Email already exists
  */
 
 /**
@@ -108,10 +197,10 @@ const loginValidation = [
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - usr_email
  *               - password
  *             properties:
- *               email:
+ *               usr_email:
  *                 type: string
  *                 example: minhduc@example.com
  *               password:
@@ -128,9 +217,24 @@ const loginValidation = [
  *                 status:
  *                   type: string
  *                   example: success
- *                 token:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     profile:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: 71c9e45f-56ab-4f7b-93d7-fb19841e2b2b
+ *                         usr_fullname:
+ *                           type: string
+ *                           example: Hoang Minh Duc
+ *                         usr_email:
+ *                           type: string
+ *                           example: minhduc@example.com
+ *                     token:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       401:
  *         description: Email hoặc mật khẩu sai
  */
