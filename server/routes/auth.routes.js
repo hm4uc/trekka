@@ -5,10 +5,10 @@
  *   description: API cho đăng ký, đăng nhập và xác thực người dùng
  */
 
-const express = require('express');
-const { body, validationResult} = require('express-validator');
-const authController = require('../controllers/auth.controller');
-const { authenticate } = require('../middleware/authenticate');
+import express from "express";
+import { body, validationResult} from 'express-validator';
+import authController from '../controllers/auth.controller.js';
+import { authenticate } from '../middleware/authenticate.js';
 
 const router = express.Router();
 
@@ -169,4 +169,4 @@ router.post('/register', validate(registerValidation), authController.register);
 router.post('/login', validate(loginValidation), authController.login);
 router.get('/profile', authenticate, authController.getProfile);
 
-module.exports = router;
+export default router;

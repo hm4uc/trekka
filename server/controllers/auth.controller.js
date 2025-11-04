@@ -1,5 +1,5 @@
-const { StatusCodes } = require('http-status-codes');
-const userService = require('../services/user.service');
+import { StatusCodes } from 'http-status-codes';
+import userService from '../services/user.service.js';
 
 async function register(req, res, next) {
     try {
@@ -46,8 +46,4 @@ async function getProfile(req, res, next) {
     }
 }
 
-module.exports = {
-    register,
-    login,
-    getProfile
-};
+export default { register, login, getProfile };

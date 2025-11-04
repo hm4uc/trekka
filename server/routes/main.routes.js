@@ -1,5 +1,5 @@
-const express = require("express");
-const { StatusCodes } = require("http-status-codes");
+import express from "express";
+import { StatusCodes } from "http-status-codes";
 
 const router = express.Router();
 
@@ -11,4 +11,4 @@ router.get('/hello', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

@@ -1,7 +1,7 @@
 // index.js
 import express from "express";
 import swaggerDocs from "./swagger.js";
-import { sequelize } from "./database/db.js";
+import sequelize from "./database/db.js";
 import mainRouter from "./routes/main.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";

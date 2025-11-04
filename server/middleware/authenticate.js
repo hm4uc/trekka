@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
-const { StatusCodes } = require('http-status-codes');
+import jwt from 'jsonwebtoken';
+import {StatusCodes} from 'http-status-codes';
 
-function authenticate(req, res, next) {
+export function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -24,5 +24,3 @@ function authenticate(req, res, next) {
         });
     }
 }
-
-module.exports = { authenticate };

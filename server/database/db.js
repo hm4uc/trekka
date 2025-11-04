@@ -1,5 +1,6 @@
-const { Sequelize, DataTypes } = require('sequelize');
-require('dotenv').config(); // Tải các biến từ file .env
+import { Sequelize, DataTypes } from 'sequelize';
+import dotenv from "dotenv"; // Tải các biến từ file .env
+dotenv.config();
 
 // 1. Khởi tạo kết nối Sequelize
 const sequelize = new Sequelize(
@@ -16,4 +17,4 @@ const sequelize = new Sequelize(
 
 // sequelize.sync({ force: true });
 
-module.exports = { sequelize };
+export default sequelize;

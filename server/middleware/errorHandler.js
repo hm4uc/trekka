@@ -1,6 +1,6 @@
-const { StatusCodes } = require('http-status-codes');
+import { StatusCodes } from 'http-status-codes';
 
-function errorHandler(err, req, res, next) {
+export function errorHandler(err, req, res, next) {
     console.error('Error:', err);
 
     // Default error
@@ -42,5 +42,3 @@ function errorHandler(err, req, res, next) {
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 }
-
-module.exports = { errorHandler };
