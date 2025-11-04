@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js';
 
 async function register({ name, email, password }) {
     const existing = await User.findOne({ where: { email }});

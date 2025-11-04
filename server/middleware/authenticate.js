@@ -15,7 +15,7 @@ export function authenticate(req, res, next) {
 
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = payload;
+        req.user = { profileId: payload.profileId, usr_email: payload.usr_email };
         next();
     } catch (error) {
         return res.status(StatusCodes.UNAUTHORIZED).json({
