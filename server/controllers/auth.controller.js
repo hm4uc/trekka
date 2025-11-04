@@ -3,14 +3,32 @@ import userService from '../services/user.service.js';
 
 async function register(req, res, next) {
     try {
-        const { name, email, password } = req.body;
+        const {
+            usr_fullname,
+            usr_email,
+            password,
+            usr_gender,
+            usr_age,
+            usr_job,
+            usr_preferences,
+            usr_budget
+        } = req.body;
 
-        const user = await userService.register({ name, email, password });
+        const result = await userService.register({
+            usr_fullname,
+            usr_email,
+            password,
+            usr_gender,
+            usr_age,
+            usr_job,
+            usr_preferences,
+            usr_budget
+        });
 
         res.status(StatusCodes.CREATED).json({
             status: 'success',
-            message: 'User registered successfully',
-            data: user
+            message: 'Profile registered successfully',
+            data: result
         });
     } catch (error) {
         next(error);
@@ -19,9 +37,12 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
     try {
-        const { email, password } = req.body;
+        const { usr_email, password } = req.body;
 
-        const result = await userService.login({ email, password });
+        const result = await userService.login({
+            email: usr_email,
+            password
+        });
 
         res.status(StatusCodes.OK).json({
             status: 'success',
@@ -35,11 +56,11 @@ async function login(req, res, next) {
 
 async function getProfile(req, res, next) {
     try {
-        const user = await userService.getUserById(req.user.userId);
+        const profile = await userService.getProfileById(req.user.profileId);
 
         res.status(StatusCodes.OK).json({
             status: 'success',
-            data: user
+            data: profile
         });
     } catch (error) {
         next(error);
