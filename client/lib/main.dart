@@ -1,18 +1,9 @@
-import 'package:client/presentation/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:trekka/app.dart';
+import 'injection_container.dart' as di;
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Trekka',
-      home: const SplashScreen(),
-    );
-  }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await di.init();
+  runApp(const TrekkaApp());
 }
