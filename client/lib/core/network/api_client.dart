@@ -11,6 +11,19 @@ class ApiClient {
     dio.options.connectTimeout = const Duration(milliseconds: AppConstants.connectTimeout);
     dio.options.receiveTimeout = const Duration(milliseconds: AppConstants.receiveTimeout);
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+
+    // Thêm headers để hỗ trợ CORS
+    dio.options.headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    dio.interceptors.add(LogInterceptor(
+      requestBody: true,
+      responseBody: true,
+      requestHeader: true,
+      responseHeader: true,
+    ));
   }
 
   Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
