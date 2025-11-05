@@ -1,0 +1,1 @@
+// Biến toàn cục, API base URL
