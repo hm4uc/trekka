@@ -11,8 +11,10 @@ const options = {
         },
         servers: [
             {
-                url: "http://localhost:3000",
-                description: "Local Dev Server",
+                url: process.env.NODE_ENV === 'production'
+                    ? 'https://trekka-server.onrender.com'
+                    : `http://localhost:${process.env.PORT || 3000}`,
+                description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
             },
         ],
         components: {
@@ -24,6 +26,9 @@ const options = {
                 },
             },
         },
+        security: [{
+            bearerAuth: [],
+        }],
     },
     apis: ["./routes/*.js"], // nơi bạn viết mô tả endpoint bằng comment Swagger
 };

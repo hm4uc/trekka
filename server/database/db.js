@@ -2,7 +2,8 @@ import { Sequelize, DataTypes } from 'sequelize';
 import dotenv from "dotenv"; // Tải các biến từ file .env
 dotenv.config();
 
-const isRender = process.env.RENDER === 'true' || process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production';
+const isRender = process.env.RENDER === 'true' || isProduction;
 
 // 1. Khởi tạo kết nối Sequelize
 const sequelize = new Sequelize(
@@ -13,7 +14,7 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         dialect: 'postgres',
-        logging: console.log,
+        logging: isProduction ? false : console.log,
         dialectOptions: isRender
             ? {
                 ssl: {
@@ -22,6 +23,12 @@ const sequelize = new Sequelize(
                 },
             }
             : {},
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000,
+        },
     }
 );
 
