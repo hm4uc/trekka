@@ -14,7 +14,13 @@ const PORT = process.env.PORT || 3000;
 
 // Thêm CORS middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://10.0.2.2:3000', 'http://127.0.0.1:3000'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://10.0.2.2:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5173'
+  ],
   credentials: true
 }));
 
@@ -39,9 +45,10 @@ const startServer = async () => {
         await sequelize.sync({ alter: false });
         console.log("✅ Models synced");
 
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-        });
+        app.listen(PORT, '0.0.0.0', () => {
+                    console.log(`🚀 Server running on http://localhost:${PORT}`);
+                    console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+                });
     } catch (error) {
         console.error("❌ Database connection error:", error);
     }
