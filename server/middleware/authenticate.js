@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import {StatusCodes} from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 
 export function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -18,6 +18,7 @@ export function authenticate(req, res, next) {
         req.user = { profileId: payload.profileId, usr_email: payload.usr_email };
         next();
     } catch (error) {
+        console.error('JWT verification error:', error);
         return res.status(StatusCodes.UNAUTHORIZED).json({
             status: 'error',
             message: 'Invalid or expired token'

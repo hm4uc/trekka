@@ -3,11 +3,19 @@ import { StatusCodes } from "http-status-codes";
 
 const router = express.Router();
 
-router.get('/hello', (req, res) => {
-    res.status(StatusCodes.OK).send({
-        status: "success",
-        message: "Hello World!",
-        timestamp: new Date().toISOString(),
+router.get('/', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'Travel API is running!',
+        timestamp: new Date().toISOString()
+    });
+});
+
+router.get('/health', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'Server is healthy',
+        timestamp: new Date().toISOString()
     });
 });
 

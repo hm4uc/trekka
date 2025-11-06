@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 class AuthForm extends StatefulWidget {
   final bool isLogin;
   final Function(
-      String email,
-      String password,
-      String fullName,
-      String? gender,
-      int? age,
-      String? job,
-      List<String>? preferences,
-      double? budget,
-      ) onSubmit;
+    String email,
+    String password,
+    String fullName,
+    String? gender,
+    int? age,
+    String? job,
+    List<String>? preferences,
+    double? budget,
+  ) onSubmit;
 
   const AuthForm({
     super.key,
@@ -33,6 +33,7 @@ class _AuthFormState extends State<AuthForm> {
   final _jobController = TextEditingController();
   final _preferencesController = TextEditingController();
   final _budgetController = TextEditingController();
+  bool _obscurePassword = true;
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
@@ -60,19 +61,39 @@ class _AuthFormState extends State<AuthForm> {
     }
   }
 
+  InputDecoration _getInputDecoration(String label, {IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.grey[700]),
+      prefixIcon: icon != null ? Icon(icon, color: Colors.grey[600]) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.grey[50],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!widget.isLogin)
+          if (!widget.isLogin) ...[
             TextFormField(
               controller: _fullNameController,
-              decoration: const InputDecoration(
-                labelText: 'Họ và tên',
-                border: OutlineInputBorder(),
-              ),
+              decoration: _getInputDecoration('Họ và tên', icon: Icons.person),
               validator: (value) {
                 if (!widget.isLogin && (value == null || value.isEmpty)) {
                   return 'Vui lòng nhập họ và tên';
@@ -80,13 +101,12 @@ class _AuthFormState extends State<AuthForm> {
                 return null;
               },
             ),
-          if (!widget.isLogin) const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-            ),
+            decoration: _getInputDecoration('Email', icon: Icons.email),
+            keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Vui lòng nhập email';
@@ -100,10 +120,22 @@ class _AuthFormState extends State<AuthForm> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Mật khẩu',
-              border: OutlineInputBorder(),
+            obscureText: _obscurePassword,
+            decoration: _getInputDecoration(
+              'Mật khẩu',
+              icon: Icons.lock,
+            ).copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[600],
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -116,12 +148,21 @@ class _AuthFormState extends State<AuthForm> {
             },
           ),
           if (!widget.isLogin) ..._buildRegisterFields(),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _submit,
-              child: Text(widget.isLogin ? 'Đăng nhập' : 'Đăng ký'),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _submit,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              widget.isLogin ? 'Đăng nhập' : 'Đăng ký',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -133,20 +174,17 @@ class _AuthFormState extends State<AuthForm> {
     return [
       const SizedBox(height: 16),
       DropdownButtonFormField<String>(
-        initialValue: _gender,
-        decoration: const InputDecoration(
-          labelText: 'Giới tính',
-          border: OutlineInputBorder(),
-        ),
+        value: _gender,
+        decoration: _getInputDecoration('Giới tính', icon: Icons.people),
         items: ['male', 'female', 'other']
             .map((gender) => DropdownMenuItem(
-          value: gender,
-          child: Text(gender == 'male'
-              ? 'Nam'
-              : gender == 'female'
-              ? 'Nữ'
-              : 'Khác'),
-        ))
+                  value: gender,
+                  child: Text(gender == 'male'
+                      ? 'Nam'
+                      : gender == 'female'
+                          ? 'Nữ'
+                          : 'Khác'),
+                ))
             .toList(),
         onChanged: (value) {
           setState(() {
@@ -157,11 +195,8 @@ class _AuthFormState extends State<AuthForm> {
       const SizedBox(height: 16),
       TextFormField(
         controller: _ageController,
+        decoration: _getInputDecoration('Tuổi', icon: Icons.cake),
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Tuổi',
-          border: OutlineInputBorder(),
-        ),
         validator: (value) {
           if (value != null && value.isNotEmpty) {
             final age = int.tryParse(value);
@@ -175,27 +210,21 @@ class _AuthFormState extends State<AuthForm> {
       const SizedBox(height: 16),
       TextFormField(
         controller: _jobController,
-        decoration: const InputDecoration(
-          labelText: 'Nghề nghiệp',
-          border: OutlineInputBorder(),
-        ),
+        decoration: _getInputDecoration('Nghề nghiệp', icon: Icons.work),
       ),
       const SizedBox(height: 16),
       TextFormField(
         controller: _preferencesController,
-        decoration: const InputDecoration(
-          labelText: 'Sở thích (phân cách bằng dấu phẩy)',
-          border: OutlineInputBorder(),
+        decoration: _getInputDecoration(
+          'Sở thích (phân cách bằng dấu phẩy)',
+          icon: Icons.favorite,
         ),
       ),
       const SizedBox(height: 16),
       TextFormField(
         controller: _budgetController,
+        decoration: _getInputDecoration('Ngân sách', icon: Icons.attach_money),
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Ngân sách',
-          border: OutlineInputBorder(),
-        ),
         validator: (value) {
           if (value != null && value.isNotEmpty) {
             final budget = double.tryParse(value);
