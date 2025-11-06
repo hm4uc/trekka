@@ -12,16 +12,35 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Dynamic CORS configuration
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Thêm CORS middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://10.0.2.2:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173'
-  ],
-  credentials: true
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://10.0.2.2:3000',
+            'http://127.0.0.1:3000',
+            'http://localhost:5173',
+            'https://trekka-server.onrender.com', // Your Render domain
+            'https://your-frontend-domain.com' // Add your frontend domain if you have one
+        ];
+
+        if (allowedOrigins.indexOf(origin) !== -1 || isProduction) {
+            callback(null, true);
+        } else {
+            console.log('Blocked by CORS:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 app.use(express.json());
@@ -45,10 +64,11 @@ const startServer = async () => {
         await sequelize.sync({ alter: false });
         console.log("✅ Models synced");
 
-        app.listen(PORT, '0.0.0.0', () => {
-                    console.log(`🚀 Server running on http://localhost:${PORT}`);
-                    console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
-                });
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+            console.log(`🏠 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+        });
     } catch (error) {
         console.error("❌ Database connection error:", error);
     }
