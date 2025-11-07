@@ -5,6 +5,9 @@ import 'package:trekka/config/app_themes.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trekka/features/auth/presentation/screens/login_screen.dart';
 import 'package:trekka/features/auth/presentation/screens/register_screen.dart';
+import 'package:trekka/features/travel_preferences/presentation/screens/travel_preferences_screen.dart';
+import 'package:trekka/presentation/home/home_screen.dart';
+import 'package:trekka/presentation/splash/splash_screen.dart';
 import 'injection_container.dart' as di;
 
 class TrekkaApp extends StatelessWidget {
@@ -21,10 +24,13 @@ class TrekkaApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Trekka',
         theme: AppThemes.lightTheme,
-        initialRoute: AppRoutes.login,
+        initialRoute: AppRoutes.splash,
         routes: {
+          AppRoutes.splash: (context) => const SplashScreen(),
           AppRoutes.login: (context) => const LoginScreen(),
           AppRoutes.register: (context) => const RegisterScreen(),
+          AppRoutes.travelPreferences: (context) => const TravelPreferencesScreen(),
+          AppRoutes.home: (context) => const HomeScreen(),
         },
       ),
     );
