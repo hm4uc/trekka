@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import Profile from '../models/profile.model.js';
 
 async function register(userData) {
-    const { usr_fullname, usr_email, password, usr_gender, usr_age, usr_job, usr_preferences, usr_budget } = userData;
+    const { usr_fullname, usr_email, password, usr_gender, usr_age, usr_job } = userData;
 
     try {
         console.log('🔍 Checking if profile exists...');
@@ -27,8 +27,7 @@ async function register(userData) {
             usr_gender,
             usr_age,
             usr_job,
-            usr_preferences,
-            usr_budget
+            // Không include usr_preferences và usr_budget ở đây
         });
 
         console.log('🎫 Generating JWT token...');
@@ -47,8 +46,8 @@ async function register(userData) {
                 usr_gender: profile.usr_gender,
                 usr_age: profile.usr_age,
                 usr_job: profile.usr_job,
-                usr_preferences: profile.usr_preferences,
-                usr_budget: profile.usr_budget,
+                usr_preferences: profile.usr_preferences, // Mặc định là []
+                usr_budget: profile.usr_budget, // Mặc định là null
                 usr_avatar: profile.usr_avatar,
                 usr_bio: profile.usr_bio,
                 is_active: profile.is_active,
@@ -58,6 +57,41 @@ async function register(userData) {
         };
     } catch (error) {
         console.error('❌ Error in register service:', error);
+        throw error;
+    }
+}
+
+async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budget }) {
+    try {
+        console.log('🔍 Finding profile for update...');
+        const profile = await Profile.findByPk(profileId);
+        if (!profile) {
+            console.log('❌ Profile not found');
+            const error = new Error('Profile not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        console.log('🔄 Updating preferences and budget...');
+
+        // Cập nhật các trường mới
+        if (usr_preferences !== undefined) {
+            profile.usr_preferences = usr_preferences;
+        }
+        if (usr_budget !== undefined) {
+            profile.usr_budget = usr_budget;
+        }
+
+        await profile.save();
+
+        console.log('✅ Preferences and budget updated successfully');
+        return {
+            id: profile.id,
+            usr_preferences: profile.usr_preferences,
+            usr_budget: profile.usr_budget
+        };
+    } catch (error) {
+        console.error('❌ Error updating preferences and budget:', error);
         throw error;
     }
 }
@@ -129,4 +163,4 @@ async function getProfileById(profileId) {
     return profile;
 }
 
-export default { register, login, getProfileById };
+export default { register, login, getProfileById, updatePreferencesAndBudget };
