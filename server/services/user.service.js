@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Profile from '../models/profile.model.js';
+import { TRAVEL_STYLES, BUDGET_LEVELS } from '../config/travelConstants.js';
 
 async function register(userData) {
     const { usr_fullname, usr_email, password, usr_gender, usr_age, usr_job } = userData;
@@ -107,10 +108,24 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
 
         console.log('🔄 Updating preferences and budget...');
 
+        // Validate travel preferences
         if (usr_preferences !== undefined) {
+            const invalidPreferences = usr_preferences.filter(pref => !TRAVEL_STYLES.includes(pref));
+            if (invalidPreferences.length > 0) {
+                const error = new Error(`Invalid travel styles: ${invalidPreferences.join(', ')}`);
+                error.statusCode = 400;
+                throw error;
+            }
             profile.usr_preferences = usr_preferences;
         }
+
+        // Validate budget
         if (usr_budget !== undefined) {
+            if (usr_budget < 0) {
+                const error = new Error('Budget must be a positive number');
+                error.statusCode = 400;
+                throw error;
+            }
             profile.usr_budget = usr_budget;
         }
 
@@ -123,7 +138,9 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
         return {
             id: profile.id,
             usr_preferences: profile.usr_preferences,
-            usr_budget: profile.usr_budget
+            usr_budget: profile.usr_budget,
+            travel_styles: TRAVEL_STYLES, // Trả về danh sách travel styles
+            budget_levels: BUDGET_LEVELS  // Trả về danh sách budget levels
         };
     } catch (error) {
         console.error('❌ Error updating preferences and budget:', error);
@@ -220,11 +237,20 @@ async function getProfileById(profileId) {
     return profile;
 }
 
+// Thêm function để lấy travel constants
+async function getTravelConstants() {
+    return {
+        travel_styles: TRAVEL_STYLES,
+        budget_levels: BUDGET_LEVELS
+    };
+}
+
 export default {
     register,
     login,
     getProfileById,
     updateProfile,
     updatePreferencesAndBudget,
-    deleteProfile
+    deleteProfile,
+    getTravelConstants
 };

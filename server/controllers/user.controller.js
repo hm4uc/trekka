@@ -77,9 +77,24 @@ async function deleteProfile(req, res, next) {
     }
 }
 
+// Thêm controller để lấy travel constants
+async function getTravelConstants(req, res, next) {
+    try {
+        const constants = await userService.getTravelConstants();
+
+        res.status(StatusCodes.OK).json({
+            status: 'success',
+            data: constants
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export default {
     getProfile,
     updateProfile,
     updatePreferencesAndBudget,
-    deleteProfile
+    deleteProfile,
+    getTravelConstants
 };

@@ -21,3 +21,18 @@ export const BUDGET_LEVELS = {
     HIGH: { min: 7000000, max: 15000000, label: "Cao cấp (7-15 triệu)" },
     LUXURY: { min: 15000000, max: 50000000, label: "Sang trọng (15-50 triệu)" }
 };
+
+// Helper function để validate travel preferences
+export const isValidTravelStyle = (style) => {
+    return TRAVEL_STYLES.includes(style);
+};
+
+// Helper function để get budget level từ số tiền
+export const getBudgetLevel = (amount) => {
+    for (const [level, range] of Object.entries(BUDGET_LEVELS)) {
+        if (amount >= range.min && amount <= range.max) {
+            return level;
+        }
+    }
+    return null;
+};
