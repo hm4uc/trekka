@@ -13,9 +13,10 @@
  *       type: object
  *       description: Full user profile information
  *       properties:
- *         usr_id:
- *           type: integer
- *           example: 1
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: "71c9e45f-56ab-4f7b-93d7-fb19841e2b2b"
  *         usr_fullname:
  *           type: string
  *           example: "Hoang Minh Duc"
@@ -42,14 +43,17 @@
  *           type: array
  *           items:
  *             type: string
- *           example: ["adventure", "nature"]
+ *           example: ["Du lịch khám phá", "Du lịch ẩm thực"]
  *         usr_budget:
  *           type: number
  *           example: 5000000
- *         created_at:
+ *         is_active:
+ *           type: boolean
+ *           example: true
+ *         usr_created_at:
  *           type: string
  *           format: date-time
- *         updated_at:
+ *         usr_updated_at:
  *           type: string
  *           format: date-time
  *
@@ -88,15 +92,12 @@
  *
  *     PreferencesBudgetRequest:
  *       type: object
- *       required:
- *         - usr_preferences
- *         - usr_budget
  *       properties:
  *         usr_preferences:
  *           type: array
  *           items:
  *             type: string
- *           example: ["culture", "food", "nature"]
+ *           example: ["Du lịch văn hóa", "Du lịch ẩm thực", "Du lịch sinh thái"]
  *         usr_budget:
  *           type: number
  *           example: 3000000
@@ -109,9 +110,58 @@
  *           example: "success"
  *         message:
  *           type: string
- *           example: "Preferences and budget updated"
+ *           example: "Preferences and budget updated successfully"
  *         data:
- *           $ref: "#/components/schemas/User"
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             usr_preferences:
+ *               type: array
+ *               items:
+ *                 type: string
+ *             usr_budget:
+ *               type: number
+ *             travel_styles:
+ *               type: array
+ *               items:
+ *                 type: string
+ *             budget_levels:
+ *               type: object
+ *
+ *     TravelConstantsResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           example: "success"
+ *         data:
+ *           type: object
+ *           properties:
+ *             travel_styles:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               example: ["Du lịch nghỉ dưỡng", "Du lịch khám phá", "Du lịch mạo hiểm"]
+ *             budget_levels:
+ *               type: object
+ *               properties:
+ *                 LOW:
+ *                   type: object
+ *                   properties:
+ *                     min:
+ *                       type: number
+ *                     max:
+ *                       type: number
+ *                     label:
+ *                       type: string
+ *                 MEDIUM:
+ *                   type: object
+ *                 HIGH:
+ *                   type: object
+ *                 LUXURY:
+ *                   type: object
  */
 
 /**
@@ -126,6 +176,7 @@ import express from "express";
 import { body, validationResult } from 'express-validator';
 import userController from '../controllers/user.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
+import { TRAVEL_STYLES } from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -148,17 +199,34 @@ const validate = (validations) => {
 
 // Validation rules
 const updateProfileValidation = [
-    body('usr_fullname').optional().trim().isLength({ min: 1, max: 100 }),
-    body('usr_gender').optional().isIn(['male', 'female', 'other']),
-    body('usr_age').optional().isInt({ min: 1, max: 120 }),
-    body('usr_job').optional().isLength({ max: 255 }),
-    body('usr_avatar').optional().isURL(),
-    body('usr_bio').optional().isLength({ max: 500 }),
+    body('usr_fullname').optional().trim().isLength({ min: 1, max: 100 })
+        .withMessage('Full name must be between 1 and 100 characters'),
+    body('usr_gender').optional().isIn(['male', 'female', 'other'])
+        .withMessage('Gender must be male, female or other'),
+    body('usr_age').optional().isInt({ min: 1, max: 120 })
+        .withMessage('Age must be between 1 and 120'),
+    body('usr_job').optional().isLength({ max: 255 })
+        .withMessage('Job must not exceed 255 characters'),
+    body('usr_avatar').optional().isURL()
+        .withMessage('Avatar must be a valid URL'),
+    body('usr_bio').optional().isLength({ max: 500 })
+        .withMessage('Bio must not exceed 500 characters'),
 ];
 
 const preferencesBudgetValidation = [
-    body('usr_preferences').optional().isArray(),
-    body('usr_budget').optional().isFloat({ min: 0 }),
+    body('usr_preferences').optional().isArray()
+        .withMessage('Preferences must be an array')
+        .custom((value) => {
+            if (value) {
+                const invalidPreferences = value.filter(pref => !TRAVEL_STYLES.includes(pref));
+                if (invalidPreferences.length > 0) {
+                    throw new Error(`Invalid travel styles: ${invalidPreferences.join(', ')}`);
+                }
+            }
+            return true;
+        }),
+    body('usr_budget').optional().isFloat({ min: 0 })
+        .withMessage('Budget must be a positive number'),
 ];
 
 /**
@@ -247,6 +315,7 @@ const preferencesBudgetValidation = [
  * /user/preferences-budget:
  *   put:
  *     summary: Update travel preferences and budget
+ *     description: Update user's travel preferences (must be from predefined list) and budget
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
@@ -256,6 +325,16 @@ const preferencesBudgetValidation = [
  *         application/json:
  *           schema:
  *             $ref: "#/components/schemas/PreferencesBudgetRequest"
+ *           examples:
+ *             example1:
+ *               summary: Update preferences and budget
+ *               value:
+ *                 usr_preferences: ["Du lịch khám phá", "Du lịch ẩm thực", "Du lịch sinh thái"]
+ *                 usr_budget: 5000000
+ *             example2:
+ *               summary: Update only preferences
+ *               value:
+ *                 usr_preferences: ["Du lịch nghỉ dưỡng", "Du lịch gia đình"]
  *     responses:
  *       200:
  *         description: Preferences and budget updated successfully
@@ -264,11 +343,29 @@ const preferencesBudgetValidation = [
  *             schema:
  *               $ref: "#/components/schemas/PreferencesBudgetResponse"
  *       400:
- *         description: Validation error
+ *         description: Validation error - Invalid travel style or budget
  *       401:
  *         description: Unauthorized
  *       404:
  *         description: User not found
+ */
+
+/**
+ * @swagger
+ * /user/travel-constants:
+ *   get:
+ *     summary: Get available travel styles and budget levels
+ *     description: Retrieve predefined list of travel styles and budget levels for UI dropdowns
+ *     tags: [User]
+ *     responses:
+ *       200:
+ *         description: Travel constants retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/TravelConstantsResponse"
+ *       500:
+ *         description: Internal server error
  */
 
 // Routes
@@ -276,5 +373,6 @@ router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, validate(updateProfileValidation), userController.updateProfile);
 router.delete('/profile', authenticate, userController.deleteProfile);
 router.put('/preferences-budget', authenticate, validate(preferencesBudgetValidation), userController.updatePreferencesAndBudget);
+router.get('/travel-constants', userController.getTravelConstants);
 
 export default router;
