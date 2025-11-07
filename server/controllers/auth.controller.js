@@ -9,9 +9,8 @@ async function register(req, res, next) {
             password,
             usr_gender,
             usr_age,
-            usr_job,
-            usr_preferences,
-            usr_budget
+            usr_job
+            // Loại bỏ usr_preferences và usr_budget từ register
         } = req.body;
 
         const result = await userService.register({
@@ -20,9 +19,7 @@ async function register(req, res, next) {
             password,
             usr_gender,
             usr_age,
-            usr_job,
-            usr_preferences,
-            usr_budget
+            usr_job
         });
 
         res.status(StatusCodes.CREATED).json({
@@ -67,4 +64,25 @@ async function getProfile(req, res, next) {
     }
 }
 
-export default { register, login, getProfile };
+// Thêm controller mới cho preferences và budget
+async function updatePreferencesAndBudget(req, res, next) {
+    try {
+        const { usr_preferences, usr_budget } = req.body;
+        const profileId = req.user.profileId; // Lấy từ middleware authenticate
+
+        const result = await userService.updatePreferencesAndBudget(profileId, {
+            usr_preferences,
+            usr_budget
+        });
+
+        res.status(StatusCodes.OK).json({
+            status: 'success',
+            message: 'Preferences and budget updated successfully',
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default { register, login, getProfile, updatePreferencesAndBudget };
