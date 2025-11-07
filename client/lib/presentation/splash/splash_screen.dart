@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
-import '../home/home_screen.dart';
+import 'package:trekka/config/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,9 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
     });
   }
 
