@@ -1,3 +1,4 @@
+// features/auth/presentation/screens/register_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_bloc.dart';
@@ -5,23 +6,45 @@ import 'package:trekka/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trekka/config/app_routes.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red.shade400,
-              ),
-            );
+          if (state is AuthLoading) {
+            setState(() {
+              _isLoading = true;
+            });
+          } else if (state is AuthError) {
+            setState(() {
+              _isLoading = false;
+            });
+            _showErrorDialog(state.message);
           } else if (state is AuthAuthenticated) {
-            Navigator.pushReplacementNamed(context, AppRoutes.travelPreferences);
+            setState(() {
+              _isLoading = false;
+            });
+            // _showSuccessDialog('Đăng ký thành công!');
+            // Future.delayed(const Duration(milliseconds: 1500), () {
+              Navigator.pushReplacementNamed(context, AppRoutes.travelPreferences);
+            // });
           }
         },
         child: SafeArea(
@@ -69,7 +92,7 @@ class RegisterScreen extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: _buildRegisterForm(context),
+                    child: _buildRegisterForm(),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -83,7 +106,7 @@ class RegisterScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                     TextButton(
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () {
                         Navigator.pushReplacementNamed(context, AppRoutes.login);
                       },
                       child: const Text(
@@ -106,146 +129,211 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRegisterForm(BuildContext context) {
-    final fullNameController = TextEditingController();
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final ageController = TextEditingController();
-    final jobController = TextEditingController();
-    String? selectedGender;
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return Column(
-          children: [
-            TextField(
-              controller: fullNameController,
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+  Widget _buildRegisterForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: _fullNameController,
+            decoration: _getInputDecoration('Full Name', icon: Icons.person),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập họ và tên';
+              }
+              if (value.length < 2) {
+                return 'Họ và tên phải có ít nhất 2 ký tự';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _emailController,
+            decoration: _getInputDecoration('Email Address', icon: Icons.email),
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập email';
+              }
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                return 'Email không hợp lệ';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            decoration: _getInputDecoration(
+              'Password',
+              icon: Icons.lock,
+            ).copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[600],
                 ),
-                prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: 'Email Address',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.email, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: selectedGender,
-              decoration: InputDecoration(
-                labelText: 'Gender',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.people, color: Colors.grey[600]),
-              ),
-              items: [
-                DropdownMenuItem(
-                  value: 'male',
-                  child: Text('Male'),
-                ),
-                DropdownMenuItem(
-                  value: 'female',
-                  child: Text('Female'),
-                ),
-                DropdownMenuItem(
-                  value: 'other',
-                  child: Text('Other'),
-                ),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  selectedGender = value;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ageController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Age',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.cake, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: jobController,
-              decoration: InputDecoration(
-                labelText: 'Job Title',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.work, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
                 onPressed: () {
-                  context.read<AuthBloc>().add(
-                    RegisterEvent(
-                      usrFullname: fullNameController.text,
-                      usrEmail: emailController.text,
-                      password: passwordController.text,
-                      usrGender: selectedGender,
-                      usrAge: ageController.text.isNotEmpty ? int.tryParse(ageController.text) : null,
-                      usrJob: jobController.text.isNotEmpty ? jobController.text : null,
-                    ),
-                  );
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F6EF7),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng nhập mật khẩu';
+              }
+              if (value.length < 6) {
+                return 'Mật khẩu phải có ít nhất 6 ký tự';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _confirmPasswordController,
+            obscureText: _obscureConfirmPassword,
+            decoration: _getInputDecoration(
+              'Confirm Password',
+              icon: Icons.lock_outline,
+            ).copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[600],
                 ),
-                child: const Text(
-                  'Register',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                onPressed: () {
+                  setState(() {
+                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                  });
+                },
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Vui lòng xác nhận mật khẩu';
+              }
+              if (value != _passwordController.text) {
+                return 'Mật khẩu xác nhận không khớp';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4F6EF7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+                  : const Text(
+                'Register',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
+  }
+
+  InputDecoration _getInputDecoration(String label, {IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.grey[700]),
+      prefixIcon: icon != null ? Icon(icon, color: Colors.grey[600]) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF4F6EF7), width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.grey[50],
+    );
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      context.read<AuthBloc>().add(
+        RegisterEvent(
+          usrFullname: _fullNameController.text,
+          usrEmail: _emailController.text,
+          password: _passwordController.text,
+          // Các trường không bắt buộc sẽ là null
+          usrGender: null,
+          usrAge: null,
+          usrJob: null,
+        ),
+      );
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lỗi đăng ký'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // void _showSuccessDialog(String message) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Thành công'),
+  //       content: Text(message),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('OK'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 }

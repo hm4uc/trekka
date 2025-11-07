@@ -13,6 +13,7 @@ class User extends Equatable {
   final String? usrBio;
   final bool isActive;
   final DateTime usrCreatedAt;
+  final String? token;
 
   const User({
     required this.id,
@@ -27,6 +28,7 @@ class User extends Equatable {
     this.usrBio,
     required this.isActive,
     required this.usrCreatedAt,
+    this.token,
   });
 
   @override
@@ -43,5 +45,6 @@ class User extends Equatable {
     usrBio,
     isActive,
     usrCreatedAt,
+    token,
   ];
 }

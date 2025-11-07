@@ -7,12 +7,20 @@ import 'package:trekka/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trekka/features/auth/domain/usecases/login_user.dart';
 import 'package:trekka/features/auth/domain/usecases/register_user.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_bloc.dart';
+import 'core/storage/shared_preferences.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  // Services
+  await LocalStorageService.init();
+
   // Bloc
-  sl.registerFactory(() => AuthBloc(loginUser: sl(), registerUser: sl()));
+  sl.registerFactory(() => AuthBloc(
+    loginUser: sl(),
+    registerUser: sl(),
+    localStorageService: LocalStorageService(),
+  ));
 
   // Use cases
   sl.registerLazySingleton(() => LoginUser(sl()));

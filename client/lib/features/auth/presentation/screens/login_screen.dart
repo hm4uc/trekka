@@ -1,3 +1,4 @@
+// features/auth/presentation/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_bloc.dart';
@@ -5,23 +6,54 @@ import 'package:trekka/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trekka/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trekka/config/app_routes.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _rememberMe = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check for remembered credentials
+    context.read<AuthBloc>().add(CheckRememberMeEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red.shade400,
-              ),
-            );
+          if (state is AuthLoading) {
+            setState(() {
+              _isLoading = true;
+            });
+          } else if (state is AuthError) {
+            setState(() {
+              _isLoading = false;
+            });
+            _showErrorDialog(state.message);
           } else if (state is AuthAuthenticated) {
-            Navigator.pushReplacementNamed(context, AppRoutes.home);
+            setState(() {
+              _isLoading = false;
+            });
+            // _showSuccessDialog('Đăng nhập thành công!');
+            // Future.delayed(const Duration(milliseconds: 1500), () {
+              Navigator.pushReplacementNamed(context, AppRoutes.home);
+            // });
+          } else if (state is RememberMeLoaded) {
+            _emailController.text = state.email;
+            _passwordController.text = state.password;
+            setState(() {
+              _rememberMe = true;
+            });
           }
         },
         child: SafeArea(
@@ -54,14 +86,12 @@ class LoginScreen extends StatelessWidget {
 
                 // Social Login Buttons
                 _buildSocialButton(
-                  context,
                   icon: Icons.g_mobiledata,
                   text: 'Continue with Google',
                   onPressed: () {},
                 ),
                 const SizedBox(height: 12),
                 _buildSocialButton(
-                  context,
                   icon: Icons.apple,
                   text: 'Continue with Apple',
                   onPressed: () {},
@@ -92,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: _buildLoginForm(context),
+                    child: _buildLoginForm(),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -106,7 +136,7 @@ class LoginScreen extends StatelessWidget {
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                     TextButton(
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () {
                         Navigator.pushReplacementNamed(context, AppRoutes.register);
                       },
                       child: const Text(
@@ -128,7 +158,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSocialButton(BuildContext context, {required IconData icon, required String text, required VoidCallback onPressed}) {
+  Widget _buildSocialButton({required IconData icon, required String text, required VoidCallback onPressed}) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
@@ -158,85 +188,131 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginForm(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    bool rememberMe = false;
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return Column(
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        TextField(
+          controller: _emailController,
+          decoration: InputDecoration(
+            labelText: 'Email Address',
+            labelStyle: TextStyle(color: Colors.grey[700]),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: Icon(Icons.email, color: Colors.grey[600]),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _passwordController,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'Password',
+            labelStyle: TextStyle(color: Colors.grey[700]),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
           children: [
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: 'Email Address',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.email, color: Colors.grey[600]),
-              ),
+            Checkbox(
+              value: _rememberMe,
+              onChanged: (value) {
+                setState(() {
+                  _rememberMe = value ?? false;
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                labelStyle: TextStyle(color: Colors.grey[700]),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Checkbox(
-                  value: rememberMe,
-                  onChanged: (value) {
-                    setState(() {
-                      rememberMe = value ?? false;
-                    });
-                  },
-                ),
-                Text('Remember me', style: TextStyle(color: Colors.grey[600])),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  context.read<AuthBloc>().add(
-                    LoginEvent(
-                      email: emailController.text,
-                      password: passwordController.text,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F6EF7),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Sign In',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            Text('Remember me', style: TextStyle(color: Colors.grey[600])),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : () {
+              if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+                _showErrorDialog('Vui lòng nhập email và mật khẩu');
+                return;
+              }
+
+              context.read<AuthBloc>().add(
+                LoginEvent(
+                  email: _emailController.text,
+                  password: _passwordController.text,
+                  rememberMe: _rememberMe,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F6EF7),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+                : const Text(
+              'Sign In',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // void _showSuccessDialog(String message) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Thành công'),
+  //       content: Text(message),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('OK'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

@@ -14,6 +14,7 @@ class UserModel extends User {
     String? usrBio,
     required bool isActive,
     required DateTime usrCreatedAt,
+    String? token,
   }) : super(
     id: id,
     usrFullname: usrFullname,
@@ -27,6 +28,7 @@ class UserModel extends User {
     usrBio: usrBio,
     isActive: isActive,
     usrCreatedAt: usrCreatedAt,
+    token: token,
   );
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class UserModel extends User {
       usrBio: json['usr_bio'],
       isActive: json['is_active'],
       usrCreatedAt: DateTime.parse(json['usr_created_at']),
+      token: json['token'],
     );
   }
 
@@ -60,6 +63,7 @@ class UserModel extends User {
       'usr_bio': usrBio,
       'is_active': isActive,
       'usr_created_at': usrCreatedAt.toIso8601String(),
+      'token': token,
     };
   }
 }

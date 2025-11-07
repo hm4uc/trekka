@@ -1,4 +1,4 @@
-import 'package:trekka/core/error/exceptions.dart';
+// features/auth/data/datasources/auth_remote_data_source.dart
 import 'package:trekka/features/auth/data/models/user_model.dart';
 import 'package:trekka/core/network/api_client.dart';
 
@@ -28,7 +28,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       'usr_email': email,
       'password': password,
     });
-    return UserModel.fromJson(response['data']['profile']);
+
+    // Handle API response structure
+    final userData = response['data'] ?? response;
+    final token = response['token'];
+
+    return UserModel.fromJson({
+      ...userData['profile'] ?? userData,
+      'token': token,
+    });
   }
 
   @override
@@ -42,17 +50,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     List<String>? usrPreferences,
     double? usrBudget,
   }) async {
-    final response = await client.post('/auth/register', data: {
+    // Create request data with only non-null values
+    final Map<String, dynamic> requestData = {
       'usr_fullname': usrFullname,
       'usr_email': usrEmail,
       'password': password,
-      'usr_gender': usrGender,
-      'usr_age': usrAge,
-      'usr_job': usrJob,
-      'usr_preferences': usrPreferences,
-      'usr_budget': usrBudget,
+    };
+
+    // Only add optional fields if they are not null
+    if (usrGender != null) requestData['usr_gender'] = usrGender;
+    if (usrAge != null) requestData['usr_age'] = usrAge;
+    if (usrJob != null) requestData['usr_job'] = usrJob;
+    if (usrPreferences != null) requestData['usr_preferences'] = usrPreferences;
+    if (usrBudget != null) requestData['usr_budget'] = usrBudget;
+
+    final response = await client.post('/auth/register', data: requestData);
+
+    // Handle API response structure
+    final userData = response['data'] ?? response;
+    final token = response['token'];
+
+    return UserModel.fromJson({
+      ...userData['profile'] ?? userData,
+      'token': token,
     });
-    return UserModel.fromJson(response['data']['profile']);
   }
 
   @override
