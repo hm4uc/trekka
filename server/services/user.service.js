@@ -27,7 +27,6 @@ async function register(userData) {
             usr_gender,
             usr_age,
             usr_job,
-            // Không include usr_preferences và usr_budget ở đây
         });
 
         console.log('🎫 Generating JWT token...');
@@ -46,8 +45,8 @@ async function register(userData) {
                 usr_gender: profile.usr_gender,
                 usr_age: profile.usr_age,
                 usr_job: profile.usr_job,
-                usr_preferences: profile.usr_preferences, // Mặc định là []
-                usr_budget: profile.usr_budget, // Mặc định là null
+                usr_preferences: profile.usr_preferences,
+                usr_budget: profile.usr_budget,
                 usr_avatar: profile.usr_avatar,
                 usr_bio: profile.usr_bio,
                 is_active: profile.is_active,
@@ -57,6 +56,40 @@ async function register(userData) {
         };
     } catch (error) {
         console.error('❌ Error in register service:', error);
+        throw error;
+    }
+}
+
+async function updateProfile(profileId, updateData) {
+    try {
+        console.log('🔍 Finding profile for update...');
+        const profile = await Profile.findByPk(profileId);
+        if (!profile) {
+            console.log('❌ Profile not found');
+            const error = new Error('Profile not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        console.log('🔄 Updating profile...');
+
+        // Cập nhật các trường được phép
+        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age', 'usr_job', 'usr_avatar', 'usr_bio'];
+        allowedFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                profile[field] = updateData[field];
+            }
+        });
+
+        // Cập nhật thời gian update
+        profile.usr_updated_at = new Date();
+
+        await profile.save();
+
+        console.log('✅ Profile updated successfully');
+        return profile;
+    } catch (error) {
+        console.error('❌ Error updating profile:', error);
         throw error;
     }
 }
@@ -74,13 +107,15 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
 
         console.log('🔄 Updating preferences and budget...');
 
-        // Cập nhật các trường mới
         if (usr_preferences !== undefined) {
             profile.usr_preferences = usr_preferences;
         }
         if (usr_budget !== undefined) {
             profile.usr_budget = usr_budget;
         }
+
+        // Cập nhật thời gian update
+        profile.usr_updated_at = new Date();
 
         await profile.save();
 
@@ -92,6 +127,28 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
         };
     } catch (error) {
         console.error('❌ Error updating preferences and budget:', error);
+        throw error;
+    }
+}
+
+async function deleteProfile(profileId) {
+    try {
+        console.log('🔍 Finding profile for deletion...');
+        const profile = await Profile.findByPk(profileId);
+        if (!profile) {
+            console.log('❌ Profile not found');
+            const error = new Error('Profile not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        console.log('🗑️ Deleting profile...');
+        await profile.destroy();
+
+        console.log('✅ Profile deleted successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ Error deleting profile:', error);
         throw error;
     }
 }
@@ -163,4 +220,11 @@ async function getProfileById(profileId) {
     return profile;
 }
 
-export default { register, login, getProfileById, updatePreferencesAndBudget };
+export default {
+    register,
+    login,
+    getProfileById,
+    updateProfile,
+    updatePreferencesAndBudget,
+    deleteProfile
+};

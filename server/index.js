@@ -4,6 +4,7 @@ import swaggerDocs from "./swagger.js";
 import sequelize from "./database/db.js";
 import mainRouter from "./routes/main.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -48,6 +49,7 @@ app.use(express.json());
 // Routes
 app.use("/", mainRouter);
 app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
 
 // Swagger (⚠️ thêm trước app.listen)
 swaggerDocs(app);

@@ -30,7 +30,7 @@ const options = {
             bearerAuth: [],
         }],
     },
-    apis: ["./routes/*.js"], // nơi bạn viết mô tả endpoint bằng comment Swagger
+    apis: ["./routes/*.js"], // nơi viết mô tả endpoint bằng comment Swagger
 };
 
 const swaggerSpec = swaggerJsDoc(options);
