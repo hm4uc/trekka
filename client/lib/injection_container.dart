@@ -1,40 +1,20 @@
 import 'package:get_it/get_it.dart';
-import 'package:dio/dio.dart';
-import 'package:trekka/core/network/api_client.dart';
-import 'package:trekka/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:trekka/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:trekka/features/auth/domain/repositories/auth_repository.dart';
-import 'package:trekka/features/auth/domain/usecases/login_user.dart';
-import 'package:trekka/features/auth/domain/usecases/register_user.dart';
-import 'package:trekka/features/auth/presentation/bloc/auth_bloc.dart';
-import 'core/storage/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+// Biến toàn cục để gọi Dependency Injection ở bất cứ đâu
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // Services
-  await LocalStorageService.init();
+  // --- 1. External (Các thư viện bên ngoài) ---
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => sharedPreferences);
 
-  // Bloc
-  sl.registerFactory(() => AuthBloc(
-    loginUser: sl(),
-    registerUser: sl(),
-    localStorageService: LocalStorageService(),
-  ));
+  // --- 2. Core ---
+  // (Sau này sẽ đăng ký NetworkInfo, ApiClient tại đây)
 
-  // Use cases
-  sl.registerLazySingleton(() => LoginUser(sl()));
-  sl.registerLazySingleton(() => RegisterUser(sl()));
+  // --- 3. Features ---
 
-  // Repository
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(remoteDataSource: sl()));
-
-  // Data sources
-  sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSourceImpl(sl()));
-
-  // Core
-  sl.registerLazySingleton<ApiClient>(() => ApiClient(sl()));
-
-  // External
-  sl.registerLazySingleton(() => Dio());
+  // Ví dụ: Auth Feature (Sau này bỏ comment khi code xong Auth)
+  // sl.registerFactory(() => AuthBloc(sl()));
+  // sl.registerLazySingleton(() => AuthRepository(sl()));
 }

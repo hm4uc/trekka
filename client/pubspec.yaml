@@ -11,12 +11,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dio: ^5.9.0
-  flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
-  get_it: ^9.1.1
-  dartz: ^0.10.1
-  shared_preferences: ^2.5.3
+  dio: ^5.9.0             # Gọi API
+  flutter_bloc: ^9.1.1    # State Management
+  equatable: ^2.0.7       # So sánh object
+  get_it: ^9.1.1          # Dependency Injection
+  dartz: ^0.10.1          # Functional programming
+  go_router: ^17.0.0     # Điều hướng thông minh
+  google_fonts: ^6.1.0    # Font chữ
+  flutter_svg: ^2.0.9     # Hiển thị Logo SVG
+  cupertino_icons: ^1.0.5 # Biểu tượng iOS
+  shared_preferences: ^2.1.1 # Lưu trữ dữ liệu cục bộ
 
 dev_dependencies:
   flutter_test:
