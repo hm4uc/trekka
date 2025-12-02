@@ -1,0 +1,1 @@
+// Map JSON response (token, user_id)

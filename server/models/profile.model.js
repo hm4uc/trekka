@@ -15,13 +15,16 @@ const Profile = sequelize.define('Profile', {
         type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
+        validate: {
+            isEmail: true
+        }
     },
     usr_password_hash: {
         type: DataTypes.STRING(255),
         allowNull: false,
     },
     usr_gender: {
-        type: DataTypes.TEXT,
+        type: DataTypes.TEXT, // Postgres hỗ trợ TEXT tốt
         allowNull: true,
     },
     usr_age: {
@@ -33,11 +36,11 @@ const Profile = sequelize.define('Profile', {
         allowNull: true,
     },
     usr_preferences: {
-        type: DataTypes.ARRAY(DataTypes.TEXT),
+        type: DataTypes.ARRAY(DataTypes.TEXT), // Mảng text cho Postgres
         defaultValue: [],
     },
     usr_budget: {
-        type: DataTypes.DECIMAL(12, 2),
+        type: DataTypes.DECIMAL(12, 2), // Số tiền lớn cần chính xác
         allowNull: true,
     },
     usr_avatar: {
@@ -61,8 +64,13 @@ const Profile = sequelize.define('Profile', {
         defaultValue: DataTypes.NOW,
     },
 }, {
-    timestamps: false,
+    timestamps: false, // Vì ta đã tự định nghĩa usr_created_at/updated_at
     tableName: 'profiles',
+    hooks: {
+        beforeUpdate: (profile) => {
+            profile.usr_updated_at = new Date();
+        }
+    }
 });
 
 export default Profile;

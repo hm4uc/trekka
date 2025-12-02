@@ -176,7 +176,7 @@ import express from "express";
 import { body, validationResult } from 'express-validator';
 import userController from '../controllers/user.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
-import { TRAVEL_STYLES } from '../config/travelConstants.js';
+import {BUDGET_CONFIG, TRAVEL_STYLES} from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -225,8 +225,9 @@ const preferencesBudgetValidation = [
             }
             return true;
         }),
-    body('usr_budget').optional().isFloat({ min: 0 })
-        .withMessage('Budget must be a positive number'),
+    body('usr_budget').optional()
+        .isFloat({ min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX })
+        .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
 ];
 
 /**

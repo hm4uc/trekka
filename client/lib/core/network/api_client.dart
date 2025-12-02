@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:trekka/config/app_constants.dart';
 import 'package:trekka/core/error/exceptions.dart';
+import '../constants/constants.dart';
 
 class ApiClient {
   final Dio dio;
