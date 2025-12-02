@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import swaggerDocs from "./swagger.js";
 import sequelize from "./database/db.js";
@@ -29,7 +28,7 @@ app.use(cors({
             'http://127.0.0.1:3000',
             'http://localhost:5173',
             'https://trekka-server.onrender.com', // Your Render domain
-            'https://your-frontend-domain.com' // Add your frontend domain if you have one
+            // 'https://your-frontend-domain.com' // Add your frontend domain if you have one
         ];
 
         if (allowedOrigins.indexOf(origin) !== -1 || isProduction) {
@@ -63,7 +62,7 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log("✅ Connected to PostgreSQL");
 
-        await sequelize.sync({ alter: false });
+        await sequelize.sync({ alter: true });
         console.log("✅ Models synced");
 
         app.listen(PORT, () => {

@@ -3,7 +3,10 @@ import dotenv from "dotenv"; // Tải các biến từ file .env
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
+// Kiểm tra xem có đang deploy trên Render không
 const isRender = process.env.RENDER === 'true' || isProduction;
+// Kiểm tra xem host có phải là Neon không (để bật SSL khi chạy local)
+const isNeon = process.env.DB_HOST && process.env.DB_HOST.includes('neon.tech');
 
 // 1. Khởi tạo kết nối Sequelize
 const sequelize = new Sequelize(
@@ -15,11 +18,11 @@ const sequelize = new Sequelize(
         port: process.env.DB_PORT,
         dialect: 'postgres',
         logging: isProduction ? false : console.log,
-        dialectOptions: isRender
+        dialectOptions: (isRender || isNeon) // ⚠️ Bật SSL nếu là Render HOẶC Neon
             ? {
                 ssl: {
                     require: true,
-                    rejectUnauthorized: false, // ⚠️ bắt buộc cho Render
+                    rejectUnauthorized: false, // Chấp nhận chứng chỉ tự ký của Neon
                 },
             }
             : {},

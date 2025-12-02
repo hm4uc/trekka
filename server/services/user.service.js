@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Profile from '../models/profile.model.js';
-import { TRAVEL_STYLES, BUDGET_LEVELS } from '../config/travelConstants.js';
+import {TRAVEL_STYLES, BUDGET_CONFIG} from '../config/travelConstants.js';
 
 async function register(userData) {
     const { usr_fullname, usr_email, password, usr_gender, usr_age, usr_job } = userData;
@@ -121,8 +121,8 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
 
         // Validate budget
         if (usr_budget !== undefined) {
-            if (usr_budget < 0) {
-                const error = new Error('Budget must be a positive number');
+            if (usr_budget < BUDGET_CONFIG.MIN || usr_budget > BUDGET_CONFIG.MAX) {
+                const error = new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
                 error.statusCode = 400;
                 throw error;
             }
@@ -139,8 +139,10 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
             id: profile.id,
             usr_preferences: profile.usr_preferences,
             usr_budget: profile.usr_budget,
-            travel_styles: TRAVEL_STYLES, // Trả về danh sách travel styles
-            budget_levels: BUDGET_LEVELS  // Trả về danh sách budget levels
+            meta: {
+                travel_styles: TRAVEL_STYLES,
+                budget_config: BUDGET_CONFIG
+            }
         };
     } catch (error) {
         console.error('❌ Error updating preferences and budget:', error);
@@ -237,11 +239,11 @@ async function getProfileById(profileId) {
     return profile;
 }
 
-// Thêm function để lấy travel constants
+// Cập nhật hàm lấy constants cho FE lúc khởi động app
 async function getTravelConstants() {
     return {
         travel_styles: TRAVEL_STYLES,
-        budget_levels: BUDGET_LEVELS
+        budget_config: BUDGET_CONFIG // Trả về min, max, step
     };
 }
 
