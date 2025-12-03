@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,7 +22,7 @@ const BUDGET_CONFIG = {
   "MIN": 0.0,
   "MAX": 50000000.0,
   "STEP": 100000.0,
-  "DEFAULT": 5000000.0,
+  "DEFAULT": 1000000.0,
 };
 
 class PreferencesPage extends StatefulWidget {
@@ -69,7 +70,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
     } else {
       // Step 2: Hoàn tất -> Submit API -> Chuyển sang Location Permission
       // TODO: Call API update profile here
-      print("Selected: $_selectedStyles, Budget: $_currentBudget");
+      if (kDebugMode) {
+        print("Selected: $_selectedStyles, Budget: $_currentBudget");
+      }
       context.go('/location-permission');
     }
   }
@@ -172,7 +175,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
         children: [
           const SizedBox(height: 10),
           Text(
-            "Sở thích du lịch của\nbạn là gì?",
+            "Sở thích du lịch\ncủa bạn là gì?",
             style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),

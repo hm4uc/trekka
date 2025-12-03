@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:trekka/core/error/exceptions.dart';
+
 import '../constants/constants.dart';
 
 class ApiClient {
@@ -10,7 +12,6 @@ class ApiClient {
     dio.options.baseUrl = AppConstants.baseUrl;
     dio.options.connectTimeout = const Duration(milliseconds: AppConstants.connectTimeout);
     dio.options.receiveTimeout = const Duration(milliseconds: AppConstants.receiveTimeout);
-    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
 
     // Thêm headers để hỗ trợ CORS
     dio.options.headers = {
