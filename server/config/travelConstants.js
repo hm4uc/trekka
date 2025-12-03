@@ -4,7 +4,7 @@ export const TRAVEL_STYLES = [
     {
         id: "nature",
         label: "Thiên nhiên & Cảnh quan",
-        icon: "mountain", // Dùng để map icon ở FE
+        icon: "mountain",
         description: "Yêu thích núi non, biển đảo và phong cảnh hùng vĩ"
     },
     {
@@ -51,18 +51,28 @@ export const TRAVEL_STYLES = [
     }
 ];
 
-// Chỉ lấy danh sách các ID để validate trong code
-export const VALID_TRAVEL_STYLES = TRAVEL_STYLES.map(style => style.label);
+// Danh sách ID hợp lệ để validate trong code
+export const VALID_TRAVEL_STYLE_IDS = TRAVEL_STYLES.map(style => style.id);
+
+// Danh sách label để hiển thị (nếu cần)
+export const VALID_TRAVEL_STYLE_LABELS = TRAVEL_STYLES.map(style => style.label);
 
 export const BUDGET_CONFIG = {
-    MIN: 0,                 // Tối thiểu 0 đồng
-    MAX: 50000000,          // Tối đa 50 triệu (Frontend có thể để max là 50tr+)
-    STEP: 100000,           // Mỗi bước nhảy là 100k -> Dễ kéo chọn số chẵn
-    DEFAULT: 1000000,       // Mặc định để thanh trượt ở mức 1 triệu
+    MIN: 0,
+    MAX: 50000000,
+    STEP: 100000,
+    DEFAULT: 1000000,
     CURRENCY: "VND"
 };
 
 // Helper function
-export const isValidTravelStyle = (style) => {
-    return VALID_TRAVEL_STYLES.includes(style);
+export const isValidTravelStyle = (styleId) => {
+    return VALID_TRAVEL_STYLE_IDS.includes(styleId);
 };
+
+export const AGE_GROUPS = [
+    "15-25",
+    "26-35",
+    "36-50",
+    "50+"
+];

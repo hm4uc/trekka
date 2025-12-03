@@ -1,16 +1,16 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { Op } from 'sequelize';
 import Profile from '../models/profile.model.js';
-import {TRAVEL_STYLES, BUDGET_CONFIG} from '../config/travelConstants.js';
+import {TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS} from '../config/travelConstants.js';
 
 async function register(userData) {
-    const { usr_fullname, usr_email, password, usr_gender, usr_age, usr_job } = userData;
+    const { usr_fullname, usr_email, password, usr_gender, usr_age_group } = userData;
 
     try {
-        console.log('🔍 Checking if profile exists...');
         const existingProfile = await Profile.findOne({ where: { usr_email } });
         if (existingProfile) {
-            console.log('❌ Profile already exists');
             const error = new Error('Email already exists');
             error.statusCode = 409;
             throw error;
@@ -26,8 +26,7 @@ async function register(userData) {
             usr_email,
             usr_password_hash,
             usr_gender,
-            usr_age,
-            usr_job,
+            usr_age_group,
         });
 
         console.log('🎫 Generating JWT token...');
@@ -39,20 +38,7 @@ async function register(userData) {
 
         console.log('✅ Profile registered successfully');
         return {
-            profile: {
-                id: profile.id,
-                usr_fullname: profile.usr_fullname,
-                usr_email: profile.usr_email,
-                usr_gender: profile.usr_gender,
-                usr_age: profile.usr_age,
-                usr_job: profile.usr_job,
-                usr_preferences: profile.usr_preferences,
-                usr_budget: profile.usr_budget,
-                usr_avatar: profile.usr_avatar,
-                usr_bio: profile.usr_bio,
-                is_active: profile.is_active,
-                usr_created_at: profile.usr_created_at
-            },
+            profile: sanitizeProfile(profile),
             token
         };
     } catch (error) {
@@ -75,7 +61,7 @@ async function updateProfile(profileId, updateData) {
         console.log('🔄 Updating profile...');
 
         // Cập nhật các trường được phép
-        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age', 'usr_job', 'usr_avatar', 'usr_bio'];
+        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age_group', 'usr_avatar', 'usr_bio'];
         allowedFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 profile[field] = updateData[field];
@@ -87,8 +73,7 @@ async function updateProfile(profileId, updateData) {
 
         await profile.save();
 
-        console.log('✅ Profile updated successfully');
-        return profile;
+        return sanitizeProfile(profile);
     } catch (error) {
         console.error('❌ Error updating profile:', error);
         throw error;
@@ -108,11 +93,12 @@ async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budg
 
         console.log('🔄 Updating preferences and budget...');
 
-        // Validate travel preferences
+        // Validate travel preferences - sửa lại để so sánh với id
         if (usr_preferences !== undefined) {
-            const invalidPreferences = usr_preferences.filter(pref => !TRAVEL_STYLES.includes(pref));
+            const validStyleIds = TRAVEL_STYLES.map(style => style.id);
+            const invalidPreferences = usr_preferences.filter(pref => !validStyleIds.includes(pref));
             if (invalidPreferences.length > 0) {
-                const error = new Error(`Invalid travel styles: ${invalidPreferences.join(', ')}`);
+                const error = new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${validStyleIds.join(', ')}`);
                 error.statusCode = 400;
                 throw error;
             }
@@ -173,18 +159,15 @@ async function deleteProfile(profileId) {
 }
 
 async function login(loginData) {
-    const { email, password } = loginData;
+    const { usr_email, password } = loginData;
 
     try {
-        console.log('🔍 Finding profile for login...');
-        const profile = await Profile.findOne({ where: { usr_email: email } });
+        const profile = await Profile.findOne({ where: { usr_email } });
         if (!profile) {
-            console.log('❌ Profile not found');
             const error = new Error('Invalid email or password');
             error.statusCode = 401;
             throw error;
         }
-
         console.log('🔐 Comparing passwords...');
         const isPasswordValid = await bcrypt.compare(password, profile.usr_password_hash);
         if (!isPasswordValid) {
@@ -203,20 +186,7 @@ async function login(loginData) {
 
         console.log('✅ Profile logged in successfully');
         return {
-            profile: {
-                id: profile.id,
-                usr_fullname: profile.usr_fullname,
-                usr_email: profile.usr_email,
-                usr_gender: profile.usr_gender,
-                usr_age: profile.usr_age,
-                usr_job: profile.usr_job,
-                usr_preferences: profile.usr_preferences,
-                usr_budget: profile.usr_budget,
-                usr_avatar: profile.usr_avatar,
-                usr_bio: profile.usr_bio,
-                is_active: profile.is_active,
-                usr_created_at: profile.usr_created_at
-            },
+            profile: sanitizeProfile(profile),
             token
         };
     } catch (error) {
@@ -227,7 +197,7 @@ async function login(loginData) {
 
 async function getProfileById(profileId) {
     const profile = await Profile.findByPk(profileId, {
-        attributes: { exclude: ['usr_password_hash'] }
+        attributes: { exclude: ['usr_password_hash', 'reset_password_token', 'reset_password_expires'] }
     });
 
     if (!profile) {
@@ -243,8 +213,23 @@ async function getProfileById(profileId) {
 async function getTravelConstants() {
     return {
         travel_styles: TRAVEL_STYLES,
-        budget_config: BUDGET_CONFIG // Trả về min, max, step
+        budget_config: BUDGET_CONFIG,
+        age_groups: AGE_GROUPS
     };
+}
+
+async function logout() {
+    // Với JWT stateless, logout chủ yếu xử lý ở Client (xóa token).
+    // Nếu muốn chặt chẽ, cần dùng Redis để blacklist token.
+    // Ở đây ta trả về success để FE biết quy trình hoàn tất.
+    return true;
+}
+
+// Helper function để loại bỏ password hash khi trả về
+function sanitizeProfile(profile) {
+    const p = profile.toJSON ? profile.toJSON() : profile;
+    const { usr_password_hash, reset_password_token, reset_password_expires, ...rest } = p;
+    return rest;
 }
 
 export default {
@@ -254,5 +239,6 @@ export default {
     updateProfile,
     updatePreferencesAndBudget,
     deleteProfile,
-    getTravelConstants
+    getTravelConstants,
+    logout
 };

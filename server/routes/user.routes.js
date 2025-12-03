@@ -27,12 +27,9 @@
  *         usr_gender:
  *           type: string
  *           example: "male"
- *         usr_age:
- *           type: integer
- *           example: 25
- *         usr_job:
+ *         usr_age_group:
  *           type: string
- *           example: "Mobile Developer"
+ *           example: "15-25"
  *         usr_avatar:
  *           type: string
  *           example: "https://example.com/avatar.png"
@@ -43,7 +40,7 @@
  *           type: array
  *           items:
  *             type: string
- *           example: ["Du lịch khám phá", "Du lịch ẩm thực"]
+ *           example: ["nature", "adventure"]
  *         usr_budget:
  *           type: number
  *           example: 5000000
@@ -67,12 +64,9 @@
  *           type: string
  *           enum: [male, female, other]
  *           example: "male"
- *         usr_age:
- *           type: integer
- *           example: 26
- *         usr_job:
+ *         usr_age_group:
  *           type: string
- *           example: "Senior Software Engineer"
+ *           example: "15-25"
  *         usr_avatar:
  *           type: string
  *           example: "https://example.com/avatar.jpg"
@@ -97,38 +91,10 @@
  *           type: array
  *           items:
  *             type: string
- *           example: ["Du lịch văn hóa", "Du lịch ẩm thực", "Du lịch sinh thái"]
+ *           example: ["nature", "food_drink", "adventure"]
  *         usr_budget:
  *           type: number
  *           example: 3000000
- *
- *     PreferencesBudgetResponse:
- *       type: object
- *       properties:
- *         status:
- *           type: string
- *           example: "success"
- *         message:
- *           type: string
- *           example: "Preferences and budget updated successfully"
- *         data:
- *           type: object
- *           properties:
- *             id:
- *               type: string
- *               format: uuid
- *             usr_preferences:
- *               type: array
- *               items:
- *                 type: string
- *             usr_budget:
- *               type: number
- *             travel_styles:
- *               type: array
- *               items:
- *                 type: string
- *             budget_levels:
- *               type: object
  *
  *     TravelConstantsResponse:
  *       type: object
@@ -142,26 +108,33 @@
  *             travel_styles:
  *               type: array
  *               items:
- *                 type: string
- *               example: ["Du lịch nghỉ dưỡng", "Du lịch khám phá", "Du lịch mạo hiểm"]
- *             budget_levels:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   label:
+ *                     type: string
+ *                   icon:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *             budget_config:
  *               type: object
  *               properties:
- *                 LOW:
- *                   type: object
- *                   properties:
- *                     min:
- *                       type: number
- *                     max:
- *                       type: number
- *                     label:
- *                       type: string
- *                 MEDIUM:
- *                   type: object
- *                 HIGH:
- *                   type: object
- *                 LUXURY:
- *                   type: object
+ *                 MIN:
+ *                   type: number
+ *                 MAX:
+ *                   type: number
+ *                 STEP:
+ *                   type: number
+ *                 DEFAULT:
+ *                   type: number
+ *                 CURRENCY:
+ *                   type: string
+ *             age_groups:
+ *               type: array
+ *               items:
+ *                 type: string
  */
 
 /**
@@ -176,7 +149,7 @@ import express from "express";
 import { body, validationResult } from 'express-validator';
 import userController from '../controllers/user.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
-import {BUDGET_CONFIG, TRAVEL_STYLES} from '../config/travelConstants.js';
+import {AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS} from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -203,10 +176,8 @@ const updateProfileValidation = [
         .withMessage('Full name must be between 1 and 100 characters'),
     body('usr_gender').optional().isIn(['male', 'female', 'other'])
         .withMessage('Gender must be male, female or other'),
-    body('usr_age').optional().isInt({ min: 1, max: 120 })
-        .withMessage('Age must be between 1 and 120'),
-    body('usr_job').optional().isLength({ max: 255 })
-        .withMessage('Job must not exceed 255 characters'),
+    body('usr_age_group').optional().isIn(AGE_GROUPS)
+        .withMessage('Invalid age group'),
     body('usr_avatar').optional().isURL()
         .withMessage('Avatar must be a valid URL'),
     body('usr_bio').optional().isLength({ max: 500 })
@@ -218,9 +189,9 @@ const preferencesBudgetValidation = [
         .withMessage('Preferences must be an array')
         .custom((value) => {
             if (value) {
-                const invalidPreferences = value.filter(pref => !TRAVEL_STYLES.includes(pref));
+                const invalidPreferences = value.filter(pref => !VALID_TRAVEL_STYLE_IDS.includes(pref));
                 if (invalidPreferences.length > 0) {
-                    throw new Error(`Invalid travel styles: ${invalidPreferences.join(', ')}`);
+                    throw new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${VALID_TRAVEL_STYLE_IDS.join(', ')}`);
                 }
             }
             return true;
@@ -330,19 +301,47 @@ const preferencesBudgetValidation = [
  *             example1:
  *               summary: Update preferences and budget
  *               value:
- *                 usr_preferences: ["Du lịch khám phá", "Du lịch ẩm thực", "Du lịch sinh thái"]
+ *                 usr_preferences: ["nature", "food_drink", "adventure"]
  *                 usr_budget: 5000000
  *             example2:
  *               summary: Update only preferences
  *               value:
- *                 usr_preferences: ["Du lịch nghỉ dưỡng", "Du lịch gia đình"]
+ *                 usr_preferences: ["chill_relax", "luxury"]
  *     responses:
  *       200:
  *         description: Preferences and budget updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: "#/components/schemas/PreferencesBudgetResponse"
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Preferences and budget updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       format: uuid
+ *                     usr_preferences:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     usr_budget:
+ *                       type: number
+ *                     meta:
+ *                       type: object
+ *                       properties:
+ *                         travel_styles:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         budget_config:
+ *                           type: object
  *       400:
  *         description: Validation error - Invalid travel style or budget
  *       401:
