@@ -20,6 +20,7 @@ dependencies:
   cupertino_icons: ^1.0.8 # Biểu tượng iOS
   shared_preferences: ^2.5.3 # Lưu trữ dữ liệu cục bộ
   flutter_native_splash: ^2.4.7
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -41,9 +42,12 @@ flutter_native_splash:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/trekka_logo_app.png" # Ảnh dùng làm icon app
-  min_sdk_android: 21
+  image_path: "assets/images/trekka_logo_app.png"
+  image_path_ios: "assets/images/trekka_logo_app_ios.png"
   remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "#121E1E"
+  adaptive_icon_foreground: "assets/images/trekka_logo_app.png"
 
 flutter:
   uses-material-design: true

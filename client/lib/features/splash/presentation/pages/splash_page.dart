@@ -29,7 +29,7 @@ class _SplashPageState extends State<SplashPage> {
 
     // 3. Chuyển trang
     if (mounted) {
-      context.go('/login');
+      context.go('/onboarding');
     }
   }
 
@@ -45,7 +45,7 @@ class _SplashPageState extends State<SplashPage> {
             // Dùng ảnh giống hệt ảnh khai báo trong pubspec.yaml
             // Nếu pubspec dùng PNG thì ở đây cũng nên dùng PNG hoặc SVG kích thước tương đương
             Image.asset(
-              'assets/images/trekka_logo.png',
+              'assets/images/trekka_logo_app.png',
               width: 150, // Cần căn chỉnh cho khớp kích thước hiển thị native (tương đối)
             ),
             // Có thể thêm loading spinner bên dưới nếu thích
