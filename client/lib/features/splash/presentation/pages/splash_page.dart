@@ -1,7 +1,11 @@
+// lib/features/splash/presentation/pages/splash_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_themes.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -11,40 +15,44 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) context.go('/login');
-    });
+    context.read<AuthBloc>().add(AuthCheckRequested());
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    // 1. Làm các việc cần thiết (Check token, load config...)
+    await Future.delayed(const Duration(seconds: 2));
+
+    // 2. Sau khi xong việc, TẮT màn hình Native Splash đi
+    // Lúc này giao diện Flutter bên dưới đã vẽ xong, logo sẽ khớp nhau
+    FlutterNativeSplash.remove();
+
+    // 3. Chuyển trang
+    if (mounted) {
+      context.go('/onboarding');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Giao diện này phải GIỐNG HỆT cấu hình trong flutter_native_splash
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Giả lập Logo
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.primaryColor, width: 2),
-              ),
-              child: const Icon(Icons.send, size: 40, color: AppTheme.primaryColor),
+            // Dùng ảnh giống hệt ảnh khai báo trong pubspec.yaml
+            // Nếu pubspec dùng PNG thì ở đây cũng nên dùng PNG hoặc SVG kích thước tương đương
+            Image.asset(
+              'assets/images/trekka_logo_app.png',
+              width: 150, // Cần căn chỉnh cho khớp kích thước hiển thị native (tương đối)
             ),
-            const SizedBox(height: 20),
-            Text(
-              "Trekka",
-              style: GoogleFonts.inter(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            // Có thể thêm loading spinner bên dưới nếu thích
           ],
         ),
       ),

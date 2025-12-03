@@ -3,24 +3,7 @@ import userService from '../services/user.service.js';
 
 async function register(req, res, next) {
     try {
-        const {
-            usr_fullname,
-            usr_email,
-            password,
-            usr_gender,
-            usr_age,
-            usr_job
-        } = req.body;
-
-        const result = await userService.register({
-            usr_fullname,
-            usr_email,
-            password,
-            usr_gender,
-            usr_age,
-            usr_job
-        });
-
+        const result = await userService.register(req.body);
         res.status(StatusCodes.CREATED).json({
             status: 'success',
             message: 'Profile registered successfully',
@@ -33,13 +16,7 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
     try {
-        const { usr_email, password } = req.body;
-
-        const result = await userService.login({
-            email: usr_email,
-            password
-        });
-
+        const result = await userService.login(req.body);
         res.status(StatusCodes.OK).json({
             status: 'success',
             message: 'Login successful',
@@ -50,4 +27,16 @@ async function login(req, res, next) {
     }
 }
 
-export default { register, login };
+async function logout(req, res, next) {
+    try {
+        await userService.logout();
+        res.status(StatusCodes.OK).json({
+            status: 'success',
+            message: 'Logged out successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default { register, login, logout };

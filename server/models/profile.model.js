@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../database/db.js';
+import {AGE_GROUPS} from "../config/travelConstants.js";
 
 const Profile = sequelize.define('Profile', {
     id: {
@@ -27,12 +28,16 @@ const Profile = sequelize.define('Profile', {
         type: DataTypes.TEXT, // Postgres hỗ trợ TEXT tốt
         allowNull: true,
     },
-    usr_age: {
-        type: DataTypes.INTEGER,
+    usr_age_group: {
+        type: DataTypes.ENUM(...AGE_GROUPS),
         allowNull: true,
     },
-    usr_job: {
-        type: DataTypes.STRING(255),
+    reset_password_token: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    reset_password_expires: {
+        type: DataTypes.DATE,
         allowNull: true,
     },
     usr_preferences: {

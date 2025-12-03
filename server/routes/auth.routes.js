@@ -32,12 +32,9 @@
  *           type: string
  *           enum: [male, female, other]
  *           example: "male"
- *         usr_age:
- *           type: integer
- *           example: 22
- *         usr_job:
+ *         usr_age_group:
  *           type: string
- *           example: "Software Engineer"
+ *           example: "15-25"
  *     LoginRequest:
  *       type: object
  *       required:
@@ -55,9 +52,10 @@
  *     UserObject:
  *       type: object
  *       properties:
- *         usr_id:
- *           type: integer
- *           example: 1
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           example: "71c9e45f-56ab-4f7b-93d7-fb19841e2b2b"
  *         usr_fullname:
  *           type: string
  *           example: "Nguyen Van A"
@@ -68,19 +66,16 @@
  *         usr_gender:
  *           type: string
  *           example: "male"
- *         usr_age:
- *           type: integer
- *           example: 22
- *         usr_job:
+ *         usr_age_group:
  *           type: string
- *           example: "Designer"
- *         usr_travel_style:
+ *           example: "15-25"
+ *         usr_preferences:
  *           type: array
  *           items:
  *             type: string
- *           example: ["adventure", "culture"]
+ *           example: ["nature", "culture_history"]
  *         usr_budget:
- *           type: integer
+ *           type: number
  *           example: 2000000
  *     AuthResponse:
  *       type: object
@@ -91,16 +86,20 @@
  *         message:
  *           type: string
  *           example: "Login successful"
- *         token:
- *           type: string
- *           description: JWT token
- *         user:
- *           $ref: '#/components/schemas/UserObject'
+ *         data:
+ *           type: object
+ *           properties:
+ *             token:
+ *               type: string
+ *               description: JWT token
+ *             profile:
+ *               $ref: '#/components/schemas/UserObject'
  */
 
 import express from "express";
 import { body, validationResult } from 'express-validator';
 import authController from '../controllers/auth.controller.js';
+import {AGE_GROUPS} from "../config/travelConstants.js";
 
 const router = express.Router();
 
@@ -127,9 +126,7 @@ const registerValidation = [
     body('usr_email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6, max: 255 }),
     body('usr_gender').optional().isIn(['male', 'female', 'other']),
-    body('usr_age').optional().isInt({ min: 1, max: 120 }),
-    body('usr_job').optional().isLength({ max: 255 })
-];
+    body('usr_age_group').optional().isIn(AGE_GROUPS).withMessage('Invalid age group')];
 
 const loginValidation = [
     body('usr_email').isEmail().normalizeEmail(),
@@ -155,7 +152,16 @@ const loginValidation = [
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Profile registered successfully"
+ *                 data:
+ *                   $ref: '#/components/schemas/AuthResponse/properties/data'
  *       400:
  *         description: Validation failed
  *       409:
@@ -184,7 +190,16 @@ router.post('/register', validate(registerValidation), authController.register);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Login successful"
+ *                 data:
+ *                   $ref: '#/components/schemas/AuthResponse/properties/data'
  *       400:
  *         description: Validation failed
  *       401:
@@ -193,5 +208,29 @@ router.post('/register', validate(registerValidation), authController.register);
  *         description: Internal server error
  */
 router.post('/login', validate(loginValidation), authController.login);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     description: Invalidate user session (Client should remove token).
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Logged out successfully"
+ */
+router.post('/logout', authController.logout);
 
 export default router;
