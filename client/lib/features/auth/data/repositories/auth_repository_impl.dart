@@ -50,4 +50,17 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(CacheFailure('Lỗi khi đăng xuất'));
     }
   }
+
+  Future<Either<Failure, User>> checkAuthStatus() async {
+    try {
+      final user = await localDataSource.getLastUser();
+      if (user != null) {
+        return Right(user);
+      } else {
+        return const Left(CacheFailure('Chưa đăng nhập'));
+      }
+    } catch (e) {
+      return const Left(CacheFailure('Lỗi đọc cache'));
+    }
+  }
 }

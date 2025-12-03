@@ -1,8 +1,11 @@
 // lib/features/splash/presentation/pages/splash_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart'; // Import
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_themes.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -16,6 +19,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
+    context.read<AuthBloc>().add(AuthCheckRequested());
     _initApp();
   }
 

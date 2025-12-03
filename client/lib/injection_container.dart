@@ -10,6 +10,11 @@ import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/login_with_email.dart';
 import 'features/auth/domain/usecases/register_with_email.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/onboarding/data/datasources/preferences_remote_data_source.dart';
+import 'features/onboarding/data/repositories/preferences_repository_impl.dart';
+import 'features/onboarding/domain/repositories/preferences_repository.dart';
+import 'features/onboarding/domain/usecases/get_travel_constants.dart';
+import 'features/onboarding/presentation/bloc/preferences_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -18,9 +23,10 @@ Future<void> init() async {
   //! Features - Auth
   // Bloc
   sl.registerFactory(
-        () => AuthBloc(
+    () => AuthBloc(
       loginUseCase: sl(),
       registerUseCase: sl(),
+      authRepository: sl(),
     ),
   );
 
@@ -30,7 +36,7 @@ Future<void> init() async {
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
-        () => AuthRepositoryImpl(
+    () => AuthRepositoryImpl(
       remoteDataSource: sl(),
       localDataSource: sl(),
     ),
@@ -38,10 +44,27 @@ Future<void> init() async {
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
-        () => AuthRemoteDataSourceImpl(sl()),
+    () => AuthRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<AuthLocalDataSource>(
-        () => AuthLocalDataSourceImpl(sharedPreferences: sl()),
+    () => AuthLocalDataSourceImpl(sharedPreferences: sl()),
+  );
+
+  //! Features - Preferences
+  // Bloc
+  sl.registerFactory(() => PreferencesBloc(getTravelConstants: sl()));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetTravelConstants(sl()));
+
+  // Repository
+  sl.registerLazySingleton<PreferencesRepository>(
+    () => PreferencesRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<PreferencesRemoteDataSource>(
+    () => PreferencesRemoteDataSourceImpl(sl()),
   );
 
   //! Core

@@ -80,7 +80,6 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
-    // BlocListener để lắng nghe sự kiện thay đổi (Thành công/Thất bại)
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthFailure) {
@@ -88,14 +87,14 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
             SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         } else if (state is AuthSuccess) {
-          context.go('/preferences'); // Chuyển trang khi thành công
+          context.go('/preferences');
         }
       },
       child: Scaffold(
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Background & Overlay (Giữ nguyên code UI cũ của bạn)
+            // Background & Overlay (Giữ nguyên)
             Positioned.fill(
               child: Image.asset('assets/images/auth_background.jpg', fit: BoxFit.cover),
             ),
@@ -115,7 +114,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                     Center(child: Text("Hành trình của bạn, theo cách của bạn.", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 14))),
                     const SizedBox(height: 40),
 
-                    // TabBar
+                    // TabBar (Giữ nguyên)
                     Container(
                       height: 50,
                       decoration: BoxDecoration(color: AppTheme.surfaceColor.withOpacity(0.5), borderRadius: BorderRadius.circular(30)),
@@ -134,16 +133,18 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
 
                     const SizedBox(height: 30),
 
-                    // BlocBuilder để thay đổi UI khi đang Loading
+                    // 👇 THAY ĐỔI Ở ĐÂY:
+                    // Dùng BlocBuilder để kiểm tra state, nhưng KHÔNG return Loading Widget
+                    // Mà truyền trạng thái loading vào hàm build form
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
-                        if (state is AuthLoading) {
-                          return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
-                        }
+                        // Kiểm tra xem có đang loading không
+                        final bool isLoading = state is AuthLoading;
 
                         return AnimatedCrossFade(
-                          firstChild: _buildLoginForm(),
-                          secondChild: _buildRegisterForm(),
+                          // Truyền isLoading vào 2 hàm này
+                          firstChild: _buildLoginForm(isLoading),
+                          secondChild: _buildRegisterForm(isLoading),
                           crossFadeState: _isLogin ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                           duration: const Duration(milliseconds: 300),
                         );
@@ -151,10 +152,19 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                     ),
 
                     const SizedBox(height: 30),
-                    // ... (Phần Social Login và Skip giữ nguyên code cũ)
+                    // ... (Phần Social Login và Skip giữ nguyên)
                   ],
                 ),
               ),
+            ),
+
+            // (Tùy chọn) Thêm lớp phủ trong suốt để chặn click lung tung khi đang loading
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                return state is AuthLoading
+                    ? const ModalBarrier(dismissible: false, color: Colors.transparent)
+                    : const SizedBox.shrink();
+              },
             ),
           ],
         ),
@@ -162,12 +172,11 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
     );
   }
 
-  // Form (Cập nhật gọi hàm _onLoginPressed thay vì trực tiếp API)
-  Widget _buildLoginForm() {
+  // 👇 Cập nhật hàm nhận tham số bool isLoading
+  Widget _buildLoginForm(bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ... (UI TextField giữ nguyên)
         const Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(controller: _emailController, hintText: "Nhập email", keyboardType: TextInputType.emailAddress),
@@ -190,16 +199,22 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           child: TextButton(onPressed: () => context.push('/forgot-password'), child: const Text("Quên mật khẩu?", style: TextStyle(color: AppTheme.primaryColor))),
         ),
         const SizedBox(height: 20),
-        PrimaryButton(text: "Đăng nhập", onPressed: _onLoginPressed),
+
+        // 👇 Truyền isLoading vào PrimaryButton
+        PrimaryButton(
+          text: "Đăng nhập",
+          isLoading: isLoading, // Loading quay tại nút
+          onPressed: _onLoginPressed,
+        ),
       ],
     );
   }
 
-  Widget _buildRegisterForm() {
+  // 👇 Cập nhật hàm nhận tham số bool isLoading
+  Widget _buildRegisterForm(bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ... (UI TextField giữ nguyên)
         const Text("Họ tên", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(controller: _nameController, hintText: "Họ và tên"),
@@ -236,7 +251,13 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         ),
 
         const SizedBox(height: 30),
-        PrimaryButton(text: "Đăng ký", onPressed: _onRegisterPressed),
+
+        // 👇 Truyền isLoading vào PrimaryButton
+        PrimaryButton(
+          text: "Đăng ký",
+          isLoading: isLoading, // Loading quay tại nút
+          onPressed: _onRegisterPressed,
+        ),
       ],
     );
   }

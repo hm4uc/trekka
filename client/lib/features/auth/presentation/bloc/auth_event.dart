@@ -18,3 +18,5 @@ class AuthRegisterSubmitted extends AuthEvent {
   final String password;
   const AuthRegisterSubmitted(this.fullname, this.email, this.password);
 }
+
+class AuthCheckRequested extends AuthEvent {}

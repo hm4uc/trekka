@@ -15,7 +15,7 @@ export const TRAVEL_STYLES = [
     },
     {
         id: "food_drink",
-        label: "Ẩm thực & Cafe",
+        label: "Ẩm thực & Đồ uống",
         icon: "utensils",
         description: "Thưởng thức món ngon đường phố và các quán cafe đẹp"
     },
