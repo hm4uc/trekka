@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'app.dart'; // Import widget gốc TrekkaApp
-import 'injection_container.dart' as di; // Import Dependency Injection
+import 'package:flutter_native_splash/flutter_native_splash.dart' show FlutterNativeSplash;
+import 'app.dart';
+import 'injection_container.dart' as di;
 
 void main() async {
-  // 1. Đảm bảo Flutter Binding được khởi tạo trước khi làm bất cứ thứ gì
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Khởi tạo Dependency Injection (Các Service, Repository, Bloc...)
+  // 👇 Giữ màn hình Splash Native đứng yên đó, không cho tắt tự động
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await di.init();
 
-  // 3. Chạy ứng dụng
   runApp(const TrekkaApp());
 }

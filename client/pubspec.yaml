@@ -1,8 +1,6 @@
 name: trekka
 description: A travel_preferences planning app
-
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -17,24 +15,37 @@ dependencies:
   get_it: ^9.1.1          # Dependency Injection
   dartz: ^0.10.1          # Functional programming
   go_router: ^17.0.0     # Điều hướng thông minh
-  google_fonts: ^6.1.0    # Font chữ
-  flutter_svg: ^2.0.9     # Hiển thị Logo SVG
-  cupertino_icons: ^1.0.5 # Biểu tượng iOS
-  shared_preferences: ^2.1.1 # Lưu trữ dữ liệu cục bộ
+  google_fonts: ^6.3.3    # Font chữ
+  flutter_svg: ^2.2.3     # Hiển thị Logo SVG
+  cupertino_icons: ^1.0.8 # Biểu tượng iOS
+  shared_preferences: ^2.5.3 # Lưu trữ dữ liệu cục bộ
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_native_splash:
+  color: "#121E1E"
+  image: "assets/images/trekka_logo_app.png"
+  android_12:
+    image: "assets/images/trekka_logo_app.png"
+    color: "#121E1E"
+    fullscreen: true
+  ios: true
+
+
+# Cấu hình cho flutter_launcher_icons
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/trekka_logo_app.png" # Ảnh dùng làm icon app
+  min_sdk_android: 21
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/trekka_logo.png
-    - assets/images/trekka_logo_app.png
-    - assets/images/cafe.jpg
-    - assets/images/museum.jpg
-    - assets/images/noodle_street.jpg
-    - assets/images/cafe_interior_1.jpg
-    - assets/images/cafe_interior_2.jpg
-    - assets/images/cafe_interior_3.jpg
+    - assets/images/
