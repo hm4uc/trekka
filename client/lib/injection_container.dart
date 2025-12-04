@@ -8,7 +8,9 @@ import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/domain/usecases/login_with_email.dart';
+import 'features/auth/domain/usecases/logout.dart';
 import 'features/auth/domain/usecases/register_with_email.dart';
+import 'features/auth/domain/usecases/update_profile.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/onboarding/data/datasources/preferences_remote_data_source.dart';
 import 'features/onboarding/data/repositories/preferences_repository_impl.dart';
@@ -27,12 +29,16 @@ Future<void> init() async {
       loginUseCase: sl(),
       registerUseCase: sl(),
       authRepository: sl(),
+      logoutUseCase: sl(),
+      updateProfileUseCase: sl(),
     ),
   );
 
   // Use cases
   sl.registerLazySingleton(() => LoginWithEmail(sl()));
   sl.registerLazySingleton(() => RegisterWithEmail(sl()));
+  sl.registerLazySingleton(() => Logout(sl()));
+  sl.registerLazySingleton(() => UpdateProfile(sl()));
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(

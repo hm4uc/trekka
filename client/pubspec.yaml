@@ -12,7 +12,7 @@ dependencies:
   dio: ^5.9.0             # Gọi API
   flutter_bloc: ^9.1.1    # State Management
   equatable: ^2.0.7       # So sánh object
-  get_it: ^9.1.1          # Dependency Injection
+  get_it: ^9.2.0          # Dependency Injection
   dartz: ^0.10.1          # Functional programming
   go_router: ^17.0.0     # Điều hướng thông minh
   google_fonts: ^6.3.3    # Font chữ
@@ -53,3 +53,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/icons/

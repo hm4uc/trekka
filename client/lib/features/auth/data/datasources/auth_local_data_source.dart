@@ -5,6 +5,7 @@ abstract class AuthLocalDataSource {
   Future<void> cacheUser(UserModel user);
   Future<UserModel?> getLastUser();
   Future<void> clearUser();
+  Future<String?> getToken();
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
@@ -21,7 +22,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<void> cacheUser(UserModel user) async {
     await sharedPreferences.setString(CACHED_TOKEN, user.token ?? '');
-    await sharedPreferences.setInt(CACHED_USER_ID, user.id);
+    await sharedPreferences.setString(CACHED_USER_ID, user.id.toString());
     await sharedPreferences.setString(CACHED_USER_NAME, user.fullname);
     await sharedPreferences.setString(CACHED_USER_EMAIL, user.email);
   }
@@ -29,10 +30,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<UserModel?> getLastUser() async {
     final token = sharedPreferences.getString(CACHED_TOKEN);
-    // Nếu không có token nghĩa là chưa đăng nhập
     if (token == null || token.isEmpty) return null;
 
-    final id = sharedPreferences.getInt(CACHED_USER_ID) ?? 0;
+    final id = sharedPreferences.getString(CACHED_USER_ID) ?? '';
     final name = sharedPreferences.getString(CACHED_USER_NAME) ?? '';
     final email = sharedPreferences.getString(CACHED_USER_EMAIL) ?? '';
 
@@ -46,6 +46,14 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> clearUser() async {
-    await sharedPreferences.clear();
+    await sharedPreferences.remove(CACHED_TOKEN);
+    await sharedPreferences.remove(CACHED_USER_ID);
+    await sharedPreferences.remove(CACHED_USER_NAME);
+    await sharedPreferences.remove(CACHED_USER_EMAIL);
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return sharedPreferences.getString(CACHED_TOKEN);
   }
 }

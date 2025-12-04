@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../../../profile/domain/entities/user.dart';
+import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
 
 class RegisterWithEmail implements UseCase<User, RegisterParams> {

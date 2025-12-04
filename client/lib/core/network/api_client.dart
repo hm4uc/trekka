@@ -27,9 +27,13 @@ class ApiClient {
     ));
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters, Map<String, dynamic>? headers}) async {
     try {
-      final response = await dio.get(path, queryParameters: queryParameters);
+      final response = await dio.get(
+        path,
+        queryParameters: queryParameters,
+        options: Options(headers: headers), // Truyền headers vào đây
+      );
       return response.data;
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -39,6 +43,15 @@ class ApiClient {
   Future<dynamic> post(String path, {dynamic data}) async {
     try {
       final response = await dio.post(path, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<dynamic> put(String path, {dynamic data}) async {
+    try {
+      final response = await dio.put(path, data: data);
       return response.data;
     } on DioException catch (e) {
       throw _handleDioError(e);

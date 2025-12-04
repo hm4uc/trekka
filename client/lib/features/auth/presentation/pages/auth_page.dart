@@ -1,13 +1,14 @@
+// lib/features/auth/presentation/pages/auth_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/auth_text_field.dart';
-import '../bloc/auth_bloc.dart'; // Import Bloc
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -67,7 +68,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   void _onRegisterPressed() {
     if (_registerPasswordController.text != _registerConfirmPassController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Mật khẩu xác nhận không khớp"), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text("Mật khẩu xác nhận không khớp"),
+            backgroundColor: Colors.red),
       );
       return;
     }
@@ -77,6 +80,18 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
       _registerPasswordController.text,
     ));
   }
+
+  // TODO: Cần thêm Event vào AuthBloc để xử lý 2 hàm này
+  void _onGoogleSignInPressed() {
+    // context.read<AuthBloc>().add(AuthGoogleSignInRequested());
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tính năng Google Sign In đang phát triển")));
+  }
+
+  void _onAppleSignInPressed() {
+    // context.read<AuthBloc>().add(AuthAppleSignInRequested());
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Tính năng Apple Sign In đang phát triển")));
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -94,12 +109,14 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Background & Overlay (Giữ nguyên)
+            // Background & Overlay
             Positioned.fill(
-              child: Image.asset('assets/images/auth_background.jpg', fit: BoxFit.cover),
+              child: Image.asset('assets/images/auth_background.jpg',
+                  fit: BoxFit.cover),
             ),
             Positioned.fill(
-              child: Container(color: AppTheme.backgroundColor.withOpacity(0.85)),
+              child:
+              Container(color: AppTheme.backgroundColor.withOpacity(0.85)),
             ),
 
             SafeArea(
@@ -109,56 +126,104 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 40),
-                    Center(child: Text("Trekka", style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white))),
+                    Center(
+                        child: Text("Trekka",
+                            style: GoogleFonts.inter(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white))),
                     const SizedBox(height: 8),
-                    Center(child: Text("Hành trình của bạn, theo cách của bạn.", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 14))),
+                    Center(
+                        child: Text("Hành trình của bạn, theo cách của bạn.",
+                            style: GoogleFonts.inter(
+                                color: AppTheme.textGrey, fontSize: 14))),
                     const SizedBox(height: 40),
 
-                    // TabBar (Giữ nguyên)
+                    // TabBar
                     Container(
                       height: 50,
-                      decoration: BoxDecoration(color: AppTheme.surfaceColor.withOpacity(0.5), borderRadius: BorderRadius.circular(30)),
+                      decoration: BoxDecoration(
+                          color: AppTheme.surfaceColor.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(30)),
                       padding: const EdgeInsets.all(4),
                       child: TabBar(
                         controller: _tabController,
-                        indicator: BoxDecoration(color: AppTheme.backgroundColor, borderRadius: BorderRadius.circular(25), border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3))),
+                        indicator: BoxDecoration(
+                            color: AppTheme.backgroundColor,
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(
+                                color: AppTheme.primaryColor.withOpacity(0.3))),
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
                         labelColor: Colors.white,
                         unselectedLabelColor: AppTheme.textGrey,
-                        labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-                        tabs: const [Tab(text: "Đăng nhập"), Tab(text: "Đăng ký")],
+                        labelStyle: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold, fontSize: 14),
+                        tabs: const [
+                          Tab(text: "Đăng nhập"),
+                          Tab(text: "Đăng ký")
+                        ],
                       ),
                     ),
 
                     const SizedBox(height: 30),
 
-                    // 👇 THAY ĐỔI Ở ĐÂY:
-                    // Dùng BlocBuilder để kiểm tra state, nhưng KHÔNG return Loading Widget
-                    // Mà truyền trạng thái loading vào hàm build form
+                    // Main Form (Login/Register)
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
-                        // Kiểm tra xem có đang loading không
                         final bool isLoading = state is AuthLoading;
-
                         return AnimatedCrossFade(
-                          // Truyền isLoading vào 2 hàm này
                           firstChild: _buildLoginForm(isLoading),
                           secondChild: _buildRegisterForm(isLoading),
-                          crossFadeState: _isLogin ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                          crossFadeState: _isLogin
+                              ? CrossFadeState.showFirst
+                              : CrossFadeState.showSecond,
                           duration: const Duration(milliseconds: 300),
                         );
                       },
                     ),
 
                     const SizedBox(height: 30),
-                    // ... (Phần Social Login và Skip giữ nguyên)
+
+                    // --- PHẦN SOCIAL LOGIN MỚI THÊM ---
+                    BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          // Disable nút khi đang loading
+                          final bool isLoading = state is AuthLoading;
+                          return Column(
+                            children: [
+                              _buildDivider(),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  _buildSocialButton(
+                                    iconPath: 'assets/icons/google.png', // Đảm bảo bạn đã có file này
+                                    label: "Google",
+                                    onPressed: _onGoogleSignInPressed,
+                                    isLoading: isLoading,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  _buildSocialButton(
+                                    iconPath: 'assets/icons/apple.png', // Đảm bảo bạn đã có file này
+                                    label: "Apple",
+                                    onPressed: _onAppleSignInPressed,
+                                    isLoading: isLoading,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+                    ),
+
+                    const SizedBox(height: 40),
+                    // (Tùy chọn: Thêm nút Bỏ qua/Khám phá ngay ở đây nếu muốn)
                   ],
                 ),
               ),
             ),
 
-            // (Tùy chọn) Thêm lớp phủ trong suốt để chặn click lung tung khi đang loading
+            // Loading Overlay (Optional - nếu muốn chặn toàn màn hình)
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
                 return state is AuthLoading
@@ -172,15 +237,86 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
     );
   }
 
-  // 👇 Cập nhật hàm nhận tham số bool isLoading
+  // --- WIDGETS CON CHO SOCIAL LOGIN ---
+
+  // Dòng kẻ phân cách "Hoặc tiếp tục với"
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(
+            child: Divider(color: AppTheme.textGrey.withOpacity(0.3), thickness: 1)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text("Hoặc tiếp tục với",
+              style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 13)),
+        ),
+        Expanded(
+            child: Divider(color: AppTheme.textGrey.withOpacity(0.3), thickness: 1)),
+      ],
+    );
+  }
+
+  // Nút Social được thiết kế riêng
+  Widget _buildSocialButton({
+    required String iconPath,
+    required String label,
+    required VoidCallback onPressed,
+    bool isLoading = false,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: isLoading ? null : onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+              color: AppTheme.surfaceColor, // Sử dụng màu bề mặt tối
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: Colors.white.withOpacity(0.08), // Viền sáng rất nhẹ tạo khối
+                  width: 1
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                )
+              ]
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Dùng Image.asset để hiển thị logo màu gốc
+              Image.asset(iconPath, height: 22, width: 22),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- CÁC FORM CŨ (Đã cập nhật thêm isLoading cho nút chính) ---
+
   Widget _buildLoginForm(bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        AuthTextField(controller: _emailController, hintText: "Nhập email", keyboardType: TextInputType.emailAddress),
-
+        AuthTextField(
+            controller: _emailController,
+            hintText: "Nhập email",
+            keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
         const Text("Mật khẩu", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
@@ -189,28 +325,30 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           hintText: "Mật khẩu",
           obscureText: _obscureLoginPass,
           suffixIcon: IconButton(
-            icon: Icon(_obscureLoginPass ? Icons.visibility_off : Icons.visibility, color: AppTheme.textGrey),
-            onPressed: () => setState(() => _obscureLoginPass = !_obscureLoginPass),
+            icon: Icon(
+                _obscureLoginPass ? Icons.visibility_off : Icons.visibility,
+                color: AppTheme.textGrey),
+            onPressed: () =>
+                setState(() => _obscureLoginPass = !_obscureLoginPass),
           ),
         ),
-
         Align(
           alignment: Alignment.centerRight,
-          child: TextButton(onPressed: () => context.push('/forgot-password'), child: const Text("Quên mật khẩu?", style: TextStyle(color: AppTheme.primaryColor))),
+          child: TextButton(
+              onPressed: () => context.push('/forgot-password'),
+              child: const Text("Quên mật khẩu?",
+                  style: TextStyle(color: AppTheme.primaryColor))),
         ),
-        const SizedBox(height: 20),
-
-        // 👇 Truyền isLoading vào PrimaryButton
+        const SizedBox(height: 10),
         PrimaryButton(
           text: "Đăng nhập",
-          isLoading: isLoading, // Loading quay tại nút
+          isLoading: isLoading,
           onPressed: _onLoginPressed,
         ),
       ],
     );
   }
 
-  // 👇 Cập nhật hàm nhận tham số bool isLoading
   Widget _buildRegisterForm(bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -218,12 +356,13 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         const Text("Họ tên", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(controller: _nameController, hintText: "Họ và tên"),
-
         const SizedBox(height: 20),
         const Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        AuthTextField(controller: _registerEmailController, hintText: "Email", keyboardType: TextInputType.emailAddress),
-
+        AuthTextField(
+            controller: _registerEmailController,
+            hintText: "Email",
+            keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
         const Text("Mật khẩu", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
@@ -232,11 +371,13 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           hintText: "Mật khẩu (>6 ký tự)",
           obscureText: _obscureRegisterPass,
           suffixIcon: IconButton(
-            icon: Icon(_obscureRegisterPass ? Icons.visibility_off : Icons.visibility, color: AppTheme.textGrey),
-            onPressed: () => setState(() => _obscureRegisterPass = !_obscureRegisterPass),
+            icon: Icon(
+                _obscureRegisterPass ? Icons.visibility_off : Icons.visibility,
+                color: AppTheme.textGrey),
+            onPressed: () =>
+                setState(() => _obscureRegisterPass = !_obscureRegisterPass),
           ),
         ),
-
         const SizedBox(height: 20),
         const Text("Xác nhận", style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
@@ -245,17 +386,19 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           hintText: "Nhập lại mật khẩu",
           obscureText: _obscureRegisterConfirmPass,
           suffixIcon: IconButton(
-            icon: Icon(_obscureRegisterConfirmPass ? Icons.visibility_off : Icons.visibility, color: AppTheme.textGrey),
-            onPressed: () => setState(() => _obscureRegisterConfirmPass = !_obscureRegisterConfirmPass),
+            icon: Icon(
+                _obscureRegisterConfirmPass
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+                color: AppTheme.textGrey),
+            onPressed: () => setState(
+                    () => _obscureRegisterConfirmPass = !_obscureRegisterConfirmPass),
           ),
         ),
-
         const SizedBox(height: 30),
-
-        // 👇 Truyền isLoading vào PrimaryButton
         PrimaryButton(
           text: "Đăng ký",
-          isLoading: isLoading, // Loading quay tại nút
+          isLoading: isLoading,
           onPressed: _onRegisterPressed,
         ),
       ],
