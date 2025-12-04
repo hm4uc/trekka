@@ -29,14 +29,42 @@ async function login(req, res, next) {
 
 async function logout(req, res, next) {
     try {
-        await userService.logout();
+        const token = req.token; // Set by authenticate middleware
+        const { profileId } = req.user; // Set by authenticate middleware
+
+        const result = await userService.logout(token, profileId);
+
         res.status(StatusCodes.OK).json({
             status: 'success',
-            message: 'Logged out successfully'
+            message: result.message,
+            data: {
+                profileId,
+                timestamp: new Date().toISOString()
+            }
         });
     } catch (error) {
         next(error);
     }
 }
 
-export default { register, login, logout };
+async function logoutAllDevices(req, res, next) {
+    try {
+        const token = req.token; // Set by authenticate middleware
+        const { profileId } = req.user; // Set by authenticate middleware
+
+        const result = await userService.logoutAllDevices(profileId, token);
+
+        res.status(StatusCodes.OK).json({
+            status: 'success',
+            message: result.message,
+            data: {
+                profileId,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export default { register, login, logout, logoutAllDevices };

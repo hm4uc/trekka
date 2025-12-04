@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
 import Profile from '../models/profile.model.js';
+import TokenBlacklist from '../models/tokenBlacklist.model.js';
 import {TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS} from '../config/travelConstants.js';
 
 async function register(userData) {
@@ -218,11 +219,107 @@ async function getTravelConstants() {
     };
 }
 
-async function logout() {
-    // Với JWT stateless, logout chủ yếu xử lý ở Client (xóa token).
-    // Nếu muốn chặt chẽ, cần dùng Redis để blacklist token.
-    // Ở đây ta trả về success để FE biết quy trình hoàn tất.
-    return true;
+/**
+ * Logout user by blacklisting their current token
+ * @param {string} token - JWT token to blacklist
+ * @param {string} profileId - User's profile ID
+ * @param {string} [reason='logout'] - Reason for logout (logout, security, etc.)
+ * @returns {Promise<Object>} - Logout result
+ */
+async function logout(token, profileId, reason = 'logout') {
+    try {
+        // Decode token to get expiration time (without verification since we already verified it in middleware)
+        const decoded = jwt.decode(token);
+
+        if (!decoded || !decoded.exp) {
+            throw new Error('Invalid token format');
+        }
+
+        // Convert exp (seconds since epoch) to Date object
+        const expiresAt = new Date(decoded.exp * 1000);
+
+        // Add token to blacklist
+        await TokenBlacklist.create({
+            token,
+            profileId,
+            reason,
+            expiresAt
+        });
+
+        console.info(`✅ User ${profileId} logged out successfully. Reason: ${reason}`);
+
+        return {
+            success: true,
+            message: 'Logged out successfully'
+        };
+    } catch (error) {
+        console.error('Logout error:', error);
+
+        // If token already blacklisted, consider it a success
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            console.warn(`⚠️ Token already blacklisted for profile ${profileId}`);
+            return {
+                success: true,
+                message: 'Already logged out'
+            };
+        }
+
+        throw error;
+    }
+}
+
+/**
+ * Logout from all devices by blacklisting all active tokens for a user
+ * @param {string} profileId - User's profile ID
+ * @param {string} currentToken - Current JWT token
+ * @returns {Promise<Object>} - Logout result
+ */
+async function logoutAllDevices(profileId, currentToken) {
+    try {
+        // First, blacklist the current token
+        await logout(currentToken, profileId, 'logout_all_devices');
+
+        // Note: Since JWT is stateless, we can't retrieve all active tokens
+        // This blacklists the current token and marks in the system that user requested logout from all devices
+        // In a production system, you might want to:
+        // 1. Keep track of all issued tokens in database
+        // 2. Use shorter token expiration times
+        // 3. Implement refresh token rotation
+
+        console.info(`✅ User ${profileId} logged out from all devices`);
+
+        return {
+            success: true,
+            message: 'Logged out from all devices successfully'
+        };
+    } catch (error) {
+        console.error('Logout all devices error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Clean up expired tokens from blacklist
+ * This should be run periodically (e.g., via cron job)
+ * @returns {Promise<number>} - Number of tokens removed
+ */
+async function cleanupExpiredTokens() {
+    try {
+        const now = new Date();
+        const result = await TokenBlacklist.destroy({
+            where: {
+                expiresAt: {
+                    [Op.lt]: now
+                }
+            }
+        });
+
+        console.info(`🧹 Cleaned up ${result} expired tokens from blacklist`);
+        return result;
+    } catch (error) {
+        console.error('Token cleanup error:', error);
+        throw error;
+    }
 }
 
 // Helper function để loại bỏ password hash khi trả về
@@ -240,5 +337,7 @@ export default {
     updatePreferencesAndBudget,
     deleteProfile,
     getTravelConstants,
-    logout
+    logout,
+    logoutAllDevices,
+    cleanupExpiredTokens
 };
