@@ -5,6 +5,7 @@ import mainRouter from "./routes/main.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import userService from "./services/user.service.js";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
@@ -62,7 +63,7 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log("✅ Connected to PostgreSQL");
 
-        await sequelize.sync({ alter: true });
+        await sequelize.sync(/*{ alter: true }*/);
         console.log("✅ Models synced");
 
         app.listen(PORT, () => {
@@ -70,6 +71,25 @@ const startServer = async () => {
             console.log(`🏠 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
         });
+
+        // Schedule token cleanup to run every hour
+        const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour in milliseconds
+        setInterval(async () => {
+            try {
+                await userService.cleanupExpiredTokens();
+            } catch (error) {
+                console.error('❌ Token cleanup error:', error);
+            }
+        }, CLEANUP_INTERVAL);
+
+        // Run initial cleanup on startup
+        try {
+            await userService.cleanupExpiredTokens();
+            console.log("✅ Initial token cleanup completed");
+        } catch (error) {
+            console.error('❌ Initial token cleanup error:', error);
+        }
+
     } catch (error) {
         console.error("❌ Database connection error:", error);
     }
