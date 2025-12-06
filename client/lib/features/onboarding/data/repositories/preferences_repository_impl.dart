@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
+
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/travel_constants.dart';
 import '../../domain/repositories/preferences_repository.dart';
+import '../../domain/usecases/update_travel_settings.dart';
 import '../datasources/preferences_remote_data_source.dart';
 
 class PreferencesRepositoryImpl implements PreferencesRepository {
@@ -19,7 +21,18 @@ class PreferencesRepositoryImpl implements PreferencesRepository {
       return Left(ServerFailure(e.message, e.statusCode));
     } catch (e) {
       return const Left(ServerFailure('Lỗi không xác định', 500));
+    }
+  }
 
+  @override
+  Future<Either<Failure, void>> updateTravelSettings(UpdateTravelSettingsParams params) async {
+    try {
+      await remoteDataSource.updateTravelSettings(params);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, e.statusCode));
+    } catch (e) {
+      return const Left(ServerFailure('Lỗi cập nhật sở thích', 500));
     }
   }
 }

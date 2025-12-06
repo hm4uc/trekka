@@ -16,6 +16,7 @@ import 'features/onboarding/data/datasources/preferences_remote_data_source.dart
 import 'features/onboarding/data/repositories/preferences_repository_impl.dart';
 import 'features/onboarding/domain/repositories/preferences_repository.dart';
 import 'features/onboarding/domain/usecases/get_travel_constants.dart';
+import 'features/onboarding/domain/usecases/update_travel_settings.dart';
 import 'features/onboarding/presentation/bloc/preferences_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
@@ -58,19 +59,22 @@ Future<void> init() async {
 
   //! Features - Preferences
   // Bloc
-  sl.registerFactory(() => PreferencesBloc(getTravelConstants: sl()));
+  sl.registerFactory(() => PreferencesBloc(getTravelConstants: sl(), updateTravelSettings: sl()));
 
   // Use cases
   sl.registerLazySingleton(() => GetTravelConstants(sl()));
+  sl.registerLazySingleton(() => UpdateTravelSettings(sl()));
 
   // Repository
   sl.registerLazySingleton<PreferencesRepository>(
     () => PreferencesRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Data sources
   sl.registerLazySingleton<PreferencesRemoteDataSource>(
-    () => PreferencesRemoteDataSourceImpl(sl()),
+        () => PreferencesRemoteDataSourceImpl(
+      apiClient: sl(),
+      authLocalDataSource: sl(),
+    ),
   );
 
   //! Core

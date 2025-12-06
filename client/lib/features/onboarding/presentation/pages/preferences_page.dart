@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/theme/app_themes.dart';
 import '../../../../core/utils/image_helper.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -23,6 +24,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
   final Set<String> _selectedStyles = {};
   double _currentBudget = 0;
   bool _isBudgetSkipped = false;
+
   // Biến lưu config để dùng cho slider
   BudgetConfig? _budgetConfig;
 
@@ -72,8 +74,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
       setState(() => _currentStep = 3);
     } else {
       // Step 3 -> Hoàn tất
-      final double? budget = _isBudgetSkipped ? null : _currentBudget;
-      context.go('/location-permission');
+      final double? finalBudget = _isBudgetSkipped ? null : _currentBudget;
+      // Gửi Event lên Bloc
+      context.read<PreferencesBloc>().add(UpdateTravelSettingsEvent(
+            ageGroup: _selectedAgeGroup ?? "",
+            preferences: _selectedStyles.toList(),
+            budget: finalBudget,
+          ));
     }
   }
 
@@ -88,7 +95,6 @@ class _PreferencesPageState extends State<PreferencesPage> {
         .showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,6 +121,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
           if (state is PreferencesError) {
             _showSnackBar(state.message);
           }
+          if (state is PreferencesUpdateSuccess) {
+            context.go('/location-permission');
+          }
           if (state is PreferencesLoaded && _currentBudget == 0) {
             setState(() {
               _budgetConfig = state.constants.budgetConfig;
@@ -126,6 +135,24 @@ class _PreferencesPageState extends State<PreferencesPage> {
           if (state is PreferencesLoading) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
           }
+
+          // Nếu state là PreferencesUpdateSuccess hoặc Error, ta vẫn muốn hiện UI cũ
+          // Tuy nhiên vì Bloc emit state mới nên UI có thể bị mất.
+          // Để trải nghiệm tốt nhất, PreferencesLoaded nên giữ data trong Bloc
+          // Tạm thời nếu state không phải Loaded, ta có thể return Loading hoặc UI rỗng
+          // Nhưng logic ở trên đã cover loading rồi.
+
+          // ... Phần render UI (Column) giữ nguyên
+          // Lưu ý: Nếu state là PreferencesLoaded thì mới có data để render
+          // Khi update, ta cần đảm bảo data constants không bị mất.
+          // (Trong thực tế nên tách state LoadData và UpdateData riêng, hoặc merge chung)
+
+          // Để code đơn giản chạy được ngay:
+          // Bạn có thể check: if (state is PreferencesLoaded || state is PreferencesUpdateSuccess)
+          // Nhưng biến `state.constants` chỉ có trong PreferencesLoaded.
+
+          // => Fix nhanh: Trong Bloc, khi update thành công, ta có thể emit lại PreferencesLoaded (nếu cần giữ UI)
+          // Hoặc đơn giản là hiển thị Loading như trên là OK rồi chuyển trang luôn.
 
           if (state is PreferencesLoaded) {
             return Column(
@@ -540,7 +567,8 @@ class _PreferencesPageState extends State<PreferencesPage> {
     final int divisions = ((_budgetConfig!.max - _budgetConfig!.min) / _budgetConfig!.step).round();
 
     // Màu sắc sẽ bị mờ đi nếu đang chọn Skip
-    final contentColor = _isBudgetSkipped ? AppTheme.textGrey.withOpacity(0.5) : AppTheme.primaryColor;
+    final contentColor =
+        _isBudgetSkipped ? AppTheme.textGrey.withOpacity(0.5) : AppTheme.primaryColor;
     final textColor = _isBudgetSkipped ? AppTheme.textGrey.withOpacity(0.5) : Colors.white;
 
     return Padding(
@@ -550,7 +578,8 @@ class _PreferencesPageState extends State<PreferencesPage> {
         children: [
           const SizedBox(height: 10),
           Text("Ngân sách dự kiến?",
-              style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+              style: GoogleFonts.inter(
+                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 60),
 
           // Hiển thị số tiền
@@ -571,9 +600,11 @@ class _PreferencesPageState extends State<PreferencesPage> {
           const SizedBox(height: 40),
 
           // Thanh Slider & Nút +/-
-          IgnorePointer( // Chặn thao tác nếu đang skip
+          IgnorePointer(
+            // Chặn thao tác nếu đang skip
             ignoring: _isBudgetSkipped,
-            child: Opacity( // Làm mờ nếu đang skip
+            child: Opacity(
+              // Làm mờ nếu đang skip
               opacity: _isBudgetSkipped ? 0.3 : 1.0,
               child: Column(
                 children: [
@@ -583,7 +614,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
                           onPressed: () => _updateBudget(false),
                           icon: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                  color: AppTheme.surfaceColor,
+                                  borderRadius: BorderRadius.circular(8)),
                               child: const Icon(Icons.remove, color: Colors.white))),
                       Expanded(
                         child: SliderTheme(
@@ -606,7 +639,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
                           onPressed: () => _updateBudget(true),
                           icon: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                  color: AppTheme.surfaceColor,
+                                  borderRadius: BorderRadius.circular(8)),
                               child: const Icon(Icons.add, color: Colors.white))),
                     ],
                   ),
@@ -615,8 +650,10 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Tiết kiệm", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
-                        Text("Sang trọng", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
+                        Text("Tiết kiệm",
+                            style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
+                        Text("Sang trọng",
+                            style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -637,7 +674,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               decoration: BoxDecoration(
-                color: _isBudgetSkipped ? AppTheme.primaryColor.withOpacity(0.1) : AppTheme.surfaceColor,
+                color: _isBudgetSkipped
+                    ? AppTheme.primaryColor.withOpacity(0.1)
+                    : AppTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _isBudgetSkipped ? AppTheme.primaryColor : Colors.white10,

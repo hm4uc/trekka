@@ -21,7 +21,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<void> cacheUser(UserModel user) async {
-    await sharedPreferences.setString(CACHED_TOKEN, user.token ?? '');
+    final tokenToSave = user.token ?? '';
+
+    await sharedPreferences.setString(CACHED_TOKEN, tokenToSave);
     await sharedPreferences.setString(CACHED_USER_ID, user.id.toString());
     await sharedPreferences.setString(CACHED_USER_NAME, user.fullname);
     await sharedPreferences.setString(CACHED_USER_EMAIL, user.email);
@@ -54,6 +56,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<String?> getToken() async {
-    return sharedPreferences.getString(CACHED_TOKEN);
+    final token = sharedPreferences.getString(CACHED_TOKEN);
+    return token;
   }
 }
