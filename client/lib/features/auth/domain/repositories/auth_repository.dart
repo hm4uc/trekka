@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../../../profile/domain/entities/user.dart';
+import '../entities/user.dart';
+import '../usecases/update_profile.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, User>> login(String email, String password);
@@ -11,4 +12,6 @@ abstract class AuthRepository {
   });
   Future<Either<Failure, User>> checkAuthStatus();
   Future<Either<Failure, void>> logout();
+  Future<Either<Failure, void>> logoutAllDevices();
+  Future<Either<Failure, User>> updateProfile(UpdateProfileParams params);
 }

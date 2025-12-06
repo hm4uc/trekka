@@ -96,6 +96,37 @@
  *           type: number
  *           example: 3000000
  *
+ *     PreferencesBudgetResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           example: "success"
+ *         message:
+ *           type: string
+ *           example: "Preferences and budget created successfully"
+ *         data:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             usr_preferences:
+ *               type: array
+ *               items:
+ *                 type: string
+ *             usr_budget:
+ *               type: number
+ *             meta:
+ *               type: object
+ *               properties:
+ *                 travel_styles:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 budget_config:
+ *                   type: object
+ *
  *     TravelConstantsResponse:
  *       type: object
  *       properties:
@@ -285,9 +316,9 @@ const preferencesBudgetValidation = [
 /**
  * @swagger
  * /user/preferences-budget:
- *   put:
- *     summary: Update travel preferences and budget
- *     description: Update user's travel preferences (must be from predefined list) and budget
+ *   post:
+ *     summary: Create travel preferences and budget
+ *     description: Create user's travel preferences (must be from predefined list) and budget
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
@@ -299,49 +330,21 @@ const preferencesBudgetValidation = [
  *             $ref: "#/components/schemas/PreferencesBudgetRequest"
  *           examples:
  *             example1:
- *               summary: Update preferences and budget
+ *               summary: Create preferences and budget
  *               value:
  *                 usr_preferences: ["nature", "food_drink", "adventure"]
  *                 usr_budget: 5000000
  *             example2:
- *               summary: Update only preferences
+ *               summary: Create only preferences
  *               value:
  *                 usr_preferences: ["chill_relax", "luxury"]
  *     responses:
  *       200:
- *         description: Preferences and budget updated successfully
+ *         description: Preferences and budget created successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Preferences and budget updated successfully"
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     usr_preferences:
- *                       type: array
- *                       items:
- *                         type: string
- *                     usr_budget:
- *                       type: number
- *                     meta:
- *                       type: object
- *                       properties:
- *                         travel_styles:
- *                           type: array
- *                           items:
- *                             type: object
- *                         budget_config:
- *                           type: object
+ *               $ref: "#/components/schemas/PreferencesBudgetResponse"
  *       400:
  *         description: Validation error - Invalid travel style or budget
  *       401:
@@ -372,7 +375,7 @@ const preferencesBudgetValidation = [
 router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, validate(updateProfileValidation), userController.updateProfile);
 router.delete('/profile', authenticate, userController.deleteProfile);
-router.put('/preferences-budget', authenticate, validate(preferencesBudgetValidation), userController.updatePreferencesAndBudget);
+router.post('/preferences-budget', authenticate, validate(preferencesBudgetValidation), userController.createPreferencesAndBudget);
 router.get('/travel-constants', userController.getTravelConstants);
 
 export default router;

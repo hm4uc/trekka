@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { Op } from 'sequelize';
 import Profile from '../models/profile.model.js';
 import TokenBlacklist from '../models/tokenBlacklist.model.js';
@@ -81,7 +80,7 @@ async function updateProfile(profileId, updateData) {
     }
 }
 
-async function updatePreferencesAndBudget(profileId, { usr_preferences, usr_budget }) {
+async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budget }) {
     try {
         console.log('🔍 Finding profile for update...');
         const profile = await Profile.findByPk(profileId);
@@ -334,7 +333,7 @@ export default {
     login,
     getProfileById,
     updateProfile,
-    updatePreferencesAndBudget,
+    createPreferencesAndBudget,
     deleteProfile,
     getTravelConstants,
     logout,

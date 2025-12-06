@@ -4,11 +4,12 @@ import 'package:equatable/equatable.dart';
 class TravelConstants extends Equatable {
   final List<TravelStyle> styles;
   final BudgetConfig budgetConfig;
+  final List<String> ageGroup;
 
-  const TravelConstants({required this.styles, required this.budgetConfig});
+  const TravelConstants({required this.styles, required this.budgetConfig, required this.ageGroup});
 
   @override
-  List<Object?> get props => [styles, budgetConfig];
+  List<Object?> get props => [styles, budgetConfig, ageGroup];
 }
 
 // Entity con: TravelStyle

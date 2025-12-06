@@ -1,6 +1,8 @@
 // lib/core/router/app_router.dart
 import 'package:go_router/go_router.dart';
+import '../../features/main/presentation/pages/main_page.dart';
 import '../../features/onboarding/presentation/pages/preferences_page.dart';
+import '../../features/settings/presentation/settings_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/auth/presentation/pages/auth_page.dart';
@@ -37,7 +39,11 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const MainPage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsPage(),
     ),
   ],
 );
