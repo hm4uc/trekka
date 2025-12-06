@@ -26,13 +26,10 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _checkAppState() async {
     try {
-      // 1. Khởi tạo SharedPreferences
-      await SharedPrefsService.init();
       // Giả lập thời gian chờ loading (cho đẹp, optional)
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 1));
 
-      // 2. Kiểm tra xem đã hoàn thành Onboarding chưa
-      // (Bao gồm cả check isFirstTime, vì nếu completed = true thì chắc chắn không phải first time)
+      // Kiểm tra xem đã hoàn thành Onboarding chưa
       if (!SharedPrefsService.hasCompletedOnboarding) {
         // ==> Nếu chưa xong Onboarding -> Chuyển hướng sang màn Onboarding
         _removeNativeSplash();
@@ -43,9 +40,7 @@ class _SplashPageState extends State<SplashPage> {
         if (mounted) {
           context.read<AuthBloc>().add(AuthCheckRequested());
         }
-        // Lưu ý: Chưa removeNativeSplash ở đây, để BlocListener xử lý tiếp
-        // hoặc remove luôn cũng được, tùy trải nghiệm UI
-        _removeNativeSplash();
+        // BlocListener sẽ xử lý việc navigation dựa trên kết quả
       }
     } catch (e) {
       // Fallback an toàn: Nếu lỗi gì đó, cứ đẩy về Auth
@@ -65,9 +60,11 @@ class _SplashPageState extends State<SplashPage> {
         // Chỉ lắng nghe khi đã check xong Onboarding (logic ở initState đã đảm bảo điều này)
         if (state is AuthSuccess) {
           // ✅ Token còn hạn, API user/profile trả về 200 OK
+          _removeNativeSplash();
           if (mounted) context.go('/home');
         } else if (state is AuthInitial || state is AuthFailure) {
           // ❌ Token hết hạn (401) hoặc không có token -> Về trang đăng nhập
+          _removeNativeSplash();
           if (mounted) context.go('/auth');
         }
       },

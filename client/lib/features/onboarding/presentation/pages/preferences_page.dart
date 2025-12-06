@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-
 import '../../../../core/theme/app_themes.dart';
 import '../../../../core/utils/image_helper.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -23,7 +22,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
   String? _selectedAgeGroup;
   final Set<String> _selectedStyles = {};
   double _currentBudget = 0;
-
+  bool _isBudgetSkipped = false;
   // Biến lưu config để dùng cho slider
   BudgetConfig? _budgetConfig;
 
@@ -40,7 +39,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
   }
 
   void _updateBudget(bool increase) {
-    if (_budgetConfig == null) return;
+    if (_budgetConfig == null || _isBudgetSkipped) return;
 
     final step = _budgetConfig!.step;
     final min = _budgetConfig!.min;
@@ -59,20 +58,21 @@ class _PreferencesPageState extends State<PreferencesPage> {
   void _onContinue() {
     if (_currentStep == 1) {
       // Validate Step 1
-      if (_selectedAgeGroup == null) {
-        _showSnackBar("Vui lòng chọn nhóm tuổi của bạn!");
-        return;
-      }
+      // if (_selectedAgeGroup == null) {
+      //   _showSnackBar("Vui lòng chọn nhóm tuổi của bạn!");
+      //   return;
+      // }
       setState(() => _currentStep = 2);
     } else if (_currentStep == 2) {
       // Validate Step 2
-      if (_selectedStyles.isEmpty) {
-        _showSnackBar("Vui lòng chọn ít nhất 1 sở thích!");
-        return;
-      }
+      // if (_selectedStyles.isEmpty) {
+      //   _showSnackBar("Vui lòng chọn ít nhất 1 sở thích!");
+      //   return;
+      // }
       setState(() => _currentStep = 3);
     } else {
       // Step 3 -> Hoàn tất
+      final double? budget = _isBudgetSkipped ? null : _currentBudget;
       context.go('/location-permission');
     }
   }
@@ -539,6 +539,10 @@ class _PreferencesPageState extends State<PreferencesPage> {
     if (_budgetConfig == null) return const SizedBox.shrink();
     final int divisions = ((_budgetConfig!.max - _budgetConfig!.min) / _budgetConfig!.step).round();
 
+    // Màu sắc sẽ bị mờ đi nếu đang chọn Skip
+    final contentColor = _isBudgetSkipped ? AppTheme.textGrey.withOpacity(0.5) : AppTheme.primaryColor;
+    final textColor = _isBudgetSkipped ? AppTheme.textGrey.withOpacity(0.5) : Colors.white;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -546,60 +550,121 @@ class _PreferencesPageState extends State<PreferencesPage> {
         children: [
           const SizedBox(height: 10),
           Text("Ngân sách dự kiến?",
-              style: GoogleFonts.inter(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+              style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 60),
 
+          // Hiển thị số tiền
           Center(
             child: Column(
               children: [
-                Text("Ngân sách bạn chi trung bình cho mỗi chuyến đi.",
+                Text("Ngân sách mỗi chuyến đi",
                     style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textGrey)),
                 const SizedBox(height: 16),
-                Text(_formatCurrency(_currentBudget),
-                    style: GoogleFonts.inter(
-                        fontSize: 40, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                Text(
+                  _isBudgetSkipped ? "Chưa xác định" : _formatCurrency(_currentBudget),
+                  style: GoogleFonts.inter(
+                      fontSize: 40, fontWeight: FontWeight.bold, color: contentColor),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 40),
 
-          Row(
-            children: [
-              IconButton(
-                  onPressed: () => _updateBudget(false),
-                  icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
-                      child: const Icon(Icons.remove, color: Colors.white))),
-              Expanded(
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppTheme.primaryColor,
-                    inactiveTrackColor: AppTheme.surfaceColor,
-                    thumbColor: AppTheme.primaryColor,
-                    overlayColor: AppTheme.primaryColor.withOpacity(0.2),
+          // Thanh Slider & Nút +/-
+          IgnorePointer( // Chặn thao tác nếu đang skip
+            ignoring: _isBudgetSkipped,
+            child: Opacity( // Làm mờ nếu đang skip
+              opacity: _isBudgetSkipped ? 0.3 : 1.0,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                          onPressed: () => _updateBudget(false),
+                          icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.remove, color: Colors.white))),
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: AppTheme.primaryColor,
+                            inactiveTrackColor: AppTheme.surfaceColor,
+                            thumbColor: AppTheme.primaryColor,
+                            overlayColor: AppTheme.primaryColor.withOpacity(0.2),
+                          ),
+                          child: Slider(
+                            value: _currentBudget,
+                            min: _budgetConfig!.min,
+                            max: _budgetConfig!.max,
+                            divisions: divisions > 0 ? divisions : 1,
+                            onChanged: (value) => setState(() => _currentBudget = value),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                          onPressed: () => _updateBudget(true),
+                          icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
+                              child: const Icon(Icons.add, color: Colors.white))),
+                    ],
                   ),
-                  child: Slider(
-                    value: _currentBudget,
-                    min: _budgetConfig!.min,
-                    max: _budgetConfig!.max,
-                    divisions: divisions > 0 ? divisions : 1,
-                    onChanged: (value) => setState(() => _currentBudget = value),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Tiết kiệm", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
+                        Text("Sang trọng", style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 40),
+
+          // 👇 NÚT "KHÔNG MUỐN TIẾT LỘ NGÂN SÁCH"
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isBudgetSkipped = !_isBudgetSkipped;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                color: _isBudgetSkipped ? AppTheme.primaryColor.withOpacity(0.1) : AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isBudgetSkipped ? AppTheme.primaryColor : Colors.white10,
+                  width: 1.5,
                 ),
               ),
-              IconButton(
-                  onPressed: () => _updateBudget(true),
-                  icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: AppTheme.surfaceColor, borderRadius: BorderRadius.circular(8)),
-                      child: const Icon(Icons.add, color: Colors.white))),
-            ],
+              child: Row(
+                children: [
+                  Icon(
+                    _isBudgetSkipped ? Icons.check_circle : Icons.circle_outlined,
+                    color: _isBudgetSkipped ? AppTheme.primaryColor : AppTheme.textGrey,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    "Tôi chưa xác định ngân sách",
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: _isBudgetSkipped ? Colors.white : AppTheme.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          // ... Labels Min/Max giữ nguyên
+
           const Spacer(),
         ],
       ),

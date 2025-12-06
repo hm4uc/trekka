@@ -353,7 +353,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         const SizedBox(height: 8),
         AuthTextField(
           controller: _registerPasswordController,
-          hintText: "Mật khẩu (>6 ký tự)",
+          hintText: "Mật khẩu ít nhất 6 ký tự",
           obscureText: _obscureRegisterPass,
           suffixIcon: IconButton(
             icon: Icon(_obscureRegisterPass ? Icons.visibility_off : Icons.visibility,
