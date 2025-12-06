@@ -36,8 +36,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await loginUseCase(LoginParams(email: event.email, password: event.password));
 
     result.fold(
-      (failure) => emit(AuthFailure(failure.message)), // Trả về lỗi từ Server
-      (user) => emit(AuthSuccess(user)), // Trả về User thành công
+      (failure) => emit(AuthFailure(failure.message)),
+      // Đăng nhập -> Người dùng cũ -> isNewUser = false
+      (user) => emit(AuthSuccess(user, isNewUser: false)),
     );
   }
 
@@ -48,16 +49,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
-      (user) => emit(AuthSuccess(user)),
+      // Đăng ký -> Người dùng mới -> isNewUser = true
+      (user) => emit(AuthSuccess(user, isNewUser: true)),
     );
   }
 
   Future<void> _onCheckAuth(AuthCheckRequested event, Emitter<AuthState> emit) async {
     // Không emit Loading để tránh nháy màn hình Splash
+
     final result = await authRepository.checkAuthStatus();
+
     result.fold(
-      (failure) => emit(AuthInitial()), // Chưa đăng nhập -> Về trạng thái đầu
-      (user) => emit(AuthSuccess(user)), // Đã đăng nhập -> Trả về User
+      (failure) => emit(AuthInitial()),
+      // Tự động đăng nhập -> Người dùng cũ -> isNewUser = false
+      (user) => emit(AuthSuccess(user, isNewUser: false)),
     );
   }
 
@@ -83,14 +88,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await authRepository.checkAuthStatus();
 
     result.fold(
-          (failure) {
+      (failure) {
         // Nếu lỗi (ví dụ hết hạn token), có thể emit AuthInitial để logout
         // Hoặc giữ nguyên state cũ và báo lỗi nhẹ
         if (failure.message.contains('401')) {
           emit(AuthInitial());
         }
       },
-          (user) => emit(AuthSuccess(user)), // Cập nhật User mới nhất vào State
+      (user) => emit(AuthSuccess(user)), // Cập nhật User mới nhất vào State
     );
   }
 
@@ -106,8 +111,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ));
 
     result.fold(
-          (failure) => emit(AuthFailure(failure.message)),
-          (user) => emit(AuthSuccess(user)), // Update thành công -> Emit user mới -> UI tự cập nhật
+      (failure) => emit(AuthFailure(failure.message)),
+      (user) => emit(AuthSuccess(user)), // Update thành công -> Emit user mới -> UI tự cập nhật
     );
   }
 }

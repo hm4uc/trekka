@@ -12,6 +12,9 @@ import '../../features/home/presentation/pages/home_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  redirect: (context, state) {
+    return null; // No redirect
+  },
   routes: [
     GoRoute(
       path: '/',

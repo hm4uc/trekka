@@ -84,19 +84,25 @@
  *           type: string
  *           example: "Profile deleted successfully"
  *
- *     PreferencesBudgetRequest:
+ *     TravelSettingsRequest:
  *       type: object
  *       properties:
+ *         usr_age_group:
+ *           type: string
+ *           description: User's age group (optional)
+ *           example: "26-35"
  *         usr_preferences:
  *           type: array
  *           items:
  *             type: string
+ *           description: User's travel style preferences (optional)
  *           example: ["nature", "food_drink", "adventure"]
  *         usr_budget:
  *           type: number
+ *           description: User's travel budget in VND (optional)
  *           example: 3000000
  *
- *     PreferencesBudgetResponse:
+ *     TravelSettingsResponse:
  *       type: object
  *       properties:
  *         status:
@@ -104,13 +110,15 @@
  *           example: "success"
  *         message:
  *           type: string
- *           example: "Preferences and budget created successfully"
+ *           example: "Travel settings updated successfully"
  *         data:
  *           type: object
  *           properties:
  *             id:
  *               type: string
  *               format: uuid
+ *             usr_age_group:
+ *               type: string
  *             usr_preferences:
  *               type: array
  *               items:
@@ -167,7 +175,6 @@
  *               items:
  *                 type: string
  */
-
 /**
  * @swagger
  * tags:
@@ -215,7 +222,9 @@ const updateProfileValidation = [
         .withMessage('Bio must not exceed 500 characters'),
 ];
 
-const preferencesBudgetValidation = [
+const travelSettingsValidation = [
+    body('usr_age_group').optional().isIn(AGE_GROUPS)
+        .withMessage('Invalid age group'),
     body('usr_preferences').optional().isArray()
         .withMessage('Preferences must be an array')
         .custom((value) => {
@@ -315,10 +324,10 @@ const preferencesBudgetValidation = [
 
 /**
  * @swagger
- * /user/preferences-budget:
+ * /user/travel-settings:
  *   post:
- *     summary: Create travel preferences and budget
- *     description: Create user's travel preferences (must be from predefined list) and budget
+ *     summary: Create or update travel settings
+ *     description: Update user's age group, travel preferences (must be from predefined list) and budget
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
@@ -327,26 +336,32 @@ const preferencesBudgetValidation = [
  *       content:
  *         application/json:
  *           schema:
- *             $ref: "#/components/schemas/PreferencesBudgetRequest"
+ *             $ref: "#/components/schemas/TravelSettingsRequest"
  *           examples:
  *             example1:
- *               summary: Create preferences and budget
+ *               summary: Update all travel settings
  *               value:
+ *                 usr_age_group: "26-35"
  *                 usr_preferences: ["nature", "food_drink", "adventure"]
  *                 usr_budget: 5000000
  *             example2:
- *               summary: Create only preferences
+ *               summary: Update only age group and preferences
  *               value:
+ *                 usr_age_group: "36-50"
  *                 usr_preferences: ["chill_relax", "luxury"]
+ *             example3:
+ *               summary: Update only budget
+ *               value:
+ *                 usr_budget: 3000000
  *     responses:
  *       200:
- *         description: Preferences and budget created successfully
+ *         description: Travel settings updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: "#/components/schemas/PreferencesBudgetResponse"
+ *               $ref: "#/components/schemas/TravelSettingsResponse"
  *       400:
- *         description: Validation error - Invalid travel style or budget
+ *         description: Validation error - Invalid age group, travel style or budget
  *       401:
  *         description: Unauthorized
  *       404:
@@ -375,7 +390,7 @@ const preferencesBudgetValidation = [
 router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, validate(updateProfileValidation), userController.updateProfile);
 router.delete('/profile', authenticate, userController.deleteProfile);
-router.post('/preferences-budget', authenticate, validate(preferencesBudgetValidation), userController.createPreferencesAndBudget);
+router.post('/travel-settings', authenticate, validate(travelSettingsValidation), userController.updateTravelSettings);
 router.get('/travel-constants', userController.getTravelConstants);
 
 export default router;
