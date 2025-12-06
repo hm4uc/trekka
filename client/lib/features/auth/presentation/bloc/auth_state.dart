@@ -14,10 +14,17 @@ class AuthLoading extends AuthState {}
 
 class AuthSuccess extends AuthState {
   final User user; // Domain Entity
-  const AuthSuccess(this.user);
+  final bool isNewUser;
+
+  const AuthSuccess(this.user, {this.isNewUser = false});
+
+  @override
+  List<Object> get props => [user, isNewUser];
 }
 
 class AuthFailure extends AuthState {
   final String message;
   const AuthFailure(this.message);
+  @override
+  List<Object> get props => [message];
 }

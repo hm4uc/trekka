@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/services/shared_prefs_service.dart';
 import '../../../../core/theme/app_themes.dart';
 
 // Model dữ liệu
@@ -28,6 +29,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  bool _isNavigating = false;
 
   // Dữ liệu nội dung
   final List<OnboardingItem> _contents = [
@@ -38,7 +40,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       buttonText: 'Tiếp tục',
     ),
     OnboardingItem(
-      image: 'assets/images/onboarding_intro_2.jpg', // Lưu ý đuôi file (png/jpg) theo thực tế của bạn
+      image: 'assets/images/onboarding_intro_2.jpg',
       title: 'Gợi ý chuẩn xác từ AI',
       description: 'Phân tích sâu sở thích và ngữ cảnh để thiết kế những chuyến đi "độc bản" dành riêng cho bạn.',
       buttonText: 'Tiếp tục',
@@ -57,15 +59,50 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ),
   ];
 
-  void _onNextPressed() {
+  @override
+  void initState() {
+    super.initState();
+    _initializePrefs();
+  }
+
+  Future<void> _initializePrefs() async {
+    await SharedPrefsService.init();
+  }
+
+  Future<void> _onNextPressed() async {
+    if (_isNavigating) return;
     if (_currentPage < _contents.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/auth');
+      setState(() => _isNavigating = true);
+      await _completeOnboarding();
+      if (mounted) setState(() => _isNavigating = false);
     }
+  }
+
+  Future<void> _completeOnboarding() async {
+    try {
+      // 1. Lưu trạng thái đã hoàn thành onboarding
+      await SharedPrefsService.setOnboardingCompleted();
+
+      // 2. Chuyển hướng đến trang auth
+      if (!mounted) return;
+      _goToAuth();
+
+    } catch (e) {
+      // Nếu có lỗi, vẫn chuyển đến trang auth để đảm bảo flow không bị chặn
+      if (mounted) {
+        _goToAuth();
+      }
+    }
+  }
+
+  void _goToAuth() {
+    if (!mounted) return;
+    context.go('/auth');
   }
 
   @override
@@ -103,11 +140,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.5),
-                          Colors.black.withOpacity(0.9), // Đậm dần xuống dưới
+                          Colors.black.withOpacity(0.2),
+                          Colors.black.withOpacity(0.8), // Đậm dần xuống dưới
                           Colors.black.withOpacity(0.95),
                         ],
-                        stops: const [0.1, 0.6, 0.85, 1.0],
+                        stops: const [0.0, 0.5, 0.8, 1.0],
                       ),
                     ),
                   ),

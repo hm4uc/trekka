@@ -80,7 +80,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (e.statusCode == 401) {
         await localDataSource.clearUser();
       }
-      return Left(ServerFailure(e.message, 500));
+      return Left(ServerFailure(e.message, e.statusCode));
     } catch (e) {
       // Nếu lỗi mạng (No Internet) -> Có thể cho vào App với dữ liệu Cache cũ (Offline Mode)
       // Hoặc bắt buộc có mạng. Ở đây tôi code trường hợp trả về User cũ nếu có.
