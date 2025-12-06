@@ -101,6 +101,26 @@
  *           type: number
  *           description: User's travel budget in VND
  *           example: 2000000
+ *         usr_avatar:
+ *           type: string
+ *           description: User's avatar URL
+ *           example: "https://example.com/avatar.jpg"
+ *         usr_bio:
+ *           type: string
+ *           description: User's biography
+ *           example: "Love traveling and exploring new cultures"
+ *         is_active:
+ *           type: boolean
+ *           description: Whether the user account is active
+ *           example: true
+ *         usr_created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Account creation timestamp
+ *         usr_updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
  *     AuthResponse:
  *       type: object
  *       properties:
@@ -119,6 +139,17 @@
  *               example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *             profile:
  *               $ref: '#/components/schemas/UserObject'
+ *     RegisterResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           example: "success"
+ *         message:
+ *           type: string
+ *           example: "Profile registered successfully"
+ *         data:
+ *           $ref: '#/components/schemas/AuthResponse/properties/data'
  *     ErrorResponse:
  *       type: object
  *       properties:
@@ -228,65 +259,25 @@ const loginValidation = [
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Profile registered successfully"
- *                 data:
- *                   $ref: '#/components/schemas/AuthResponse/properties/data'
+ *               $ref: '#/components/schemas/RegisterResponse'
  *       400:
  *         description: Validation failed - Invalid input data
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Validation failed"
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       msg:
- *                         type: string
- *                       param:
- *                         type: string
- *                       location:
- *                         type: string
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       409:
  *         description: Conflict - Email already exists
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Email already exists"
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/register', validate(registerValidation), authController.register);
 
@@ -318,72 +309,25 @@ router.post('/register', validate(registerValidation), authController.register);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "success"
- *                 message:
- *                   type: string
- *                   example: "Login successful"
- *                 data:
- *                   $ref: '#/components/schemas/AuthResponse/properties/data'
- *             examples:
- *               successfulLogin:
- *                 summary: Successful login response
- *                 value:
- *                   status: "success"
- *                   message: "Login successful"
- *                   data:
- *                     token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
- *                     profile:
- *                       id: "71c9e45f-56ab-4f7b-93d7-fb19841e2b2b"
- *                       usr_fullname: "Nguyen Van A"
- *                       usr_email: "example@gmail.com"
- *                       usr_gender: "male"
- *                       usr_age_group: "15-25"
+ *               $ref: '#/components/schemas/AuthResponse'
  *       400:
  *         description: Validation failed - Invalid input format
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Validation failed"
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: object
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       401:
  *         description: Unauthorized - Invalid email or password
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Invalid email or password"
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/login', validate(loginValidation), authController.login);
 
@@ -429,16 +373,13 @@ router.post('/login', validate(loginValidation), authController.login);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Invalid or expired token"
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/logout', authenticate, authController.logout);
 
@@ -485,16 +426,13 @@ router.post('/logout', authenticate, authController.logout);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "error"
- *                 message:
- *                   type: string
- *                   example: "Invalid or expired token"
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/logout-all-devices', authenticate, authController.logoutAllDevices);
 

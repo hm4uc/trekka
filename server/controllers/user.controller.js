@@ -42,19 +42,19 @@ async function updateProfile(req, res, next) {
     }
 }
 
-async function updatePreferencesAndBudget(req, res, next) {
+async function createPreferencesAndBudget(req, res, next) {
     try {
         const { usr_preferences, usr_budget } = req.body;
         const profileId = req.user.profileId;
 
-        const result = await userService.updatePreferencesAndBudget(profileId, {
+        const result = await userService.createPreferencesAndBudget(profileId, {
             usr_preferences,
             usr_budget
         });
 
         res.status(StatusCodes.OK).json({
             status: 'success',
-            message: 'Preferences and budget updated successfully',
+            message: 'Preferences and budget created successfully',
             data: result
         });
     } catch (error) {
@@ -92,7 +92,7 @@ async function getTravelConstants(req, res, next) {
 export default {
     getProfile,
     updateProfile,
-    updatePreferencesAndBudget,
+    createPreferencesAndBudget: createPreferencesAndBudget,
     deleteProfile,
     getTravelConstants
 };
