@@ -80,9 +80,9 @@ async function updateProfile(profileId, updateData) {
     }
 }
 
-async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budget }) {
+async function updateTravelSettings(profileId, { usr_age_group, usr_preferences, usr_budget }) {
     try {
-        console.log('🔍 Finding profile for update...');
+        console.log('🔍 Finding profile for travel settings update...');
         const profile = await Profile.findByPk(profileId);
         if (!profile) {
             console.log('❌ Profile not found');
@@ -91,9 +91,19 @@ async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budg
             throw error;
         }
 
-        console.log('🔄 Updating preferences and budget...');
+        console.log('🔄 Updating travel settings...');
 
-        // Validate travel preferences - sửa lại để so sánh với id
+        // Update age group if provided
+        if (usr_age_group !== undefined) {
+            if (!AGE_GROUPS.includes(usr_age_group)) {
+                const error = new Error(`Invalid age group. Valid groups: ${AGE_GROUPS.join(', ')}`);
+                error.statusCode = 400;
+                throw error;
+            }
+            profile.usr_age_group = usr_age_group;
+        }
+
+        // Validate and update travel preferences
         if (usr_preferences !== undefined) {
             const validStyleIds = TRAVEL_STYLES.map(style => style.id);
             const invalidPreferences = usr_preferences.filter(pref => !validStyleIds.includes(pref));
@@ -105,7 +115,7 @@ async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budg
             profile.usr_preferences = usr_preferences;
         }
 
-        // Validate budget
+        // Validate and update budget
         if (usr_budget !== undefined) {
             if (usr_budget < BUDGET_CONFIG.MIN || usr_budget > BUDGET_CONFIG.MAX) {
                 const error = new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
@@ -120,9 +130,10 @@ async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budg
 
         await profile.save();
 
-        console.log('✅ Preferences and budget updated successfully');
+        console.log('✅ Travel settings updated successfully');
         return {
             id: profile.id,
+            usr_age_group: profile.usr_age_group,
             usr_preferences: profile.usr_preferences,
             usr_budget: profile.usr_budget,
             meta: {
@@ -131,7 +142,7 @@ async function createPreferencesAndBudget(profileId, { usr_preferences, usr_budg
             }
         };
     } catch (error) {
-        console.error('❌ Error updating preferences and budget:', error);
+        console.error('❌ Error updating travel settings:', error);
         throw error;
     }
 }
@@ -333,7 +344,7 @@ export default {
     login,
     getProfileById,
     updateProfile,
-    createPreferencesAndBudget,
+    updateTravelSettings,
     deleteProfile,
     getTravelConstants,
     logout,
