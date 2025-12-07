@@ -7,7 +7,7 @@ class UserModel extends User {
     required super.email,
     required super.fullname,
     super.token,
-    super.avatar, // Thêm các trường mới
+    super.avatar,
     super.gender,
     super.ageGroup,
     super.bio,
@@ -19,7 +19,6 @@ class UserModel extends User {
     // API Login/Register trả về: { "status": "success", "data": { "profile": {...}, "token": "..." } }
     // API Get Profile trả về: { "status": "success", "data": { ... } }
     // API Update Profile trả về: { "status": "success", "data": { ... } }
-
     Map<String, dynamic> userData;
     String? token;
 
@@ -62,5 +61,20 @@ class UserModel extends User {
       budget: (userData['usr_budget'] as num?)?.toDouble(),
       preferences: (userData['usr_preferences'] as List?)?.map((e) => e.toString()).toList(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'usr_fullname': fullname,
+      'usr_email': email,
+      'token': token,
+      'usr_avatar': avatar,
+      'usr_gender': gender,
+      'usr_age_group': ageGroup,
+      'usr_bio': bio,
+      'usr_budget': budget,
+      'usr_preferences': preferences,
+    };
   }
 }

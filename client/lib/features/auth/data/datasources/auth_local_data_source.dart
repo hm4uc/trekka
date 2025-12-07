@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_response_model.dart';
+import 'dart:convert';
 
 abstract class AuthLocalDataSource {
   Future<void> cacheUser(UserModel user);
@@ -13,50 +14,36 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   AuthLocalDataSourceImpl({required this.sharedPreferences});
 
-  // Key hằng số để tránh gõ sai
-  static const CACHED_TOKEN = 'CACHED_TOKEN';
-  static const CACHED_USER_ID = 'CACHED_USER_ID';
-  static const CACHED_USER_NAME = 'CACHED_USER_NAME';
-  static const CACHED_USER_EMAIL = 'CACHED_USER_EMAIL';
+  // Chỉ cần 1 key duy nhất để lưu toàn bộ User Object
+  static const CACHED_USER_DATA = 'CACHED_USER_DATA';
 
   @override
   Future<void> cacheUser(UserModel user) async {
-    final tokenToSave = user.token ?? '';
-
-    await sharedPreferences.setString(CACHED_TOKEN, tokenToSave);
-    await sharedPreferences.setString(CACHED_USER_ID, user.id.toString());
-    await sharedPreferences.setString(CACHED_USER_NAME, user.fullname);
-    await sharedPreferences.setString(CACHED_USER_EMAIL, user.email);
+    final jsonString = jsonEncode(user.toJson());
+    await sharedPreferences.setString(CACHED_USER_DATA, jsonString);
   }
 
   @override
   Future<UserModel?> getLastUser() async {
-    final token = sharedPreferences.getString(CACHED_TOKEN);
-    if (token == null || token.isEmpty) return null;
+    final jsonString = sharedPreferences.getString(CACHED_USER_DATA);
+    if (jsonString == null) return null;
 
-    final id = sharedPreferences.getString(CACHED_USER_ID) ?? '';
-    final name = sharedPreferences.getString(CACHED_USER_NAME) ?? '';
-    final email = sharedPreferences.getString(CACHED_USER_EMAIL) ?? '';
-
-    return UserModel(
-      id: id,
-      fullname: name,
-      email: email,
-      token: token,
-    );
+    try {
+      // Đọc chuỗi JSON và parse ngược lại thành UserModel
+      return UserModel.fromJson(jsonDecode(jsonString));
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
   Future<void> clearUser() async {
-    await sharedPreferences.remove(CACHED_TOKEN);
-    await sharedPreferences.remove(CACHED_USER_ID);
-    await sharedPreferences.remove(CACHED_USER_NAME);
-    await sharedPreferences.remove(CACHED_USER_EMAIL);
+    await sharedPreferences.remove(CACHED_USER_DATA);
   }
 
   @override
   Future<String?> getToken() async {
-    final token = sharedPreferences.getString(CACHED_TOKEN);
-    return token;
+    final user = await getLastUser();
+    return user?.token;
   }
 }
