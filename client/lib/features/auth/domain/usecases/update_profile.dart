@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../entities/user.dart';
@@ -21,7 +22,9 @@ class UpdateProfileParams extends Equatable {
   final String gender;
   final String ageGroup;
   final String bio;
-  final String avatar; // API yêu cầu URL string
+  final String avatar;
+  final double? budget;
+  final List<String>? preferences;
 
   const UpdateProfileParams({
     required this.fullname,
@@ -29,16 +32,20 @@ class UpdateProfileParams extends Equatable {
     required this.ageGroup,
     required this.bio,
     required this.avatar,
+    this.budget,
+    this.preferences,
   });
 
   Map<String, dynamic> toJson() => {
-    "usr_fullname": fullname,
-    "usr_gender": gender,
-    "usr_age_group": ageGroup,
-    "usr_bio": bio,
-    "usr_avatar": avatar,
-  };
+        "usr_fullname": fullname,
+        "usr_gender": gender,
+        "usr_age_group": ageGroup,
+        "usr_bio": bio,
+        "usr_avatar": avatar,
+        "usr_budget": budget,
+        "usr_preferences": preferences,
+      };
 
   @override
-  List<Object> get props => [fullname, gender, ageGroup, bio, avatar];
+  List<Object?> get props => [fullname, gender, ageGroup, bio, avatar, budget, preferences];
 }

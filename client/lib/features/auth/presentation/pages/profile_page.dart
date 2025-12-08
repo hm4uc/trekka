@@ -5,10 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_themes.dart';
-import '../../domain/entities/user.dart';
-import '../bloc/auth_bloc.dart';
-import '../bloc/auth_event.dart';
-import '../bloc/auth_state.dart';
+import '../../../auth/domain/entities/user.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../onboarding/domain/entities/travel_constants.dart'; // Import Entity
+import '../../../onboarding/presentation/bloc/preferences_bloc.dart'; // Import PreferencesBloc
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -22,26 +24,28 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Gọi API lấy thông tin mới nhất ngay khi vào màn hình (đã gọi ở MainPage)
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   context.read<AuthBloc>().add(AuthGetProfileRequested());
-    // });
+    // 1. Gọi API lấy Constants để có bộ từ điển (ID -> Label)
+    // Dùng addPostFrameCallback để tránh lỗi build khi gọi bloc
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
+    });
   }
 
-  // Hàm pull to refresh
   Future<void> _onRefresh() async {
     if (!mounted) return;
     context.read<AuthBloc>().add(AuthGetProfileRequested());
+    // Refresh cả constants phòng trường hợp server thay đổi cấu hình
+    context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     await Future.delayed(const Duration(seconds: 1));
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
+      builder: (context, authState) {
         User? user;
-        if (state is AuthSuccess) {
-          user = state.user;
+        if (authState is AuthSuccess) {
+          user = authState.user;
         }
 
         if (user == null) {
@@ -74,20 +78,15 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  // 1. Header (Avatar, Name, Email)
                   _buildHeader(user),
                   const SizedBox(height: 24),
 
-                  // 2. Nút Edit
                   _buildEditButton(context, user),
                   const SizedBox(height: 32),
 
-                  // 3. Bio Section
                   if (user.bio != null && user.bio!.isNotEmpty) _buildBioSection(user.bio!),
-
                   const SizedBox(height: 24),
 
-                  // 4. Thông tin cơ bản (Giới tính, Tuổi)
                   Row(
                     children: [
                       Expanded(
@@ -95,19 +94,29 @@ class _ProfilePageState extends State<ProfilePage> {
                               "Giới tính", _formatGender(user.gender), Icons.person)),
                       const SizedBox(width: 16),
                       Expanded(
-                          child: _buildInfoCard("Độ tuổi", user.ageGroup ?? "N/A", Icons.cake)),
+                          child:
+                              _buildInfoCard("Độ tuổi", user.ageGroup ?? "Chưa chọn", Icons.cake)),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  // 5. Ngân sách
                   _buildBudgetCard(user.budget),
                   const SizedBox(height: 24),
 
-                  // 6. Sở thích
                   _buildSectionTitle("Sở thích & Phong cách"),
                   const SizedBox(height: 12),
-                  _buildPreferencesWrap(user.preferences),
+
+                  // 👇 2. Lắng nghe PreferencesBloc để lấy danh sách Constants
+                  BlocBuilder<PreferencesBloc, PreferencesState>(
+                    builder: (context, prefState) {
+                      List<TravelStyle> availableStyles = [];
+                      if (prefState is PreferencesLoaded) {
+                        availableStyles = prefState.constants.styles;
+                      }
+                      // Truyền danh sách styles vào để map ID -> Label
+                      return _buildPreferencesWrap(user!.preferences, availableStyles);
+                    },
+                  ),
 
                   const SizedBox(height: 40),
                 ],
@@ -225,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildBudgetCard(double? budget) {
-    final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
+    final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
     final budgetText = budget != null ? currencyFormat.format(budget) : "Chưa thiết lập";
 
     return Container(
@@ -255,7 +264,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildPreferencesWrap(List<String>? preferences) {
+  Widget _buildPreferencesWrap(List<String>? preferences, List<TravelStyle> availableStyles) {
     if (preferences == null || preferences.isEmpty) {
       return Center(
           child: Text("Chưa chọn sở thích",
@@ -268,7 +277,20 @@ class _ProfilePageState extends State<ProfilePage> {
         spacing: 8,
         runSpacing: 8,
         alignment: WrapAlignment.center,
-        children: preferences.map((pref) {
+        children: preferences.map((prefId) {
+          // 👇 SỬA ĐOẠN NÀY: Thêm .cast<TravelStyle>()
+          final style = availableStyles.cast<TravelStyle>().firstWhere(
+                (s) => s.id == prefId,
+                // Fallback khi chưa load xong constants
+                orElse: () => TravelStyle(
+                    id: prefId,
+                    label: prefId.isNotEmpty
+                        ? "${prefId[0].toUpperCase()}${prefId.substring(1)}"
+                        : prefId,
+                    icon: "",
+                    description: ""),
+              );
+
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -277,8 +299,7 @@ class _ProfilePageState extends State<ProfilePage> {
               border: Border.all(color: AppTheme.primaryColor.withOpacity(0.5)),
             ),
             child: Text(
-              // Viết hoa chữ cái đầu
-              "${pref[0].toUpperCase()}${pref.substring(1)}",
+              style.label, // Hiển thị Label tiếng Việt
               style: GoogleFonts.inter(fontSize: 13, color: Colors.white),
             ),
           );

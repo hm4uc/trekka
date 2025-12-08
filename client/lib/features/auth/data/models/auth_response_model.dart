@@ -1,4 +1,3 @@
-
 import '../../domain/entities/user.dart';
 
 class UserModel extends User {
@@ -22,28 +21,19 @@ class UserModel extends User {
     Map<String, dynamic> userData;
     String? token;
 
-    // Case 1: Response từ Login/Register API
     if (json.containsKey('data') && json['data'] is Map<String, dynamic>) {
       final data = json['data'] as Map<String, dynamic>;
-
-      // Nếu có nested "profile" và "token" (Login/Register)
       if (data.containsKey('profile') && data.containsKey('token')) {
         userData = data['profile'] as Map<String, dynamic>;
         token = data['token'] as String?;
-      }
-      // Nếu chỉ có user data (Get/Update Profile)
-      else {
+      } else {
         userData = data;
         token = null;
       }
-    }
-    // Case 2: Response có "user" object (backward compatibility)
-    else if (json.containsKey('user')) {
+    } else if (json.containsKey('user')) {
       userData = json['user'];
       token = json['token'];
-    }
-    // Case 3: Direct user data
-    else {
+    } else {
       userData = json;
       token = json['token'];
     }
@@ -53,12 +43,14 @@ class UserModel extends User {
       fullname: userData['usr_fullname'] ?? '',
       email: userData['usr_email'] ?? '',
       token: token,
-      // Các trường Profile
       avatar: userData['usr_avatar'],
       gender: userData['usr_gender'],
       ageGroup: userData['usr_age_group'],
       bio: userData['usr_bio'],
-      budget: (userData['usr_budget'] as num?)?.toDouble(),
+      // Map budget: API có thể trả về String hoặc Number
+      budget: userData['usr_budget'] is String
+          ? double.tryParse(userData['usr_budget'])
+          : (userData['usr_budget'] as num?)?.toDouble(),
       preferences: (userData['usr_preferences'] as List?)?.map((e) => e.toString()).toList(),
     );
   }

@@ -36,6 +36,9 @@ class AuthUpdateProfileSubmitted extends AuthEvent {
   final String ageGroup;
   final String bio;
   final String avatar;
+  final double? budget;
+  final List<String>? preferences;
+
 
   const AuthUpdateProfileSubmitted({
     required this.fullname,
@@ -43,5 +46,7 @@ class AuthUpdateProfileSubmitted extends AuthEvent {
     required this.ageGroup,
     required this.bio,
     required this.avatar,
+    this.budget,
+    this.preferences,
   });
 }
