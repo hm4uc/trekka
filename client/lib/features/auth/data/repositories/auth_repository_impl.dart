@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/user.dart';
@@ -35,32 +34,27 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, User>> register(
       {required String fullname, required String email, required String password}) async {
     try {
+      // Gọi API Đăng ký - API sẽ trả về token trong response
       final userModel = await remoteDataSource.register(fullname, email, password);
+      // Lưu user (với token) vào cache
       await localDataSource.cacheUser(userModel);
+
       return Right(userModel);
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, e.statusCode));
     } catch (e) {
-      return Left(ServerFailure('Lỗi không xác định', 500));
+      return const Left(ServerFailure('Lỗi không xác định', 500));
     }
   }
 
   @override
   Future<Either<Failure, User>> checkAuthStatus() async {
     try {
-      // 1. Lấy token từ local
-      final token =
-          await localDataSource.getToken(); // Bạn cần thêm hàm getToken() vào LocalDataSource
-
+      final token = await localDataSource.getToken();
       if (token == null || token.isEmpty) {
         return const Left(CacheFailure('Chưa đăng nhập'));
       }
-
-      // 2. Gọi API để kiểm tra Token còn sống không và lấy Info mới nhất
       final remoteUser = await remoteDataSource.getProfile(token);
-
-      // 3. Nếu thành công (200 OK), cập nhật lại cache user info (giữ nguyên token cũ)
-      // Lưu ý: User trả về từ getProfile không có token, ta phải gán lại token cũ vào
       final userWithToken = UserModel(
         id: remoteUser.id,
         email: remoteUser.email,
@@ -71,23 +65,16 @@ class AuthRepositoryImpl implements AuthRepository {
         preferences: remoteUser.preferences,
         budget: remoteUser.budget,
       );
-
       await localDataSource.cacheUser(userWithToken);
-
       return Right(userWithToken);
     } on ServerException catch (e) {
-      // Nếu lỗi 401 (Hết hạn) -> Xóa cache để bắt đăng nhập lại
       if (e.statusCode == 401) {
         await localDataSource.clearUser();
       }
       return Left(ServerFailure(e.message, e.statusCode));
     } catch (e) {
-      // Nếu lỗi mạng (No Internet) -> Có thể cho vào App với dữ liệu Cache cũ (Offline Mode)
-      // Hoặc bắt buộc có mạng. Ở đây tôi code trường hợp trả về User cũ nếu có.
       final localUser = await localDataSource.getLastUser();
-      if (localUser != null) {
-        return Right(localUser);
-      }
+      if (localUser != null) return Right(localUser);
       return const Left(CacheFailure('Lỗi kiểm tra trạng thái'));
     }
   }
@@ -146,7 +133,7 @@ class AuthRepositoryImpl implements AuthRepository {
         id: updatedUserRemote.id,
         email: updatedUserRemote.email,
         fullname: updatedUserRemote.fullname,
-        token: token, // Giữ lại token cũ
+        token: token,
         avatar: updatedUserRemote.avatar,
         gender: updatedUserRemote.gender,
         ageGroup: updatedUserRemote.ageGroup,
