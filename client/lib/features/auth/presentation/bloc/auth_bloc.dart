@@ -108,6 +108,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ageGroup: event.ageGroup,
       bio: event.bio,
       avatar: event.avatar,
+      budget: event.budget,
+      preferences: event.preferences,
     ));
 
     result.fold(
