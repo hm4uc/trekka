@@ -21,7 +21,9 @@ async function updateProfile(req, res, next) {
             usr_gender,
             usr_age_group,
             usr_avatar,
-            usr_bio
+            usr_bio,
+            usr_budget,
+            usr_preferences
         } = req.body;
 
         const updatedProfile = await userService.updateProfile(req.user.profileId, {
@@ -29,7 +31,9 @@ async function updateProfile(req, res, next) {
             usr_gender,
             usr_age_group,
             usr_avatar,
-            usr_bio
+            usr_bio,
+            usr_budget,
+            usr_preferences
         });
 
         res.status(StatusCodes.OK).json({

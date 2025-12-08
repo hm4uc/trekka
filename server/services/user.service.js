@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import Profile from '../models/profile.model.js';
 import TokenBlacklist from '../models/tokenBlacklist.model.js';
-import {TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS} from '../config/travelConstants.js';
+import { TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS } from '../config/travelConstants.js';
 
 async function register(userData) {
     const { usr_fullname, usr_email, password, usr_gender, usr_age_group } = userData;
@@ -61,12 +61,35 @@ async function updateProfile(profileId, updateData) {
         console.log('🔄 Updating profile...');
 
         // Cập nhật các trường được phép
-        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age_group', 'usr_avatar', 'usr_bio'];
+        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age_group', 'usr_avatar', 'usr_bio', 'usr_budget', 'usr_preferences'];
         allowedFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 profile[field] = updateData[field];
             }
         });
+        if (updateData.usr_age_group !== undefined) {
+            if (!AGE_GROUPS.includes(updateData.usr_age_group)) {
+                const error = new Error(`Invalid age group. Valid groups: ${AGE_GROUPS.join(', ')}`);
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+        if (updateData.usr_preferences !== undefined) {
+            const validStyleIds = TRAVEL_STYLES.map(style => style.id);
+            const invalidPreferences = updateData.usr_preferences.filter(pref => !validStyleIds.includes(pref));
+            if (invalidPreferences.length > 0) {
+                const error = new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${validStyleIds.join(', ')}`);
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+        if (updateData.usr_budget !== undefined) {
+            if (updateData.usr_budget < BUDGET_CONFIG.MIN || updateData.usr_budget > BUDGET_CONFIG.MAX) {
+                const error = new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
+                error.statusCode = 400;
+                throw error;
+            }
+        }
 
         // Cập nhật thời gian update
         profile.usr_updated_at = new Date();

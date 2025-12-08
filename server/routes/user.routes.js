@@ -73,7 +73,16 @@
  *         usr_bio:
  *           type: string
  *           example: "Love traveling and exploring new cultures"
- *
+ *         usr_preferences:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: User's travel style preferences (optional)
+ *           example: ["nature", "food_drink", "adventure"]
+ *         usr_budget:
+ *           type: number
+ *           description: User's travel budget in VND (optional)
+ *           example: 5000000
  *     DeleteProfileResponse:
  *       type: object
  *       properties:
@@ -187,7 +196,7 @@ import express from "express";
 import { body, validationResult } from 'express-validator';
 import userController from '../controllers/user.controller.js';
 import { authenticate } from '../middleware/authenticate.js';
-import {AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS} from '../config/travelConstants.js';
+import { AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS } from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -220,6 +229,20 @@ const updateProfileValidation = [
         .withMessage('Avatar must be a valid URL'),
     body('usr_bio').optional().isLength({ max: 500 })
         .withMessage('Bio must not exceed 500 characters'),
+    body('usr_preferences').optional().isArray()
+        .withMessage('Preferences must be an array')
+        .custom((value) => {
+            if (value) {
+                const invalidPreferences = value.filter(pref => !VALID_TRAVEL_STYLE_IDS.includes(pref));
+                if (invalidPreferences.length > 0) {
+                    throw new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${VALID_TRAVEL_STYLE_IDS.join(', ')}`);
+                }
+            }
+            return true;
+        }),
+    body('usr_budget').optional()
+        .isFloat({ min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX })
+        .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
 ];
 
 const travelSettingsValidation = [
