@@ -4,6 +4,7 @@ import sequelize from "./database/db.js";
 import mainRouter from "./routes/main.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import destinationRoutes from "./routes/destination.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import userService from "./services/user.service.js";
 import cors from "cors";
@@ -50,6 +51,7 @@ app.use(express.json());
 app.use("/", mainRouter);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
+app.use("/destinations", destinationRoutes);
 
 // Swagger (⚠️ thêm trước app.listen)
 swaggerDocs(app);
@@ -63,7 +65,7 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log("✅ Connected to PostgreSQL");
 
-        await sequelize.sync(/*{ alter: true }*/);
+        await sequelize.sync({ /* alter: true */ });
         console.log("✅ Models synced");
 
         app.listen(PORT, () => {
