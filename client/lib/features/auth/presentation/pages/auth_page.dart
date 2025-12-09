@@ -137,7 +137,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                     const SizedBox(height: 8),
                     Center(
                         child: Text("Hành trình của bạn, theo cách của bạn.",
-                            style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 14))),
+                            style: GoogleFonts.inter(color: AppTheme.primaryColor, fontSize: 14))),
                     const SizedBox(height: 40),
 
                     // TabBar

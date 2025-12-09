@@ -9,8 +9,8 @@ import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../../onboarding/domain/entities/travel_constants.dart'; // Import Entity
-import '../../../onboarding/presentation/bloc/preferences_bloc.dart'; // Import PreferencesBloc
+import '../../../onboarding/domain/entities/travel_constants.dart';
+import '../../../onboarding/presentation/bloc/preferences_bloc.dart';
 import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -24,8 +24,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // 1. Gọi API lấy Constants để có bộ từ điển (ID -> Label)
-    // Dùng addPostFrameCallback để tránh lỗi build khi gọi bloc
+    // ✅ CHỈ GỌI API CONSTANTS ĐỂ LẤY TỪ ĐIỂN MAP ID -> LABEL
+    // ❌ KHÔNG GỌI API PROFILE Ở ĐÂY NỮA (VÌ MAIN_PAGE ĐÃ GỌI)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     });
@@ -33,8 +33,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onRefresh() async {
     if (!mounted) return;
+    // Chỉ gọi lại khi người dùng chủ động kéo
     context.read<AuthBloc>().add(AuthGetProfileRequested());
-    // Refresh cả constants phòng trường hợp server thay đổi cấu hình
     context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     await Future.delayed(const Duration(seconds: 1));
   }
@@ -75,47 +75,50 @@ class _ProfilePageState extends State<ProfilePage> {
             backgroundColor: AppTheme.surfaceColor,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               child: Column(
                 children: [
+                  // 1. Header (Avatar, Name, Email)
                   _buildHeader(user),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   _buildEditButton(context, user),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 30),
 
-                  if (user.bio != null && user.bio!.isNotEmpty) _buildBioSection(user.bio!),
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildInfoCard(
-                              "Giới tính", _formatGender(user.gender), Icons.person)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                          child:
-                              _buildInfoCard("Độ tuổi", user.ageGroup ?? "Chưa chọn", Icons.cake)),
-                    ],
-                  ),
+                  // 2. IMPORTANT INFO: Ngân sách & Sở thích (Đưa lên đầu)
+                  _buildSectionTitle("Thông tin du lịch"),
+                  const SizedBox(height: 16),
+                  _buildBudgetCard(user.budget),
                   const SizedBox(height: 16),
 
-                  _buildBudgetCard(user.budget),
-                  const SizedBox(height: 24),
-
-                  _buildSectionTitle("Sở thích & Phong cách"),
-                  const SizedBox(height: 12),
-
-                  // 👇 2. Lắng nghe PreferencesBloc để lấy danh sách Constants
+                  // Lấy danh sách style từ Bloc để map ID -> Label
                   BlocBuilder<PreferencesBloc, PreferencesState>(
                     builder: (context, prefState) {
                       List<TravelStyle> availableStyles = [];
                       if (prefState is PreferencesLoaded) {
                         availableStyles = prefState.constants.styles;
                       }
-                      // Truyền danh sách styles vào để map ID -> Label
                       return _buildPreferencesWrap(user!.preferences, availableStyles);
                     },
+                  ),
+                  const SizedBox(height: 30),
+
+                  // 3. SECONDARY INFO: Bio, Gender, Age
+                  if (user.bio != null && user.bio!.isNotEmpty) ...[
+                    _buildBioSection(user.bio!),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Row thông tin phụ (Giới tính, Tuổi)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildSmallInfoChip(Icons.person_outline, _formatGender(user.gender)),
+                      const SizedBox(width: 12),
+                      Container(width: 1, height: 20, color: Colors.white24),
+                      const SizedBox(width: 12),
+                      _buildSmallInfoChip(Icons.cake_outlined, user.ageGroup ?? "Chưa chọn tuổi"),
+                    ],
                   ),
 
                   const SizedBox(height: 40),
@@ -131,9 +134,10 @@ class _ProfilePageState extends State<ProfilePage> {
   // --- WIDGETS ---
 
   Widget _buildHeader(User user) {
-    final imageProvider = (user.avatar != null && user.avatar!.isNotEmpty)
-        ? NetworkImage(user.avatar!) as ImageProvider
-        : const AssetImage('assets/images/welcome.jpg');
+    // Logic fallback Avatar
+    final avatarUrl = (user.avatar != null && user.avatar!.isNotEmpty)
+        ? user.avatar!
+        : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.fullname)}&background=random&size=256";
 
     return Column(
       children: [
@@ -144,8 +148,8 @@ class _ProfilePageState extends State<ProfilePage> {
             border: Border.all(color: AppTheme.primaryColor.withOpacity(0.5), width: 2),
           ),
           child: CircleAvatar(
-            radius: 60,
-            backgroundImage: imageProvider,
+            radius: 55,
+            backgroundImage: NetworkImage(avatarUrl),
             backgroundColor: AppTheme.surfaceColor,
           ),
         ),
@@ -166,9 +170,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildEditButton(BuildContext context, User user) {
     return SizedBox(
-      width: 160,
-      height: 40,
-      child: ElevatedButton(
+      height: 36,
+      child: OutlinedButton.icon(
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
@@ -177,58 +180,13 @@ class _ProfilePageState extends State<ProfilePage> {
             context.read<AuthBloc>().add(AuthGetProfileRequested());
           }
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: AppTheme.backgroundColor,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.white24),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 0,
+          foregroundColor: Colors.white,
         ),
-        child: const Text("Chỉnh sửa", style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-
-  Widget _buildBioSection(String bio) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Giới thiệu",
-              style: GoogleFonts.inter(
-                  fontSize: 12, color: AppTheme.textGrey, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(
-            bio,
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white, height: 1.5),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppTheme.primaryColor, size: 24),
-          const SizedBox(height: 8),
-          Text(value,
-              style: GoogleFonts.inter(
-                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey)),
-        ],
+        icon: const Icon(Icons.edit, size: 14),
+        label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(fontSize: 13)),
       ),
     );
   }
@@ -241,23 +199,19 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.surfaceColor, AppTheme.surfaceColor.withOpacity(0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          Text("Ngân sách dự kiến",
-              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textGrey)),
-          const SizedBox(height: 8),
+          Text("Ngân sách dự kiến mỗi ngày",
+              style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey)),
+          const SizedBox(height: 4),
           Text(
             budgetText,
             style: GoogleFonts.inter(
-                fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                fontSize: 26, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
           ),
         ],
       ),
@@ -271,45 +225,49 @@ class _ProfilePageState extends State<ProfilePage> {
               style: GoogleFonts.inter(color: AppTheme.textGrey, fontStyle: FontStyle.italic)));
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        alignment: WrapAlignment.center,
-        children: preferences.map((prefId) {
-          // 👇 SỬA ĐOẠN NÀY: Thêm .cast<TravelStyle>()
-          final style = availableStyles.cast<TravelStyle>().firstWhere(
-                (s) => s.id == prefId,
-                // Fallback khi chưa load xong constants
-                orElse: () => TravelStyle(
-                    id: prefId,
-                    label: prefId.isNotEmpty
-                        ? "${prefId[0].toUpperCase()}${prefId.substring(1)}"
-                        : prefId,
-                    icon: "",
-                    description: ""),
-              );
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
+      children: preferences.map((prefId) {
+        final style = availableStyles.cast<TravelStyle>().firstWhere(
+              (s) => s.id == prefId,
+              orElse: () => TravelStyle(id: prefId, label: prefId, icon: "", description: ""),
+            );
 
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.5)),
-            ),
-            child: Text(
-              style.label, // Hiển thị Label tiếng Việt
-              style: GoogleFonts.inter(fontSize: 13, color: Colors.white),
-            ),
-          );
-        }).toList(),
-      ),
+        return Chip(
+          label: Text(style.label),
+          backgroundColor: AppTheme.surfaceColor,
+          side: BorderSide(color: Colors.white12),
+          labelStyle: GoogleFonts.inter(fontSize: 12, color: Colors.white),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildBioSection(String bio) {
+    return Text(
+      bio,
+      textAlign: TextAlign.center,
+      style: GoogleFonts.inter(
+          fontSize: 14, color: AppTheme.textGrey, height: 1.4, fontStyle: FontStyle.italic),
+    );
+  }
+
+  Widget _buildSmallInfoChip(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppTheme.textGrey),
+        const SizedBox(width: 6),
+        Text(text, style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textGrey)),
+      ],
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Center(
+    return Align(
+      alignment: Alignment.centerLeft,
       child: Text(title,
           style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
     );
