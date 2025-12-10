@@ -12,7 +12,7 @@ import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/auth_text_field.dart';
 import '../../../onboarding/domain/entities/travel_constants.dart';
-import '../../../onboarding/presentation/bloc/preferences_bloc.dart'; // Import PreferencesBloc
+import '../../../onboarding/presentation/bloc/preferences_bloc.dart';
 
 class EditProfilePage extends StatefulWidget {
   final User user;
@@ -30,27 +30,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String _selectedGender = 'male';
   String _selectedAgeGroup = '15-25';
 
-  // Budget Variables
+  // Budget
   double _currentBudget = 0;
   bool _isBudgetSkipped = false;
 
-  // Preferences Variables
+  // Preferences
   final Set<String> _selectedPreferences = {};
 
   final List<String> _genders = ['male', 'female', 'other'];
 
-  // Dữ liệu từ API Constants
-  List<String> _ageGroups = ['15-25', '26-35', '36-50', '50+']; // Default fallback
+  // Data from API
+  List<String> _ageGroups = ['15-25', '26-35', '36-50', '50+'];
   List<TravelStyle> _travelStyles = [];
   BudgetConfig? _budgetConfig;
 
   @override
   void initState() {
     super.initState();
-    // 1. Gọi API lấy Constants để có danh sách sở thích & config budget
     context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
 
-    // 2. Fill User Data
+    // Init Data
     _nameController = TextEditingController(text: widget.user.fullname);
     _bioController = TextEditingController(text: widget.user.bio ?? "");
 
@@ -60,11 +59,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (widget.user.ageGroup != null) {
       _selectedAgeGroup = widget.user.ageGroup!;
     }
-
     if (widget.user.preferences != null) {
       _selectedPreferences.addAll(widget.user.preferences!);
     }
-
     if (widget.user.budget != null) {
       _currentBudget = widget.user.budget!;
       _isBudgetSkipped = false;
@@ -81,13 +78,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _onSubmit() {
+    // Generate URL nếu avatar trống để tránh lỗi 400 backend
+    String avatarUrl = widget.user.avatar ?? "";
+    if (avatarUrl.isEmpty) {
+      final name = _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : "User";
+      avatarUrl =
+          "https://ui-avatars.com/api/?name=${Uri.encodeComponent(name)}&background=random&size=256";
+    }
+
     context.read<AuthBloc>().add(AuthUpdateProfileSubmitted(
           fullname: _nameController.text.trim(),
           gender: _selectedGender,
           ageGroup: _selectedAgeGroup,
           bio: _bioController.text.trim(),
-          avatar: widget.user.avatar ?? "",
-          // Giữ nguyên avatar cũ
+          avatar: avatarUrl,
+          // Gửi URL hợp lệ
           budget: _isBudgetSkipped ? null : _currentBudget,
           preferences: _selectedPreferences.toList(),
         ));
@@ -139,16 +144,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
           title: Text("Chỉnh sửa Hồ sơ", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           centerTitle: true,
         ),
-        // Lắng nghe PreferencesBloc để lấy Constants
         body: BlocConsumer<PreferencesBloc, PreferencesState>(
           listener: (context, prefState) {
             if (prefState is PreferencesLoaded) {
               setState(() {
-                _ageGroups = prefState.constants.ageGroup;
+                _ageGroups = prefState
+                    .constants.ageGroup; // Check lại tên biến ageGroups hay ageGroup trong model
                 _travelStyles = prefState.constants.styles;
                 _budgetConfig = prefState.constants.budgetConfig;
-
-                // Nếu User chưa có budget, set default từ config
                 if (widget.user.budget == null) {
                   _currentBudget = _budgetConfig!.defaultValue;
                 }
@@ -156,78 +159,57 @@ class _EditProfilePageState extends State<EditProfilePage> {
             }
           },
           builder: (context, prefState) {
-            // Nếu đang load constants thì hiện loading nhẹ hoặc vẫn hiện UI cũ
-            // Ở đây ta cứ render UI, nếu chưa có data constants thì các widget bên dưới sẽ dùng fallback
-
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Avatar (Chỉ hiện ảnh, nút bấm giả lập upload)
+                  // 1. Avatar (Chỉ hiện)
                   Center(
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage:
-                              (widget.user.avatar != null && widget.user.avatar!.isNotEmpty)
-                                  ? NetworkImage(widget.user.avatar!)
-                                  : const AssetImage('assets/images/welcome.jpg') as ImageProvider,
-                          backgroundColor: AppTheme.surfaceColor,
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                                color: AppTheme.primaryColor, shape: BoxShape.circle),
-                            child: const Icon(Icons.camera_alt, size: 16, color: Colors.black),
-                          ),
-                        )
-                      ],
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          (widget.user.avatar != null && widget.user.avatar!.isNotEmpty)
+                              ? NetworkImage(widget.user.avatar!)
+                              : const AssetImage('assets/images/welcome.jpg') as ImageProvider,
+                      backgroundColor: AppTheme.surfaceColor,
                     ),
                   ),
                   const SizedBox(height: 30),
 
-                  // 2. Info Fields
+                  // 2. Form Fields
                   _buildLabel("Tên hiển thị"),
                   AuthTextField(controller: _nameController, hintText: "Tên của bạn"),
                   const SizedBox(height: 20),
 
+                  _buildLabel("Giới thiệu"),
+                  AuthTextField(
+                      controller: _bioController, hintText: "Viết gì đó về bạn..."),
+                  const SizedBox(height: 20),
+
+                  // Row: Age & Gender (Ít quan trọng hơn)
                   Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildLabel("Độ tuổi"),
-                            _buildDropdown(_ageGroups, _selectedAgeGroup,
-                                (val) => setState(() => _selectedAgeGroup = val!)),
-                          ],
-                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _buildLabel("Độ tuổi"),
+                          _buildDropdown(_ageGroups, _selectedAgeGroup,
+                              (val) => setState(() => _selectedAgeGroup = val!)),
+                        ]),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildLabel("Giới tính"),
-                            _buildDropdown(_genders, _selectedGender,
-                                (val) => setState(() => _selectedGender = val!)),
-                          ],
-                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          _buildLabel("Giới tính"),
+                          _buildDropdown(_genders, _selectedGender,
+                              (val) => setState(() => _selectedGender = val!)),
+                        ]),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-
-                  _buildLabel("Giới thiệu (Bio)"),
-                  AuthTextField(controller: _bioController, hintText: "Mô tả ngắn..."),
                   const SizedBox(height: 30),
 
-                  // 3. BUDGET SLIDER (Giống Onboarding)
+                  // 3. BUDGET (Quan trọng - Slider)
                   if (_budgetConfig != null) ...[
                     _buildLabel("Ngân sách dự kiến"),
                     const SizedBox(height: 10),
@@ -235,12 +217,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Text(
                         _isBudgetSkipped ? "Chưa xác định" : _formatCurrency(_currentBudget),
                         style: GoogleFonts.inter(
-                            fontSize: 32,
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: _isBudgetSkipped ? AppTheme.textGrey : AppTheme.primaryColor),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     IgnorePointer(
                       ignoring: _isBudgetSkipped,
                       child: Opacity(
@@ -267,9 +249,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   value: _currentBudget,
                                   min: _budgetConfig!.min,
                                   max: _budgetConfig!.max,
-                                  divisions: ((_budgetConfig!.max - _budgetConfig!.min) /
-                                          _budgetConfig!.step)
-                                      .round(),
+                                  divisions: 100,
+                                  // Hoặc tính divisions theo step
                                   onChanged: (value) => setState(() => _currentBudget = value),
                                 ),
                               ),
@@ -286,6 +267,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                       ),
                     ),
+                    // Toggle
                     GestureDetector(
                       onTap: () => setState(() => _isBudgetSkipped = !_isBudgetSkipped),
                       child: Row(
@@ -305,7 +287,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     const SizedBox(height: 30),
                   ],
 
-                  // 4. PREFERENCES (Chips)
+                  // 4. PREFERENCES (Quan trọng - Chips)
                   if (_travelStyles.isNotEmpty) ...[
                     _buildLabel("Sở thích du lịch"),
                     Wrap(
@@ -318,11 +300,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           selected: isSelected,
                           onSelected: (bool selected) {
                             setState(() {
-                              if (selected) {
-                                _selectedPreferences.add(pref.id);
-                              } else {
-                                _selectedPreferences.remove(pref.id);
-                              }
+                              selected
+                                  ? _selectedPreferences.add(pref.id)
+                                  : _selectedPreferences.remove(pref.id);
                             });
                           },
                           backgroundColor: AppTheme.surfaceColor,
@@ -340,14 +320,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     const SizedBox(height: 40),
                   ],
 
-                  // Save Button
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       return PrimaryButton(
-                        text: "Lưu thay đổi",
-                        isLoading: state is AuthLoading,
-                        onPressed: _onSubmit,
-                      );
+                          text: "Lưu thay đổi",
+                          isLoading: state is AuthLoading,
+                          onPressed: _onSubmit);
                     },
                   ),
                 ],
@@ -359,7 +337,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  // --- Helpers ---
+  // Helpers
   Widget _buildLabel(String text) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(text, style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textGrey)));
@@ -374,18 +352,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : null,
-          // Tránh lỗi value not in items
           hint: Text(value, style: const TextStyle(color: Colors.white)),
           isExpanded: true,
           dropdownColor: AppTheme.surfaceColor,
           style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
           icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textGrey),
           items: items
-              .map((String item) => DropdownMenuItem<String>(value: item, child: Text(item)))
+              .map((String item) =>
+                  DropdownMenuItem<String>(value: item, child: Text(_formatLabel(item))))
               .toList(),
           onChanged: onChanged,
         ),
       ),
     );
+  }
+
+  String _formatLabel(String s) {
+    if (s == 'male') return 'Nam';
+    if (s == 'female') return 'Nữ';
+    if (s == 'other') return 'Khác';
+    return s;
   }
 }
