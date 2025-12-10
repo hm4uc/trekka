@@ -33,7 +33,8 @@ class AuthGetProfileRequested extends AuthEvent {}
 class AuthUpdateProfileSubmitted extends AuthEvent {
   final String fullname;
   final String gender;
-  final String ageGroup;
+  final String job;
+  final int? age;
   final String bio;
   final String avatar;
   final double? budget;
@@ -43,7 +44,8 @@ class AuthUpdateProfileSubmitted extends AuthEvent {
   const AuthUpdateProfileSubmitted({
     required this.fullname,
     required this.gender,
-    required this.ageGroup,
+    required this.job,
+    required this.age,
     required this.bio,
     required this.avatar,
     this.budget,

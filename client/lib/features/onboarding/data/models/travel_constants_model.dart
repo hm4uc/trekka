@@ -5,6 +5,9 @@ class TravelConstantsModel extends TravelConstants {
     required super.styles,
     required super.budgetConfig,
     required super.ageGroup,
+    required super.jobs,
+    required super.ageMin,
+    required super.ageMax,
   });
 
   factory TravelConstantsModel.fromJson(Map<String, dynamic> json) {
@@ -14,6 +17,9 @@ class TravelConstantsModel extends TravelConstants {
           .toList(),
       budgetConfig: BudgetConfigModel.fromJson(json['budget_config']),
       ageGroup: List<String>.from(json['age_groups'] ?? []),
+      jobs: List<String>.from(json['jobs'] ?? []),
+      ageMin: (json['age_min'] as num?)?.toInt() ?? 15,
+      ageMax: (json['age_max'] as num?)?.toInt() ?? 150,
     );
   }
 }

@@ -9,6 +9,8 @@ class UserModel extends User {
     super.avatar,
     super.gender,
     super.ageGroup,
+    super.age,
+    super.job,
     super.bio,
     super.budget,
     super.preferences,
@@ -46,6 +48,8 @@ class UserModel extends User {
       avatar: userData['usr_avatar'],
       gender: userData['usr_gender'],
       ageGroup: userData['usr_age_group'],
+      age: userData['usr_age'] is int ? userData['usr_age'] : int.tryParse(userData['usr_age']?.toString() ?? ''),
+      job: userData['usr_job'],
       bio: userData['usr_bio'],
       // Map budget: API có thể trả về String hoặc Number
       budget: userData['usr_budget'] is String
@@ -64,6 +68,8 @@ class UserModel extends User {
       'usr_avatar': avatar,
       'usr_gender': gender,
       'usr_age_group': ageGroup,
+      'usr_age': age,
+      'usr_job': job,
       'usr_bio': bio,
       'usr_budget': budget,
       'usr_preferences': preferences,

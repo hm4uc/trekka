@@ -24,8 +24,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // ✅ CHỈ GỌI API CONSTANTS ĐỂ LẤY TỪ ĐIỂN MAP ID -> LABEL
-    // ❌ KHÔNG GỌI API PROFILE Ở ĐÂY NỮA (VÌ MAIN_PAGE ĐÃ GỌI)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     });
@@ -33,21 +31,29 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onRefresh() async {
     if (!mounted) return;
-    // Chỉ gọi lại khi người dùng chủ động kéo
     context.read<AuthBloc>().add(AuthGetProfileRequested());
     context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     await Future.delayed(const Duration(seconds: 1));
+  }
+
+  void _handleItemTap(String title) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Tính năng '$title' đang phát triển!",
+            style: const TextStyle(color: Colors.white)),
+        backgroundColor: AppTheme.surfaceColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
-        User? user;
-        if (authState is AuthSuccess) {
-          user = authState.user;
-        }
-
+        User? user = (authState is AuthSuccess) ? authState.user : null;
         if (user == null) {
           return const Scaffold(
             backgroundColor: AppTheme.backgroundColor,
@@ -60,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Text("Hồ sơ cá nhân", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            title: Text("Hồ sơ", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
             centerTitle: true,
             actions: [
               IconButton(
@@ -75,53 +81,81 @@ class _ProfilePageState extends State<ProfilePage> {
             backgroundColor: AppTheme.surfaceColor,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
                 children: [
-                  // 1. Header (Avatar, Name, Email)
+                  // 1. THANH TIẾN ĐỘ HOÀN THÀNH (Đưa lên đầu)
+                  _buildCompletionProgressBar(85),
+                  const SizedBox(height: 24),
+
+                  // 2. HEADER
                   _buildHeader(user),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
+                  // 3. NÚT CHỈNH SỬA
                   _buildEditButton(context, user),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24),
 
-                  // 2. IMPORTANT INFO: Ngân sách & Sở thích (Đưa lên đầu)
-                  _buildSectionTitle("Thông tin du lịch"),
-                  const SizedBox(height: 16),
-                  _buildBudgetCard(user.budget),
-                  const SizedBox(height: 16),
-
-                  // Lấy danh sách style từ Bloc để map ID -> Label
-                  BlocBuilder<PreferencesBloc, PreferencesState>(
-                    builder: (context, prefState) {
-                      List<TravelStyle> availableStyles = [];
-                      if (prefState is PreferencesLoaded) {
-                        availableStyles = prefState.constants.styles;
-                      }
-                      return _buildPreferencesWrap(user!.preferences, availableStyles);
-                    },
-                  ),
-                  const SizedBox(height: 30),
-
-                  // 3. SECONDARY INFO: Bio, Gender, Age
-                  if (user.bio != null && user.bio!.isNotEmpty) ...[
-                    _buildBioSection(user.bio!),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Row thông tin phụ (Giới tính, Tuổi)
+                  // 4. THỐNG KÊ (Stats)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSmallInfoChip(Icons.person_outline, _formatGender(user.gender)),
+                      Expanded(child: _buildStatCard("42", "Điểm đã đến")),
                       const SizedBox(width: 12),
-                      Container(width: 1, height: 20, color: Colors.white24),
-                      const SizedBox(width: 12),
-                      _buildSmallInfoChip(Icons.cake_outlined, user.ageGroup ?? "Chưa chọn tuổi"),
+                      Expanded(child: _buildStatCard("15", "Sự kiện tham gia")),
                     ],
                   ),
+                  const SizedBox(height: 30),
 
-                  const SizedBox(height: 40),
+                  // 5. NGÂN SÁCH (Hiển thị số to)
+                  _buildSectionTitle("Thông tin du lịch"),
+                  const SizedBox(height: 12),
+                  _buildBudgetDisplay(user.budget),
+
+                  const SizedBox(height: 24),
+
+                  // 6. PHONG CÁCH DU LỊCH
+                  _buildSectionTitle("Phong cách & Sở thích"),
+                  const SizedBox(height: 12),
+                  BlocBuilder<PreferencesBloc, PreferencesState>(
+                    builder: (context, prefState) {
+                      List<TravelStyle> styles =
+                          (prefState is PreferencesLoaded) ? prefState.constants.styles : [];
+                      return _buildPreferencesWrap(user.preferences, styles);
+                    },
+                  ),
+
+                  // 7. BIO
+                  if (user.bio != null && user.bio!.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _buildSectionTitle("Giới thiệu"),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        user.bio!,
+                        style: GoogleFonts.inter(fontSize: 14, color: Colors.white70, height: 1.5),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 30),
+
+                  // 8. MENU
+                  _buildMenuItem(Icons.calendar_today, "Lịch trình của tôi",
+                      () => _handleItemTap("Lịch trình")),
+                  _buildMenuItem(
+                      Icons.favorite, "Địa điểm yêu thích", () => _handleItemTap("Yêu thích")),
+                  _buildMenuItem(
+                      Icons.location_on, "Địa điểm đã đi", () => _handleItemTap("Check-in")),
+                  _buildMenuItem(
+                      Icons.celebration, "Sự kiện đã tham gia", () => _handleItemTap("Sự kiện")),
+
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -131,47 +165,44 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- WIDGETS ---
+  // --- Sub-widgets ---
 
   Widget _buildHeader(User user) {
-    // Logic fallback Avatar
-    final avatarUrl = (user.avatar != null && user.avatar!.isNotEmpty)
+    final avatarUrl = (user.avatar != null && user.avatar!.startsWith("http"))
         ? user.avatar!
-        : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.fullname)}&background=random&size=256";
+        : "https://ui-avatars.com/api/?name=${Uri.encodeComponent(user.fullname)}&background=F3D6C6&color=333&size=256";
+
+    String subtitle = "";
+    if (user.age != null && user.age! > 0) subtitle += "${user.age} tuổi";
+    if (user.job != null && user.job!.isNotEmpty) {
+      if (subtitle.isNotEmpty) subtitle += "  •  "; // Dùng dấu chấm ngăn cách đẹp hơn
+      subtitle += "${user.job![0].toUpperCase()}${user.job!.substring(1)}";
+    }
+    if (subtitle.isEmpty) subtitle = user.email;
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.5), width: 2),
-          ),
-          child: CircleAvatar(
-            radius: 55,
-            backgroundImage: NetworkImage(avatarUrl),
-            backgroundColor: AppTheme.surfaceColor,
-          ),
+        CircleAvatar(
+          radius: 55,
+          backgroundColor: const Color(0xFFF3D6C6),
+          backgroundImage: NetworkImage(avatarUrl),
         ),
         const SizedBox(height: 16),
         Text(
-          user.fullname.isNotEmpty ? user.fullname : "Trekker",
+          user.fullname,
           style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 4),
-        Text(
-          user.email,
-          style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textGrey),
-        ),
+        const SizedBox(height: 6),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 14, color: Colors.white70)),
       ],
     );
   }
 
   Widget _buildEditButton(BuildContext context, User user) {
     return SizedBox(
-      height: 36,
-      child: OutlinedButton.icon(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton.icon(
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
@@ -180,18 +211,85 @@ class _ProfilePageState extends State<ProfilePage> {
             context.read<AuthBloc>().add(AuthGetProfileRequested());
           }
         },
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.white24),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          foregroundColor: Colors.white,
+        icon: const Icon(Icons.edit, size: 16, color: Colors.black),
+        label: const Text("Chỉnh sửa hồ sơ",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 15)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 0,
         ),
-        icon: const Icon(Icons.edit, size: 14),
-        label: const Text("Chỉnh sửa hồ sơ", style: TextStyle(fontSize: 13)),
       ),
     );
   }
 
-  Widget _buildBudgetCard(double? budget) {
+  Widget _buildStatCard(String value, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Text(value,
+              style: GoogleFonts.inter(
+                  fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text(label, style: GoogleFonts.inter(fontSize: 13, color: Colors.white60)),
+        ],
+      ),
+    );
+  }
+
+  // Mới: Progress Bar đẹp
+  Widget _buildCompletionProgressBar(int percent) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF1E3E36), const Color(0xFF1E3E36).withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Hoàn thành hồ sơ",
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+              Text("$percent%",
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: percent / 100,
+              backgroundColor: Colors.black26,
+              color: AppTheme.primaryColor,
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text("Hoàn thiện hồ sơ để nhận gợi ý chính xác hơn từ Trekka AI.",
+              style: GoogleFonts.inter(
+                  fontSize: 11, color: Colors.white60, fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+
+  // Mới: Hiển thị Ngân sách dạng số
+  Widget _buildBudgetDisplay(double? budget) {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
     final budgetText = budget != null ? currencyFormat.format(budget) : "Chưa thiết lập";
 
@@ -201,82 +299,85 @@ class _ProfilePageState extends State<ProfilePage> {
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Ngân sách dự kiến mỗi ngày",
-              style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey)),
-          const SizedBox(height: 4),
+          Text("Ngân sách dự kiến mỗi chuyến đi",
+              style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textGrey)),
+          const SizedBox(height: 8),
           Text(
             budgetText,
             style: GoogleFonts.inter(
-                fontSize: 26, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
+                fontSize: 28, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPreferencesWrap(List<String>? preferences, List<TravelStyle> availableStyles) {
+  Widget _buildPreferencesWrap(List<String>? preferences, List<TravelStyle> styles) {
     if (preferences == null || preferences.isEmpty) {
-      return Center(
-          child: Text("Chưa chọn sở thích",
-              style: GoogleFonts.inter(color: AppTheme.textGrey, fontStyle: FontStyle.italic)));
+      return const Align(
+        alignment: Alignment.centerLeft,
+        child: Text("Chưa chọn sở thích",
+            style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic)),
+      );
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: preferences.map((prefId) {
-        final style = availableStyles.cast<TravelStyle>().firstWhere(
-              (s) => s.id == prefId,
-              orElse: () => TravelStyle(id: prefId, label: prefId, icon: "", description: ""),
-            );
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: preferences.map((pid) {
+          final label = styles
+              .cast<TravelStyle>()
+              .firstWhere((s) => s.id == pid,
+                  orElse: () => TravelStyle(id: pid, label: pid, icon: "", description: ""))
+              .label;
 
-        return Chip(
-          label: Text(style.label),
-          backgroundColor: AppTheme.surfaceColor,
-          side: BorderSide(color: Colors.white12),
-          labelStyle: GoogleFonts.inter(fontSize: 12, color: Colors.white),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildBioSection(String bio) {
-    return Text(
-      bio,
-      textAlign: TextAlign.center,
-      style: GoogleFonts.inter(
-          fontSize: 14, color: AppTheme.textGrey, height: 1.4, fontStyle: FontStyle.italic),
-    );
-  }
-
-  Widget _buildSmallInfoChip(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppTheme.textGrey),
-        const SizedBox(width: 6),
-        Text(text, style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textGrey)),
-      ],
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E3E36),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              "#$label",
+              style: GoogleFonts.inter(
+                  color: AppTheme.primaryColor, fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
     return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(title,
-          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-    );
+        alignment: Alignment.centerLeft,
+        child: Text(title,
+            style:
+                GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)));
   }
 
-  String _formatGender(String? gender) {
-    if (gender == 'male') return "Nam";
-    if (gender == 'female') return "Nữ";
-    if (gender == 'other') return "Khác";
-    return "Chưa chọn";
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12), // Dùng Padding thay vì Container margin
+      child: Material(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.hardEdge, // 👇 QUAN TRỌNG: Cắt bỏ phần loang lổ ra ngoài bo góc
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Icon(icon, color: Colors.white70),
+          title: Text(title, style: GoogleFonts.inter(color: Colors.white, fontSize: 15)),
+          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.white24),
+        ),
+      ),
+    );
   }
 }
