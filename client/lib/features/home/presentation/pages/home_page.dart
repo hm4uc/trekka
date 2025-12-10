@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_themes.dart';
-import '../widgets/home_dummy_data.dart'; // Import file data vừa tạo
+import '../widgets/home_dummy_data.dart';
+import '../widgets/weather_location_widget.dart';
+import '../widgets/events_near_you_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,27 +24,41 @@ class _HomePageState extends State<HomePage> {
           // 1. APP BAR & SEARCH
           _buildSliverAppBar(context),
 
-          // 2. HERO SLIDER (AI SUGGESTION)
+          // 2. WEATHER & LOCATION
+          SliverToBoxAdapter(
+            child: WeatherLocationWidget(
+              location: "Hà Nội, Việt Nam",
+              temperature: "24°C",
+              weatherCondition: "Nắng đẹp",
+              weatherIcon: Icons.wb_sunny,
+            ),
+          ),
+
+          // 3. HERO SLIDER (AI SUGGESTION)
           _buildSectionTitle("Dành riêng cho bạn ✦"),
           _buildHeroSlider(),
 
-          // 3. YOUTH CATEGORIES (CAFE, DATING...)
+          // 4. YOUTH CATEGORIES (CAFE, DATING...)
           _buildSectionTitle("Hôm nay đi đâu?"),
           _buildQuickCategories(),
 
-          // 4. TRENDING
+          // 5. EVENTS NEAR YOU
+          _buildSectionTitle("Sự kiện gần bạn 🎉"),
+          _buildEventsSection(),
+
+          // 6. TRENDING
           _buildSectionTitle("Xu hướng tuần này 🔥"),
           _buildHorizontalList(HomeMockData.trending, isLarge: false),
 
-          // 5. BUDGET CHALLENGE
+          // 7. BUDGET CHALLENGE
           _buildSectionTitle("Thử thách ngân sách 💸"),
           _buildBudgetGrid(),
 
-          // 6. FOODTOUR
+          // 8. FOODTOUR
           _buildSectionTitle("Foodtour không lối về 🍜"),
-          _buildHorizontalList(HomeMockData.food, isCircle: true), // Ảnh tròn cho món ăn
+          _buildHorizontalList(HomeMockData.food, isCircle: true),
 
-          // 7. SHORTS (VIDEO)
+          // 9. SHORTS (VIDEO)
           _buildSectionTitle("Trekka Shorts 🎬"),
           _buildShortsList(),
 
@@ -99,31 +115,10 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(width: 8),
       ],
 
-      // 2. BOTTOM: SEARCH BAR
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: Container(
-          height: 60,
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          alignment: Alignment.center,
-          child: Container(
-            height: 46,
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white10),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.search, color: AppTheme.primaryColor),
-                const SizedBox(width: 12),
-                Text("Tìm địa điểm, sự kiện...",
-                    style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 14)),
-              ],
-            ),
-          ),
-        ),
+      // 2. BOTTOM: WEATHER & LOCATION WIDGET
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(90),
+        child: SizedBox.shrink(), // Weather widget will be in the body
       ),
     );
   }
@@ -304,6 +299,42 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // Events Near You Section
+  Widget _buildEventsSection() {
+    final mockEvents = [
+      Event(
+        title: "Food Festival Hà Nội 2025",
+        date: "15-17 Dec",
+        location: "Hoàng Hoa Thám, Ba Đình",
+        imageUrl: "assets/images/welcome.jpg",
+        category: "Ẩm thực",
+      ),
+      Event(
+        title: "Chợ đêm phố cổ cuối tuần",
+        date: "Thứ 7-CN hàng tuần",
+        location: "Phố cổ Hà Nội",
+        imageUrl: "assets/images/welcome.jpg",
+        category: "Văn hóa",
+      ),
+      Event(
+        title: "Live Music tại Acoustic Cafe",
+        date: "Hôm nay, 20:00",
+        location: "Tây Hồ, Hà Nội",
+        imageUrl: "assets/images/welcome.jpg",
+        category: "Âm nhạc",
+      ),
+    ];
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      sliver: SliverList(
+        delegate: SliverChildListDelegate([
+          EventsNearYouWidget(events: mockEvents),
+        ]),
       ),
     );
   }

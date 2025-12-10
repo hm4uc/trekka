@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_themes.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart'; // Import AuthBloc
-import '../../../auth/presentation/bloc/auth_event.dart'; // Import AuthEvent
+import '../../../../injection_container.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/pages/profile_page.dart';
+import '../../../destinations/presentation/bloc/destination_bloc.dart';
+import '../../../discovery/presentation/pages/explore_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../trips/presentation/pages/favorites_page.dart';
+import '../../../trips/presentation/pages/journey_page.dart';
 import '../cubit/main_cubit.dart';
 import '../widgets/trekka_bottom_bar.dart';
 
-// Placeholder cho các trang chưa có
-class PlaceholderPage extends StatelessWidget {
-  final String title;
-  const PlaceholderPage(this.title, {super.key});
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppTheme.backgroundColor,
-    body: Center(child: Text(title, style: const TextStyle(color: Colors.white))),
-  );
-}
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -43,9 +37,7 @@ class _MainViewState extends State<MainView> {
   @override
   void initState() {
     super.initState();
-    // 👇 GỌI API PROFILE NGAY KHI VÀO MÀN HÌNH CHÍNH
-    // Việc này giúp dữ liệu User được cập nhật ngầm ngay lập tức
-    // dù người dùng đang ở Tab Home.
+    // Fetch user profile when entering main screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthBloc>().add(AuthGetProfileRequested());
     });
@@ -53,12 +45,19 @@ class _MainViewState extends State<MainView> {
 
   @override
   Widget build(BuildContext context) {
+    // Wrap destination-dependent pages with BlocProvider
     final List<Widget> pages = [
-      const HomePage(),      // Tab 0
-      const PlaceholderPage("Khám phá"), // Tab 1
-      const PlaceholderPage("Hành trình"), // Tab 2
-      const PlaceholderPage("Yêu thích"), // Tab 3
-      const ProfilePage(),   // Tab 4
+      const HomePage(), // Tab 0
+      BlocProvider(
+        create: (_) => sl<DestinationBloc>(),
+        child: const ExplorePage(),
+      ), // Tab 1
+      const JourneyPage(), // Tab 2
+      BlocProvider(
+        create: (_) => sl<DestinationBloc>(),
+        child: const FavoritesPage(),
+      ), // Tab 3
+      const ProfilePage(), // Tab 4
     ];
 
     return BlocBuilder<MainCubit, int>(

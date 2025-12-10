@@ -18,6 +18,14 @@ import 'features/onboarding/domain/repositories/preferences_repository.dart';
 import 'features/onboarding/domain/usecases/get_travel_constants.dart';
 import 'features/onboarding/domain/usecases/update_travel_settings.dart';
 import 'features/onboarding/presentation/bloc/preferences_bloc.dart';
+import 'features/destinations/data/datasources/destination_remote_data_source.dart';
+import 'features/destinations/data/repositories/destination_repository_impl.dart';
+import 'features/destinations/domain/repositories/destination_repository.dart';
+import 'features/destinations/domain/usecases/get_categories.dart';
+import 'features/destinations/domain/usecases/get_destinations.dart';
+import 'features/destinations/domain/usecases/like_destination.dart';
+import 'features/destinations/domain/usecases/save_destination.dart';
+import 'features/destinations/presentation/bloc/destination_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -75,6 +83,31 @@ Future<void> init() async {
       apiClient: sl(),
       authLocalDataSource: sl(),
     ),
+  );
+
+  //! Features - Destinations
+  // Bloc
+  sl.registerFactory(() => DestinationBloc(
+        getDestinations: sl(),
+        getCategories: sl(),
+        likeDestination: sl(),
+        saveDestination: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetDestinations(sl()));
+  sl.registerLazySingleton(() => GetCategories(sl()));
+  sl.registerLazySingleton(() => LikeDestination(sl()));
+  sl.registerLazySingleton(() => SaveDestination(sl()));
+
+  // Repository
+  sl.registerLazySingleton<DestinationRepository>(
+    () => DestinationRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<DestinationRemoteDataSource>(
+    () => DestinationRemoteDataSourceImpl(sl()),
   );
 
   //! Core
