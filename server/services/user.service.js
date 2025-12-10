@@ -1,15 +1,15 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import {Op} from 'sequelize';
+import { Op } from 'sequelize';
 import Profile from '../models/profile.model.js';
 import TokenBlacklist from '../models/tokenBlacklist.model.js';
-import {TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS, AGE_MIN, AGE_MAX, JOBS} from '../config/travelConstants.js';
+import { TRAVEL_STYLES, BUDGET_CONFIG, AGE_GROUPS, AGE_MIN, AGE_MAX, JOBS, getAgeGroupFromAge } from '../config/travelConstants.js';
 
 async function register(userData) {
-    const {usr_fullname, usr_email, password, usr_gender, usr_age_group} = userData;
+    const { usr_fullname, usr_email, password, usr_gender, usr_age_group } = userData;
 
     try {
-        const existingProfile = await Profile.findOne({where: {usr_email}});
+        const existingProfile = await Profile.findOne({ where: { usr_email } });
         if (existingProfile) {
             const error = new Error('Email already exists');
             error.statusCode = 409;
@@ -31,9 +31,9 @@ async function register(userData) {
 
         console.log('🎫 Generating JWT token...');
         const token = jwt.sign(
-            {profileId: profile.id, usr_email: profile.usr_email},
+            { profileId: profile.id, usr_email: profile.usr_email },
             process.env.JWT_SECRET || 'fallback_secret',
-            {expiresIn: process.env.JWT_EXPIRES_IN || '7d'}
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
         console.log('✅ Profile registered successfully');
@@ -61,20 +61,12 @@ async function updateProfile(profileId, updateData) {
         console.log('🔄 Updating profile...');
 
         // Cập nhật các trường được phép
-        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age_group', 'usr_age', 'usr_job', 'usr_avatar', 'usr_bio', 'usr_budget', 'usr_preferences'];
+        const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age', 'usr_job', 'usr_avatar', 'usr_bio', 'usr_budget', 'usr_preferences'];
         allowedFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 profile[field] = updateData[field];
             }
         });
-        // Validate các trường đặc biệt
-        if (updateData.usr_age_group !== undefined) {
-            if (!AGE_GROUPS.includes(updateData.usr_age_group)) {
-                const error = new Error(`Invalid age group. Valid groups: ${AGE_GROUPS.join(', ')}`);
-                error.statusCode = 400;
-                throw error;
-            }
-        }
         if (updateData.usr_preferences !== undefined) {
             const validStyleIds = TRAVEL_STYLES.map(style => style.id);
             const invalidPreferences = updateData.usr_preferences.filter(pref => !validStyleIds.includes(pref));
@@ -91,13 +83,15 @@ async function updateProfile(profileId, updateData) {
                 throw error;
             }
         }
-        // Validation cho usr_age
+        // Nếu có cập nhật tuổi, thì tự động tính toán age_group
         if (updateData.usr_age !== undefined) {
             if (updateData.usr_age < AGE_MIN || updateData.usr_age > AGE_MAX) {
                 const error = new Error(`Age must be between ${AGE_MIN} and ${AGE_MAX}`);
                 error.statusCode = 400;
                 throw error;
             }
+            // Tự động tính toán age_group từ tuổi
+            profile.usr_age_group = getAgeGroupFromAge(updateData.usr_age);
         }
         // Validation cho usr_job
         if (updateData.usr_job !== undefined) {
@@ -120,7 +114,7 @@ async function updateProfile(profileId, updateData) {
     }
 }
 
-async function updateTravelSettings(profileId, {usr_age_group, usr_preferences, usr_budget}) {
+async function updateTravelSettings(profileId, { usr_age_group, usr_preferences, usr_budget }) {
     try {
         console.log('🔍 Finding profile for travel settings update...');
         const profile = await Profile.findByPk(profileId);
@@ -210,10 +204,10 @@ async function deleteProfile(profileId) {
 }
 
 async function login(loginData) {
-    const {usr_email, password} = loginData;
+    const { usr_email, password } = loginData;
 
     try {
-        const profile = await Profile.findOne({where: {usr_email}});
+        const profile = await Profile.findOne({ where: { usr_email } });
         if (!profile) {
             const error = new Error('Invalid email or password');
             error.statusCode = 401;
@@ -230,9 +224,9 @@ async function login(loginData) {
 
         console.log('🎫 Generating JWT token for login...');
         const token = jwt.sign(
-            {profileId: profile.id, usr_email: profile.usr_email},
+            { profileId: profile.id, usr_email: profile.usr_email },
             process.env.JWT_SECRET || 'fallback_secret',
-            {expiresIn: process.env.JWT_EXPIRES_IN || '7d'}
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
         console.log('✅ Profile logged in successfully');
@@ -248,7 +242,7 @@ async function login(loginData) {
 
 async function getProfileById(profileId) {
     const profile = await Profile.findByPk(profileId, {
-        attributes: {exclude: ['usr_password_hash', 'reset_password_token', 'reset_password_expires']}
+        attributes: { exclude: ['usr_password_hash', 'reset_password_token', 'reset_password_expires'] }
     });
 
     if (!profile) {
@@ -378,7 +372,7 @@ async function cleanupExpiredTokens() {
 // Helper function để loại bỏ password hash khi trả về
 function sanitizeProfile(profile) {
     const p = profile.toJSON ? profile.toJSON() : profile;
-    const {usr_password_hash, reset_password_token, reset_password_expires, ...rest} = p;
+    const { usr_password_hash, reset_password_token, reset_password_expires, ...rest } = p;
     return rest;
 }
 

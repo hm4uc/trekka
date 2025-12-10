@@ -19,7 +19,8 @@ async function updateProfile(req, res, next) {
         const {
             usr_fullname,
             usr_gender,
-            usr_age_group,
+            usr_age,
+            usr_job,
             usr_avatar,
             usr_bio,
             usr_budget,
@@ -29,7 +30,8 @@ async function updateProfile(req, res, next) {
         const updatedProfile = await userService.updateProfile(req.user.profileId, {
             usr_fullname,
             usr_gender,
-            usr_age_group,
+            usr_age,
+            usr_job,
             usr_avatar,
             usr_bio,
             usr_budget,

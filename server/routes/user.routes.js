@@ -70,9 +70,6 @@
  *           type: string
  *           enum: [male, female, other]
  *           example: "male"
- *         usr_age_group:
- *           type: string
- *           example: "15-25"
  *         usr_age:
  *           type: integer
  *           example: 23
@@ -247,8 +244,6 @@ const updateProfileValidation = [
         .withMessage('Full name must be between 1 and 100 characters'),
     body('usr_gender').optional().isIn(['male', 'female', 'other'])
         .withMessage('Gender must be male, female or other'),
-    body('usr_age_group').optional().isIn(AGE_GROUPS)
-        .withMessage('Invalid age group'),
     body('usr_age').optional().isInt({min: AGE_MIN, max: AGE_MAX})  // <-- VALIDATION MỚI
         .withMessage(`Age must be between ${AGE_MIN} and ${AGE_MAX}`),
     body('usr_job').optional().isIn(JOBS)  // <-- VALIDATION MỚI
