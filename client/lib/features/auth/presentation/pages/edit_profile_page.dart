@@ -25,10 +25,12 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _bioController;
-  late TextEditingController _ageController;
+
+  // Thay _ageController bằng biến int để lưu giá trị chọn
+  int? _selectedAge;
 
   String _selectedGender = 'other';
-  String? _selectedJob; // Giữ null nếu chưa chọn
+  String? _selectedJob;
   double _currentBudget = 0;
   bool _isBudgetSkipped = false;
   final Set<String> _selectedPreferences = {};
@@ -36,6 +38,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   List<String> _jobs = [];
   List<TravelStyle> _travelStyles = [];
   BudgetConfig? _budgetConfig;
+  int _ageMin = 15;
+  int _ageMax = 100;
 
   @override
   void initState() {
@@ -47,7 +51,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _initUserData() {
     _nameController = TextEditingController(text: widget.user.fullname);
     _bioController = TextEditingController(text: widget.user.bio ?? "");
-    _ageController = TextEditingController(text: widget.user.age?.toString() ?? "");
+
+    // Init Age
+    _selectedAge = widget.user.age; // int?
+
     _selectedGender = widget.user.gender ?? 'other';
     _selectedJob = widget.user.job;
 
@@ -62,6 +69,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
   void _onSubmit() {
     String avatarUrl = widget.user.avatar ?? "";
     if (avatarUrl.isEmpty || !avatarUrl.startsWith("http")) {
@@ -70,21 +84,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     context.read<AuthBloc>().add(AuthUpdateProfileSubmitted(
-        fullname: _nameController.text.trim(),
-        gender: _selectedGender,
-        age: int.tryParse(_ageController.text),
-        job: _selectedJob ?? "",
-        bio: _bioController.text.trim(),
-        avatar: avatarUrl,
-        budget: _isBudgetSkipped ? null : _currentBudget,
-        preferences: _selectedPreferences.toList()));
+          fullname: _nameController.text.trim(),
+          gender: _selectedGender,
+          age: _selectedAge,
+          // Gửi int trực tiếp
+          job: _selectedJob ?? "",
+          bio: _bioController.text.trim(),
+          avatar: avatarUrl,
+          budget: _isBudgetSkipped ? null : _currentBudget,
+          preferences: _selectedPreferences.toList(),
+        ));
   }
 
-  // Logic tăng giảm budget
   void _updateBudget(bool increase) {
     if (_budgetConfig == null || _isBudgetSkipped) return;
-
-    final step = _budgetConfig!.step; // API trả về 100000
+    final step = _budgetConfig!.step;
     final min = _budgetConfig!.min;
     final max = _budgetConfig!.max;
 
@@ -97,8 +111,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
   }
 
-  // Hàm hiện BottomSheet chọn Job
+  // --- SHOW PICKERS (Bottom Sheet) ---
+
+  // Picker chọn Nghề nghiệp
   void _showJobPicker() {
+    _showSelectionSheet(
+      title: "Chọn nghề nghiệp",
+      items: _jobs,
+      selectedItem: _selectedJob,
+      itemLabelBuilder: (item) => "${item[0].toUpperCase()}${item.substring(1)}",
+      onSelected: (val) => setState(() => _selectedJob = val),
+    );
+  }
+
+  // Picker chọn Tuổi (Tạo list số từ min->max)
+  void _showAgePicker() {
+    final List<int> ages = List.generate(_ageMax - _ageMin + 1, (index) => _ageMin + index);
+
+    _showSelectionSheet<int>(
+      title: "Chọn độ tuổi",
+      items: ages,
+      selectedItem: _selectedAge,
+      itemLabelBuilder: (item) => "$item tuổi",
+      onSelected: (val) => setState(() => _selectedAge = val),
+    );
+  }
+
+  // Hàm hiển thị BottomSheet chung (Clean Code)
+  void _showSelectionSheet<T>({
+    required String title,
+    required List<T> items,
+    required T? selectedItem,
+    required String Function(T) itemLabelBuilder,
+    required Function(T) onSelected,
+  }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.backgroundColor,
@@ -107,31 +153,46 @@ class _EditProfilePageState extends State<EditProfilePage> {
       isScrollControlled: true,
       builder: (context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.5,
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             children: [
-              Text("Chọn nghề nghiệp",
+              Text(title,
                   style: GoogleFonts.inter(
                       fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
-                  itemCount: _jobs.length,
+                  itemCount: items.length,
                   itemBuilder: (context, index) {
-                    final job = _jobs[index];
-                    final label = "${job[0].toUpperCase()}${job.substring(1)}";
-                    final isSelected = _selectedJob == job;
-                    return ListTile(
-                      title: Text(label,
-                          style:
-                              TextStyle(color: isSelected ? AppTheme.primaryColor : Colors.white)),
-                      trailing:
-                          isSelected ? const Icon(Icons.check, color: AppTheme.primaryColor) : null,
-                      onTap: () {
-                        setState(() => _selectedJob = job);
-                        Navigator.pop(context);
-                      },
+                    final item = items[index];
+                    final label = itemLabelBuilder(item);
+                    final isSelected = selectedItem == item;
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          onSelected(item);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  bottom: BorderSide(color: Colors.white.withOpacity(0.05)))),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(label,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      color: isSelected ? AppTheme.primaryColor : Colors.white)),
+                              if (isSelected)
+                                const Icon(Icons.check, color: AppTheme.primaryColor, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -168,6 +229,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _travelStyles = state.constants.styles;
                 _budgetConfig = state.constants.budgetConfig;
                 _jobs = state.constants.jobs;
+                _ageMin = state.constants.ageMin;
+                _ageMax = state.constants.ageMax;
                 if (widget.user.budget == null) _currentBudget = _budgetConfig!.defaultValue;
               });
             }
@@ -185,56 +248,54 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildCustomTextField(_nameController, "Tên của bạn"),
                   const SizedBox(height: 20),
 
+                  // SELECTOR: Tuổi & Nghề nghiệp
                   Row(
                     children: [
+                      // Tuổi (Dạng Selector)
                       Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel("Tuổi"),
-                        _buildCustomTextField(_ageController, "Nhập tuổi", isNumber: true),
-                      ])),
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel("Tuổi"),
+                            _buildSelectorField(
+                              text: _selectedAge != null ? "$_selectedAge" : "Chọn",
+                              onTap: _showAgePicker,
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(width: 16),
+                      // Nghề nghiệp (Dạng Selector)
                       Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildLabel("Giới tính"),
-                        _buildDropdown(['male', 'female', 'other'], _selectedGender,
-                            (v) => setState(() => _selectedGender = v!),
-                            isGender: true),
-                      ])),
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel("Nghề nghiệp"),
+                            _buildSelectorField(
+                              text: _selectedJob != null
+                                  ? "${_selectedJob![0].toUpperCase()}${_selectedJob!.substring(1)}"
+                                  : "Chọn nghề",
+                              onTap: _showJobPicker,
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
 
-                  // JOB PICKER MỚI (Thân thiện hơn)
-                  _buildLabel("Nghề nghiệp"),
-                  GestureDetector(
-                    onTap: _showJobPicker,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                          color: AppTheme.surfaceColor,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white24)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _selectedJob != null
-                                ? "${_selectedJob![0].toUpperCase()}${_selectedJob!.substring(1)}"
-                                : "Chọn nghề nghiệp",
-                            style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
-                          ),
-                          const Icon(Icons.arrow_drop_down, color: Colors.white54),
-                        ],
-                      ),
-                    ),
-                  ),
-
+                  // GENDER SELECTION (Giao diện mới: Cards)
+                  _buildLabel("Giới tính"),
+                  _buildGenderSelector(),
                   const SizedBox(height: 20),
+
                   _buildLabel("Giới thiệu (Bio)"),
                   _buildCustomTextField(_bioController, "Viết gì đó về bạn...", maxLines: 3),
                   const SizedBox(height: 30),
 
-                  // BUDGET VỚI NÚT +/-
+                  // BUDGET VỚI NÚT +/- (Đã fix UI)
                   if (_budgetConfig != null) _buildBudgetControl(),
 
                   const SizedBox(height: 20),
@@ -259,6 +320,84 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // --- Components ---
 
+  // Widget chọn (giống Dropdown nhưng đẹp hơn, dùng cho Age & Job)
+  Widget _buildSelectorField({required String text, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: BorderRadius.circular(16), // Bo góc mềm mại hơn (24 -> 16)
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(text, style: GoogleFonts.inter(fontSize: 15, color: Colors.white)),
+            const Icon(Icons.keyboard_arrow_down, color: Colors.white54, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget chọn giới tính mới (3 Cards ngang)
+  Widget _buildGenderSelector() {
+    return Row(
+      children: [
+        _buildGenderCard('male', 'Nam', Icons.male),
+        const SizedBox(width: 12),
+        _buildGenderCard('female', 'Nữ', Icons.female),
+        const SizedBox(width: 12),
+        _buildGenderCard('other', 'Khác', Icons.transgender),
+      ],
+    );
+  }
+
+  Widget _buildGenderCard(String value, String label, IconData icon) {
+    final isSelected = _selectedGender == value;
+    return Expanded(
+      child: Material(
+        color: isSelected ? AppTheme.primaryColor : AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => setState(() => _selectedGender = value),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? AppTheme.primaryColor : Colors.white12,
+                width: 1,
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? AppTheme.backgroundColor : Colors.white54,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? AppTheme.backgroundColor : Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBudgetControl() {
     return Column(
       children: [
@@ -282,9 +421,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             opacity: _isBudgetSkipped ? 0.4 : 1.0,
             child: Row(
               children: [
-                // Nút (-) đã sửa lỗi tràn viền
+                // Nút (-)
                 _buildBudgetBtn(Icons.remove, () => _updateBudget(false)),
-
                 // Slider
                 Expanded(
                   child: SliderTheme(
@@ -299,21 +437,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       value: _currentBudget,
                       min: _budgetConfig!.min,
                       max: _budgetConfig!.max,
-                      divisions: ((_budgetConfig!.max - _budgetConfig!.min) / _budgetConfig!.step)
-                          .round(),
+                      divisions:
+                          ((_budgetConfig!.max - _budgetConfig!.min) / _budgetConfig!.step).round(),
                       onChanged: (v) => setState(() => _currentBudget = v),
                     ),
                   ),
                 ),
-
-                // Nút (+) đã sửa lỗi tràn viền
+                // Nút (+)
                 _buildBudgetBtn(Icons.add, () => _updateBudget(true)),
               ],
             ),
           ),
         ),
 
-        // Toggle Budget (Giữ nguyên)
+        // Toggle Budget
         GestureDetector(
           onTap: () => setState(() => _isBudgetSkipped = !_isBudgetSkipped),
           child: Padding(
@@ -322,13 +459,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(_isBudgetSkipped ? Icons.check_circle : Icons.circle_outlined,
-                    color: _isBudgetSkipped ? AppTheme.primaryColor : AppTheme.textGrey,
-                    size: 20),
+                    color: _isBudgetSkipped ? AppTheme.primaryColor : AppTheme.textGrey, size: 20),
                 const SizedBox(width: 8),
                 Text("Chưa xác định ngân sách",
                     style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: _isBudgetSkipped ? Colors.white : AppTheme.textGrey)),
+                        fontSize: 14, color: _isBudgetSkipped ? Colors.white : AppTheme.textGrey)),
               ],
             ),
           ),
@@ -348,7 +483,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(8), // Bo tròn hiệu ứng splash
+          borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.all(8),
             child: Icon(icon, color: Colors.white),
@@ -384,7 +519,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       decoration: BoxDecoration(
           color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16), // Bo góc đồng bộ
           border: Border.all(color: Colors.white24)),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: TextField(
@@ -397,40 +532,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           hintText: hint,
           hintStyle: const TextStyle(color: Colors.white38),
           isDense: false,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown(List<String> items, String? value, Function(String?) onChanged,
-      {bool isGender = false, String? hint}) {
-    return Container(
-      decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white24)),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : null,
-          hint: Text(hint ?? "Chọn", style: const TextStyle(color: Colors.white38)),
-          isExpanded: true,
-          dropdownColor: const Color(0xFF2A2A3E),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
-          items: items
-              .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                      isGender
-                          ? (e == 'male'
-                              ? 'Nam'
-                              : e == 'female'
-                                  ? 'Nữ'
-                                  : 'Khác')
-                          : "${e[0].toUpperCase()}${e.substring(1)}",
-                      style: const TextStyle(color: Colors.white))))
-              .toList(),
-          onChanged: onChanged,
         ),
       ),
     );
