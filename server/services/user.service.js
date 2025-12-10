@@ -59,44 +59,79 @@ async function updateProfile(profileId, updateData) {
         }
 
         console.log('🔄 Updating profile...');
+        console.log('📝 Update data received:', updateData);
 
         // Cập nhật các trường được phép
         const allowedFields = ['usr_fullname', 'usr_gender', 'usr_age', 'usr_job', 'usr_avatar', 'usr_bio', 'usr_budget', 'usr_preferences'];
         allowedFields.forEach(field => {
             if (updateData[field] !== undefined) {
-                profile[field] = updateData[field];
+                // Xử lý giá trị rỗng: chuyển thành null
+                if (updateData[field] === '' || updateData[field] === null) {
+                    profile[field] = null;
+                } else {
+                    profile[field] = updateData[field];
+                }
             }
         });
-        if (updateData.usr_preferences !== undefined) {
-            const validStyleIds = TRAVEL_STYLES.map(style => style.id);
-            const invalidPreferences = updateData.usr_preferences.filter(pref => !validStyleIds.includes(pref));
-            if (invalidPreferences.length > 0) {
-                const error = new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${validStyleIds.join(', ')}`);
-                error.statusCode = 400;
-                throw error;
-            }
-        }
-        if (updateData.usr_budget !== undefined) {
-            if (updateData.usr_budget < BUDGET_CONFIG.MIN || updateData.usr_budget > BUDGET_CONFIG.MAX) {
-                const error = new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
-                error.statusCode = 400;
-                throw error;
-            }
-        }
+
         // Nếu có cập nhật tuổi, thì tự động tính toán age_group
-        if (updateData.usr_age !== undefined) {
-            if (updateData.usr_age < AGE_MIN || updateData.usr_age > AGE_MAX) {
+        if (updateData.usr_age !== undefined && updateData.usr_age !== null && updateData.usr_age !== '') {
+            const age = parseInt(updateData.usr_age);
+            if (isNaN(age)) {
+                const error = new Error('Age must be a valid number');
+                error.statusCode = 400;
+                throw error;
+            }
+            if (age < AGE_MIN || age > AGE_MAX) {
                 const error = new Error(`Age must be between ${AGE_MIN} and ${AGE_MAX}`);
                 error.statusCode = 400;
                 throw error;
             }
-            // Tự động tính toán age_group từ tuổi
-            profile.usr_age_group = getAgeGroupFromAge(updateData.usr_age);
+            profile.usr_age = age;
+            profile.usr_age_group = getAgeGroupFromAge(age);
+        } else if (updateData.usr_age === '' || updateData.usr_age === null) {
+            // Nếu gửi rỗng hoặc null, set cả age và age_group thành null
+            profile.usr_age = null;
+            profile.usr_age_group = null;
         }
-        // Validation cho usr_job
-        if (updateData.usr_job !== undefined) {
+
+        // Validation cho usr_job (nếu có giá trị)
+        if (updateData.usr_job !== undefined && updateData.usr_job !== null && updateData.usr_job !== '') {
             if (!JOBS.includes(updateData.usr_job)) {
                 const error = new Error(`Invalid job. Valid jobs: ${JOBS.join(', ')}`);
+                error.statusCode = 400;
+                throw error;
+            }
+        }
+
+        // Validation cho usr_preferences (nếu có giá trị)
+        if (updateData.usr_preferences !== undefined && updateData.usr_preferences !== null) {
+            if (!Array.isArray(updateData.usr_preferences)) {
+                const error = new Error('Preferences must be an array');
+                error.statusCode = 400;
+                throw error;
+            }
+            if (updateData.usr_preferences.length > 0) {
+                const validStyleIds = TRAVEL_STYLES.map(style => style.id);
+                const invalidPreferences = updateData.usr_preferences.filter(pref => !validStyleIds.includes(pref));
+                if (invalidPreferences.length > 0) {
+                    const error = new Error(`Invalid travel style IDs: ${invalidPreferences.join(', ')}. Valid styles: ${validStyleIds.join(', ')}`);
+                    error.statusCode = 400;
+                    throw error;
+                }
+            }
+        }
+
+        // Validation cho usr_budget (nếu có giá trị)
+        if (updateData.usr_budget !== undefined && updateData.usr_budget !== null && updateData.usr_budget !== '') {
+            const budget = parseFloat(updateData.usr_budget);
+            if (isNaN(budget)) {
+                const error = new Error('Budget must be a valid number');
+                error.statusCode = 400;
+                throw error;
+            }
+            if (budget < BUDGET_CONFIG.MIN || budget > BUDGET_CONFIG.MAX) {
+                const error = new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
                 error.statusCode = 400;
                 throw error;
             }
@@ -107,6 +142,7 @@ async function updateProfile(profileId, updateData) {
 
         await profile.save();
 
+        console.log('✅ Profile updated successfully');
         return sanitizeProfile(profile);
     } catch (error) {
         console.error('❌ Error updating profile:', error);

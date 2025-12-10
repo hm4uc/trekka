@@ -214,10 +214,10 @@
  */
 
 import express from "express";
-import {body, validationResult} from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import userController from '../controllers/user.controller.js';
-import {authenticate} from '../middleware/authenticate.js';
-import {AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS, AGE_MIN, JOBS, AGE_MAX} from '../config/travelConstants.js';
+import { authenticate } from '../middleware/authenticate.js';
+import { AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS, AGE_MIN, JOBS, AGE_MAX } from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -240,17 +240,36 @@ const validate = (validations) => {
 
 // Validation rules
 const updateProfileValidation = [
-    body('usr_fullname').optional().trim().isLength({min: 1, max: 100})
+    body('usr_fullname').optional().trim().isLength({ min: 1, max: 100 })
         .withMessage('Full name must be between 1 and 100 characters'),
     body('usr_gender').optional().isIn(['male', 'female', 'other'])
         .withMessage('Gender must be male, female or other'),
-    body('usr_age').optional().isInt({min: AGE_MIN, max: AGE_MAX})  // <-- VALIDATION MỚI
-        .withMessage(`Age must be between ${AGE_MIN} and ${AGE_MAX}`),
-    body('usr_job').optional().isIn(JOBS)  // <-- VALIDATION MỚI
-        .withMessage(`Job must be one of: ${JOBS.join(', ')}`),
-    body('usr_avatar').optional().isURL()
-        .withMessage('Avatar must be a valid URL'),
-    body('usr_bio').optional().isLength({max: 500})
+    body('usr_age').optional()
+        .custom((value) => {
+            if (value === null || value === undefined || value === '') {
+                return true; // Cho phép null, undefined, hoặc rỗng
+            }
+            const age = parseInt(value);
+            if (isNaN(age)) {
+                throw new Error('Age must be a valid number');
+            }
+            if (age < AGE_MIN || age > AGE_MAX) {
+                throw new Error(`Age must be between ${AGE_MIN} and ${AGE_MAX}`);
+            }
+            return true;
+        }),
+    body('usr_job').optional()
+        .custom((value) => {
+            if (value === null || value === undefined || value === '') {
+                return true; // Cho phép null, undefined, hoặc rỗng
+            }
+            if (!JOBS.includes(value)) {
+                throw new Error(`Job must be one of: ${JOBS.join(', ')}`);
+            }
+            return true;
+        }), body('usr_avatar').optional().isURL()
+            .withMessage('Avatar must be a valid URL'),
+    body('usr_bio').optional().isLength({ max: 500 })
         .withMessage('Bio must not exceed 500 characters'),
     body('usr_preferences').optional().isArray()
         .withMessage('Preferences must be an array')
@@ -264,8 +283,19 @@ const updateProfileValidation = [
             return true;
         }),
     body('usr_budget').optional()
-        .isFloat({min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX})
-        .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
+        .custom((value) => {
+            if (value === null || value === undefined || value === '') {
+                return true; // Cho phép null, undefined, hoặc rỗng
+            }
+            const budget = parseFloat(value);
+            if (isNaN(budget)) {
+                throw new Error('Budget must be a valid number');
+            }
+            if (budget < BUDGET_CONFIG.MIN || budget > BUDGET_CONFIG.MAX) {
+                throw new Error(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`);
+            }
+            return true;
+        }),
 ];
 
 const travelSettingsValidation = [
@@ -283,7 +313,7 @@ const travelSettingsValidation = [
             return true;
         }),
     body('usr_budget').optional()
-        .isFloat({min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX})
+        .isFloat({ min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX })
         .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
 ];
 
