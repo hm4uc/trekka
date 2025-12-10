@@ -50,6 +50,17 @@
  *           enum: ["15-25", "26-35", "36-50", "50+"]
  *           description: User age group (optional)
  *           example: "15-25"
+ *         usr_age:
+ *           type: integer
+ *           minimum: 15
+ *           maximum: 150
+ *           description: User age (optional)
+ *           example: 22
+ *         usr_job:
+ *           type: string
+ *           enum: ["student", "teacher", "engineer", "doctor", "nurse", "accountant", "lawyer", "artist", "designer", "developer", "manager", "entrepreneur", "freelancer", "marketing", "sales", "consultant", "researcher", "writer", "chef", "photographer", "pilot"]
+ *           description: User job (optional)
+ *           example: "student"
  *     LoginRequest:
  *       type: object
  *       required:
@@ -186,9 +197,9 @@
  */
 
 import express from "express";
-import { body, validationResult } from 'express-validator';
+import {body, validationResult} from 'express-validator';
 import authController from '../controllers/auth.controller.js';
-import {AGE_GROUPS} from "../config/travelConstants.js";
+import {AGE_GROUPS, JOBS, AGE_MAX, AGE_MIN} from "../config/travelConstants.js";
 import {authenticate} from "../middleware/authenticate.js";
 
 const router = express.Router();
@@ -212,11 +223,16 @@ const validate = (validations) => {
 
 // Validation rules
 const registerValidation = [
-    body('usr_fullname').trim().isLength({ min: 1, max: 100 }),
+    body('usr_fullname').trim().isLength({min: 1, max: 100}),
     body('usr_email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6, max: 255 }),
+    body('password').isLength({min: 6, max: 255}),
     body('usr_gender').optional().isIn(['male', 'female', 'other']),
     body('usr_age_group').optional().isIn(AGE_GROUPS).withMessage('Invalid age group')];
+body('usr_age').optional().isInt({
+    min: AGE_MIN,
+    max: AGE_MAX
+}).withMessage(`Age must be between ${AGE_MIN} and ${AGE_MAX}`);
+body('usr_job').optional().isIn(JOBS).withMessage(`Job must be one of: ${JOBS.join(', ')}`)
 
 const loginValidation = [
     body('usr_email').isEmail().normalizeEmail(),

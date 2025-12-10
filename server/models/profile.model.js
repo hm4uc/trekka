@@ -1,6 +1,6 @@
-import { DataTypes } from 'sequelize';
+import {DataTypes} from 'sequelize';
 import sequelize from '../database/db.js';
-import {AGE_GROUPS} from "../config/travelConstants.js";
+import {AGE_GROUPS, JOBS} from "../config/travelConstants.js";
 
 const Profile = sequelize.define('Profile', {
     id: {
@@ -25,11 +25,23 @@ const Profile = sequelize.define('Profile', {
         allowNull: false,
     },
     usr_gender: {
-        type: DataTypes.TEXT, // Postgres hỗ trợ TEXT tốt
+        type: DataTypes.TEXT,
         allowNull: true,
     },
     usr_age_group: {
         type: DataTypes.ENUM(...AGE_GROUPS),
+        allowNull: true,
+    },
+    usr_age: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        validate: {
+            min: 15,
+            max: 100
+        }
+    },
+    usr_job: {
+        type: DataTypes.ENUM(...JOBS),
         allowNull: true,
     },
     reset_password_token: {
@@ -41,11 +53,11 @@ const Profile = sequelize.define('Profile', {
         allowNull: true,
     },
     usr_preferences: {
-        type: DataTypes.ARRAY(DataTypes.TEXT), // Mảng text cho Postgres
+        type: DataTypes.ARRAY(DataTypes.TEXT),
         defaultValue: [],
     },
     usr_budget: {
-        type: DataTypes.DECIMAL(12, 2), // Số tiền lớn cần chính xác
+        type: DataTypes.DECIMAL(12, 2),
         allowNull: true,
     },
     usr_avatar: {
@@ -69,7 +81,7 @@ const Profile = sequelize.define('Profile', {
         defaultValue: DataTypes.NOW,
     },
 }, {
-    timestamps: false, // Vì ta đã tự định nghĩa usr_created_at/updated_at
+    timestamps: false,
     tableName: 'profiles',
     hooks: {
         beforeUpdate: (profile) => {
