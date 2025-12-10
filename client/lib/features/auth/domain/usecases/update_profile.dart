@@ -20,7 +20,8 @@ class UpdateProfile implements UseCase<User, UpdateProfileParams> {
 class UpdateProfileParams extends Equatable {
   final String fullname;
   final String gender;
-  final String ageGroup;
+  final int? age; // 👇 Đổi thành int
+  final String job; // 👇 Mới
   final String bio;
   final String avatar;
   final double? budget;
@@ -29,7 +30,8 @@ class UpdateProfileParams extends Equatable {
   const UpdateProfileParams({
     required this.fullname,
     required this.gender,
-    required this.ageGroup,
+    required this.age,
+    required this.job,
     required this.bio,
     required this.avatar,
     this.budget,
@@ -39,7 +41,8 @@ class UpdateProfileParams extends Equatable {
   Map<String, dynamic> toJson() => {
         "usr_fullname": fullname,
         "usr_gender": gender,
-        "usr_age_group": ageGroup,
+        "usr_age": age, // Gửi số
+        "usr_job": job,
         "usr_bio": bio,
         "usr_avatar": avatar,
         "usr_budget": budget,
@@ -47,5 +50,5 @@ class UpdateProfileParams extends Equatable {
       };
 
   @override
-  List<Object?> get props => [fullname, gender, ageGroup, bio, avatar, budget, preferences];
+  List<Object?> get props => [fullname, gender, age, job, bio, avatar, budget, preferences];
 }

@@ -9,6 +9,8 @@ class User extends Equatable {
   final String? avatar;
   final String? gender;
   final String? ageGroup;
+  final int? age;
+  final String? job;
   final String? bio;
   final double? budget;
   final List<String>? preferences;
@@ -21,6 +23,8 @@ class User extends Equatable {
     this.avatar,
     this.gender,
     this.ageGroup,
+    this.age,
+    this.job,
     this.bio,
     this.budget,
     this.preferences,
@@ -34,6 +38,8 @@ class User extends Equatable {
     String? avatar,
     String? gender,
     String? ageGroup,
+    int? age,
+    String? job,
     String? bio,
     double? budget,
     List<String>? preferences,
@@ -46,6 +52,8 @@ class User extends Equatable {
       avatar: avatar ?? this.avatar,
       gender: gender ?? this.gender,
       ageGroup: ageGroup ?? this.ageGroup,
+      age: age ?? this.age,
+      job: job ?? this.job,
       bio: bio ?? this.bio,
       budget: budget ?? this.budget,
       preferences: preferences ?? this.preferences,
@@ -61,6 +69,8 @@ class User extends Equatable {
         avatar,
         gender,
         ageGroup,
+        age,
+        job,
         bio,
         budget,
         preferences,

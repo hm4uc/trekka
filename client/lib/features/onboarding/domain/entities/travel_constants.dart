@@ -5,11 +5,20 @@ class TravelConstants extends Equatable {
   final List<TravelStyle> styles;
   final BudgetConfig budgetConfig;
   final List<String> ageGroup;
+  final List<String> jobs;
+  final int ageMin;
+  final int ageMax;
 
-  const TravelConstants({required this.styles, required this.budgetConfig, required this.ageGroup});
+  const TravelConstants(
+      {required this.styles,
+      required this.budgetConfig,
+      required this.ageGroup,
+      required this.jobs,
+      required this.ageMin,
+      required this.ageMax});
 
   @override
-  List<Object?> get props => [styles, budgetConfig, ageGroup];
+  List<Object?> get props => [styles, budgetConfig, ageGroup, jobs, ageMin, ageMax];
 }
 
 // Entity con: TravelStyle

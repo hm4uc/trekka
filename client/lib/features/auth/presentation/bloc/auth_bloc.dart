@@ -105,7 +105,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await updateProfileUseCase(UpdateProfileParams(
       fullname: event.fullname,
       gender: event.gender,
-      ageGroup: event.ageGroup,
+      job: event.job,
+      age: event.age,
       bio: event.bio,
       avatar: event.avatar,
       budget: event.budget,
