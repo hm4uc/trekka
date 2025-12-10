@@ -108,4 +108,18 @@ export const JOBS = [
     "retired",
     "unemployed",
     "other"
-]
+];
+
+export function getAgeGroupFromAge(age) {
+    if (age >= 15 && age <= 25) {
+        return "15-25";
+    } else if (age >= 26 && age <= 35) {
+        return "26-35";
+    } else if (age >= 36 && age <= 50) {
+        return "36-50";
+    } else if (age > 50) {
+        return "50+";
+    } else {
+        return null;
+    }
+}
