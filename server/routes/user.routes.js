@@ -30,6 +30,12 @@
  *         usr_age_group:
  *           type: string
  *           example: "15-25"
+ *         usr_age:
+ *           type: integer
+ *           example: 22
+ *         usr_job:
+ *           type: string
+ *           example: "developer"
  *         usr_avatar:
  *           type: string
  *           example: "https://example.com/avatar.png"
@@ -67,6 +73,13 @@
  *         usr_age_group:
  *           type: string
  *           example: "15-25"
+ *         usr_age:
+ *           type: integer
+ *           example: 23
+ *         usr_job:
+ *           type: string
+ *           enum: [student, teacher, engineer, doctor, nurse, accountant, lawyer, artist, designer, developer, manager, entrepreneur, freelancer, marketing, sales, consultant, researcher, writer, chef, photographer, pilot, architect, civil_servant, military, retired, unemployed, other]
+ *           example: "developer"
  *         usr_avatar:
  *           type: string
  *           example: "https://example.com/avatar.jpg"
@@ -183,6 +196,17 @@
  *               type: array
  *               items:
  *                 type: string
+ *             jobs:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               example: ["student", "teacher", "engineer", "doctor", "nurse", "accountant", "lawyer", "artist", "designer", "developer", "manager", "entrepreneur", "freelancer", "marketing", "sales", "consultant", "researcher", "writer", "chef", "photographer", "pilot", "architect", "civil_servant", "military", "retired", "unemployed", "other"]
+ *             age_min:
+ *               type: integer
+ *               example: 15
+ *             age_max:
+ *               type: integer
+ *               example: 150
  */
 /**
  * @swagger
@@ -193,10 +217,10 @@
  */
 
 import express from "express";
-import { body, validationResult } from 'express-validator';
+import {body, validationResult} from 'express-validator';
 import userController from '../controllers/user.controller.js';
-import { authenticate } from '../middleware/authenticate.js';
-import { AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS } from '../config/travelConstants.js';
+import {authenticate} from '../middleware/authenticate.js';
+import {AGE_GROUPS, BUDGET_CONFIG, VALID_TRAVEL_STYLE_IDS, AGE_MIN, JOBS, AGE_MAX} from '../config/travelConstants.js';
 
 const router = express.Router();
 
@@ -219,15 +243,19 @@ const validate = (validations) => {
 
 // Validation rules
 const updateProfileValidation = [
-    body('usr_fullname').optional().trim().isLength({ min: 1, max: 100 })
+    body('usr_fullname').optional().trim().isLength({min: 1, max: 100})
         .withMessage('Full name must be between 1 and 100 characters'),
     body('usr_gender').optional().isIn(['male', 'female', 'other'])
         .withMessage('Gender must be male, female or other'),
     body('usr_age_group').optional().isIn(AGE_GROUPS)
         .withMessage('Invalid age group'),
+    body('usr_age').optional().isInt({min: AGE_MIN, max: AGE_MAX})  // <-- VALIDATION MỚI
+        .withMessage(`Age must be between ${AGE_MIN} and ${AGE_MAX}`),
+    body('usr_job').optional().isIn(JOBS)  // <-- VALIDATION MỚI
+        .withMessage(`Job must be one of: ${JOBS.join(', ')}`),
     body('usr_avatar').optional().isURL()
         .withMessage('Avatar must be a valid URL'),
-    body('usr_bio').optional().isLength({ max: 500 })
+    body('usr_bio').optional().isLength({max: 500})
         .withMessage('Bio must not exceed 500 characters'),
     body('usr_preferences').optional().isArray()
         .withMessage('Preferences must be an array')
@@ -241,7 +269,7 @@ const updateProfileValidation = [
             return true;
         }),
     body('usr_budget').optional()
-        .isFloat({ min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX })
+        .isFloat({min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX})
         .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
 ];
 
@@ -260,7 +288,7 @@ const travelSettingsValidation = [
             return true;
         }),
     body('usr_budget').optional()
-        .isFloat({ min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX })
+        .isFloat({min: BUDGET_CONFIG.MIN, max: BUDGET_CONFIG.MAX})
         .withMessage(`Budget must be between ${BUDGET_CONFIG.MIN} and ${BUDGET_CONFIG.MAX}`),
 ];
 

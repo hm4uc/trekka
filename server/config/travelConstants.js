@@ -76,3 +76,36 @@ export const AGE_GROUPS = [
     "36-50",
     "50+"
 ];
+
+export const AGE_MIN = 15;
+export const AGE_MAX = 150;
+
+export const JOBS = [
+    "student",
+    "teacher",
+    "engineer",
+    "doctor",
+    "nurse",
+    "accountant",
+    "lawyer",
+    "artist",
+    "designer",
+    "developer",
+    "manager",
+    "entrepreneur",
+    "freelancer",
+    "marketing",
+    "sales",
+    "consultant",
+    "researcher",
+    "writer",
+    "chef",
+    "photographer",
+    "pilot",
+    "architect",
+    "civil_servant",
+    "military",
+    "retired",
+    "unemployed",
+    "other"
+]
