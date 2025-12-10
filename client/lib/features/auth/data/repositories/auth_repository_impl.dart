@@ -61,9 +61,13 @@ class AuthRepositoryImpl implements AuthRepository {
         fullname: remoteUser.fullname,
         token: token,
         avatar: remoteUser.avatar,
+        gender: remoteUser.gender,
         ageGroup: remoteUser.ageGroup,
-        preferences: remoteUser.preferences,
+        age: remoteUser.age,
+        job: remoteUser.job,
+        bio: remoteUser.bio,
         budget: remoteUser.budget,
+        preferences: remoteUser.preferences,
       );
       await localDataSource.cacheUser(userWithToken);
       return Right(userWithToken);
@@ -137,6 +141,8 @@ class AuthRepositoryImpl implements AuthRepository {
         avatar: updatedUserRemote.avatar,
         gender: updatedUserRemote.gender,
         ageGroup: updatedUserRemote.ageGroup,
+        age: updatedUserRemote.age,
+        job: updatedUserRemote.job,
         bio: updatedUserRemote.bio,
         budget: updatedUserRemote.budget,
         preferences: updatedUserRemote.preferences,

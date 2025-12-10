@@ -17,9 +17,6 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // API Login/Register trả về: { "status": "success", "data": { "profile": {...}, "token": "..." } }
-    // API Get Profile trả về: { "status": "success", "data": { ... } }
-    // API Update Profile trả về: { "status": "success", "data": { ... } }
     Map<String, dynamic> userData;
     String? token;
 
@@ -40,6 +37,18 @@ class UserModel extends User {
       token = json['token'];
     }
 
+    // Xử lý tuổi - nhận cả số và chuỗi
+    int? ageValue;
+    if (userData['usr_age'] != null) {
+      if (userData['usr_age'] is int) {
+        ageValue = userData['usr_age'];
+      } else if (userData['usr_age'] is String) {
+        ageValue = int.tryParse(userData['usr_age']);
+      } else if (userData['usr_age'] is num) {
+        ageValue = (userData['usr_age'] as num).toInt();
+      }
+    }
+
     return UserModel(
       id: userData['id']?.toString() ?? userData['usr_id']?.toString() ?? '',
       fullname: userData['usr_fullname'] ?? '',
@@ -48,10 +57,9 @@ class UserModel extends User {
       avatar: userData['usr_avatar'],
       gender: userData['usr_gender'],
       ageGroup: userData['usr_age_group'],
-      age: userData['usr_age'] is int ? userData['usr_age'] : int.tryParse(userData['usr_age']?.toString() ?? ''),
+      age: ageValue,
       job: userData['usr_job'],
       bio: userData['usr_bio'],
-      // Map budget: API có thể trả về String hoặc Number
       budget: userData['usr_budget'] is String
           ? double.tryParse(userData['usr_budget'])
           : (userData['usr_budget'] as num?)?.toDouble(),

@@ -85,53 +85,41 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
                 children: [
-                  // 1. THANH TIẾN ĐỘ HOÀN THÀNH (Gamification)
-                  _buildCompletionProgressBar(85),
-                  const SizedBox(height: 24),
-
-                  // 2. HEADER CƠ BẢN (Avatar, Name, Email)
+                  // 1. HEADER (Avatar, Tên, Email)
                   _buildHeader(user),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  // 3. BIO (Giới thiệu bản thân)
-                  if (user.bio != null && user.bio!.isNotEmpty) ...[
-                    Text(
-                      user.bio!,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.white70,
-                          height: 1.5,
-                          fontStyle: FontStyle.italic),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                  // 2. BIO (Nếu có)
+                  if (user.bio != null && user.bio!.isNotEmpty)
+                    Text(user.bio!,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic),
+                        textAlign: TextAlign.center),
 
-                  // 4. THÔNG TIN CÁ NHÂN (Chips: Tuổi | Giới tính | Nghề nghiệp)
+                  const SizedBox(height: 16),
+
+                  // 3. THÔNG TIN CÁ NHÂN (Chips)
                   _buildPersonalInfoChips(user),
 
                   const SizedBox(height: 24),
-
-                  // 5. NÚT CHỈNH SỬA
                   _buildEditButton(context, user),
                   const SizedBox(height: 30),
 
-                  // 6. THỐNG KÊ (Stats)
+                  // Stats Row
                   Row(
                     children: [
-                      Expanded(child: _buildStatCard("42", "Điểm đã đến")),
+                      Expanded(child: _buildStatCard("42", "Điểm đến")),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard("15", "Sự kiện tham gia")),
+                      Expanded(child: _buildStatCard("15", "Sự kiện")),
                     ],
                   ),
                   const SizedBox(height: 30),
 
-                  // 7. TRAVEL DNA (Thông tin quan trọng nhất)
+                  // Travel DNA
                   _buildTravelDnaCard(user),
-
                   const SizedBox(height: 30),
 
-                  // 8. MENU
+                  // 6. MENU
                   _buildMenuItem(Icons.calendar_today, "Lịch trình của tôi",
                       () => _handleItemTap("Lịch trình")),
                   _buildMenuItem(
@@ -181,7 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget hiển thị Tuổi, Giới tính, Nghề nghiệp dạng Chips
+  // 👇 HÀM HIỂN THỊ CHIPS THÔNG TIN
   Widget _buildPersonalInfoChips(User user) {
     List<Widget> chips = [];
 
@@ -189,18 +177,15 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user.age != null && user.age! > 0) {
       chips.add(_buildInfoChip(Icons.cake_outlined, "${user.age} tuổi"));
     }
-
     // Giới tính
     if (user.gender != null) {
-      IconData genderIcon = Icons.person_outline;
-      if (user.gender == 'male') genderIcon = Icons.male;
-      if (user.gender == 'female') genderIcon = Icons.female;
-      chips.add(_buildInfoChip(genderIcon, _formatGender(user.gender)));
+      IconData icon = Icons.person_outline;
+      if (user.gender == 'male') icon = Icons.male;
+      if (user.gender == 'female') icon = Icons.female;
+      chips.add(_buildInfoChip(icon, _formatGender(user.gender)));
     }
-
     // Nghề nghiệp
     if (user.job != null && user.job!.isNotEmpty) {
-      // Viết hoa chữ cái đầu
       String jobLabel = "${user.job![0].toUpperCase()}${user.job!.substring(1)}";
       chips.add(_buildInfoChip(Icons.work_outline, jobLabel));
     }
@@ -208,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (chips.isEmpty) return const SizedBox.shrink();
 
     return Wrap(
-      spacing: 12,
+      spacing: 10,
       runSpacing: 10,
       alignment: WrapAlignment.center,
       children: chips,
@@ -217,7 +202,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildInfoChip(IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
@@ -226,13 +211,9 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppTheme.primaryColor),
+          Icon(icon, size: 14, color: AppTheme.primaryColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style:
-                GoogleFonts.inter(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
-          ),
+          Text(label, style: GoogleFonts.inter(fontSize: 13, color: Colors.white70)),
         ],
       ),
     );
@@ -374,50 +355,50 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildCompletionProgressBar(int percent) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E3E36).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Hoàn thành hồ sơ",
-                        style: GoogleFonts.inter(
-                            fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-                    Text("$percent%",
-                        style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: percent / 100,
-                    backgroundColor: Colors.black26,
-                    color: AppTheme.primaryColor,
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildCompletionProgressBar(int percent) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF1E3E36).withOpacity(0.5),
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   Text("Hoàn thành hồ sơ",
+  //                       style: GoogleFonts.inter(
+  //                           fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+  //                   Text("$percent%",
+  //                       style: GoogleFonts.inter(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: AppTheme.primaryColor)),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 8),
+  //               ClipRRect(
+  //                 borderRadius: BorderRadius.circular(4),
+  //                 child: LinearProgressIndicator(
+  //                   value: percent / 100,
+  //                   backgroundColor: Colors.black26,
+  //                   color: AppTheme.primaryColor,
+  //                   minHeight: 6,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
     return Padding(
