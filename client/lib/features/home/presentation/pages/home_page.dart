@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../../core/theme/app_themes.dart';
-import '../widgets/home_dummy_data.dart';
-import '../widgets/weather_location_widget.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../widgets/events_near_you_widget.dart';
+import '../widgets/home_dummy_data.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,116 +17,301 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final ScrollController _scrollController = ScrollController();
+
+  // Ngưỡng scroll để chuyển đổi giao diện (khoảng 140px)
+  bool _isCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Khi cuộn quá 140px (gần hết phần expanded), chuyển sang chế độ collapsed
+    if (_scrollController.hasClients) {
+      if (_scrollController.offset > 140 && !_isCollapsed) {
+        setState(() => _isCollapsed = true);
+      } else if (_scrollController.offset <= 140 && _isCollapsed) {
+        setState(() => _isCollapsed = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(), // Hiệu ứng cuộn nảy kiểu iOS
-        slivers: [
-          // 1. APP BAR & SEARCH
-          _buildSliverAppBar(context),
+      body: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          final displayName = authState is AuthSuccess
+              ? authState.user.fullname.split(' ').last // Lấy tên (Last name) cho thân mật
+              : 'Bạn';
 
-          // 2. WEATHER & LOCATION
-          SliverToBoxAdapter(
-            child: WeatherLocationWidget(
-              location: "Hà Nội, Việt Nam",
-              temperature: "24°C",
-              weatherCondition: "Nắng đẹp",
-              weatherIcon: Icons.wb_sunny,
+          // Avatar url hoặc ảnh mặc định
+          final avatarUrl = (authState is AuthSuccess &&
+                  authState.user.avatar != null &&
+                  authState.user.avatar!.startsWith('http'))
+              ? authState.user.avatar
+              : null;
+
+          return CustomScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // 1. APP BAR (COLLAPSIBLE HEADER)
+              _buildSliverAppBar(context, displayName, avatarUrl),
+
+              // 2. HERO SLIDER (AI SUGGESTION)
+              _buildSectionTitle("Dành riêng cho bạn ✦"),
+              _buildHeroSlider(),
+
+              // 3. YOUTH CATEGORIES
+              _buildSectionTitle("Hôm nay đi đâu?"),
+              _buildQuickCategories(),
+
+              // 4. EVENTS NEAR YOU
+              _buildSectionTitle("Sự kiện gần bạn 🎉"),
+              _buildEventsSection(),
+
+              // 5. TRENDING
+              _buildSectionTitle("Xu hướng tuần này 🔥"),
+              _buildHorizontalList(HomeMockData.trending, isLarge: false),
+
+              // 6. BUDGET CHALLENGE
+              _buildSectionTitle("Thử thách ngân sách 💸"),
+              _buildBudgetGrid(),
+
+              // 7. FOODTOUR
+              _buildSectionTitle("Foodtour không lối về 🍜"),
+              _buildHorizontalList(HomeMockData.food, isCircle: true),
+
+              // 8. SHORTS
+              _buildSectionTitle("Trekka Shorts 🎬"),
+              _buildShortsList(),
+
+              // PADDING BOTTOM (Để không bị BottomBar che)
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // --- SLIVER APP BAR ---
+
+  Widget _buildSliverAppBar(BuildContext context, String displayName, String? avatarUrl) {
+    return SliverAppBar(
+      backgroundColor: AppTheme.backgroundColor,
+      surfaceTintColor: AppTheme.backgroundColor,
+      // Tránh đổi màu khi scroll
+      floating: false,
+      pinned: true,
+      elevation: 0,
+      expandedHeight: 200,
+      // Chiều cao khi mở rộng
+      collapsedHeight: 70,
+      // Chiều cao khi thu gọn
+
+      // Nút hành động (Notification, Settings)
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: _isCollapsed ? Colors.transparent : Colors.black12, // Nền mờ khi mở rộng
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 24),
+            onPressed: () {},
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: _isCollapsed ? Colors.transparent : Colors.black12,
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 24),
+            onPressed: () => context.push('/settings'),
+          ),
+        ),
+      ],
+
+      // Title khi thu gọn (Compact Header)
+      title: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: _isCollapsed ? 1.0 : 0.0,
+        child: _buildCollapsedHeader(displayName, avatarUrl),
+      ),
+      centerTitle: false,
+      titleSpacing: 0,
+      // Để title sát lề trái
+
+      // Flexible Space (Expanded Header)
+      flexibleSpace: FlexibleSpaceBar(
+        background: Padding(
+          padding: const EdgeInsets.only(top: 60), // Tránh status bar
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _isCollapsed ? 0.0 : 1.0,
+            child: _buildExpandedHeader(displayName, avatarUrl),
+          ),
+        ),
+        collapseMode: CollapseMode.pin, // Giữ background cố định khi cuộn
+      ),
+    );
+  }
+
+  // --- HEADER WIDGETS ---
+
+  // Giao diện MỞ RỘNG (Chào + Thời tiết chi tiết)
+  Widget _buildExpandedHeader(String displayName, String? avatarUrl) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Greeting Row
+          Row(
+            children: [
+              _buildAvatar(avatarUrl, 28),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Chào $displayName 👋",
+                      style: GoogleFonts.inter(
+                          fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text("Hôm nay bạn muốn đi đâu?",
+                      style: GoogleFonts.inter(fontSize: 13, color: AppTheme.textGrey)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Weather Card (Glassmorphism Style)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryColor.withOpacity(0.15),
+                  AppTheme.surfaceColor.withOpacity(0.8),
+                ],
+              ),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.wb_sunny_rounded, color: Colors.orangeAccent, size: 36),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("24°C",
+                            style: GoogleFonts.inter(
+                                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text("Hà Nội • Nắng đẹp",
+                            style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text("AQI 45 (Tốt)",
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: AppTheme.primaryColor, fontWeight: FontWeight.w600)),
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Giao diện THU GỌN (Compact Header khi cuộn lên)
+  Widget _buildCollapsedHeader(String displayName, String? avatarUrl) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          _buildAvatar(avatarUrl, 18),
+          const SizedBox(width: 10),
+
+          // Name & Greeting Compact
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Chào $displayName",
+                    style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
             ),
           ),
 
-          // 3. HERO SLIDER (AI SUGGESTION)
-          _buildSectionTitle("Dành riêng cho bạn ✦"),
-          _buildHeroSlider(),
-
-          // 4. YOUTH CATEGORIES (CAFE, DATING...)
-          _buildSectionTitle("Hôm nay đi đâu?"),
-          _buildQuickCategories(),
-
-          // 5. EVENTS NEAR YOU
-          _buildSectionTitle("Sự kiện gần bạn 🎉"),
-          _buildEventsSection(),
-
-          // 6. TRENDING
-          _buildSectionTitle("Xu hướng tuần này 🔥"),
-          _buildHorizontalList(HomeMockData.trending, isLarge: false),
-
-          // 7. BUDGET CHALLENGE
-          _buildSectionTitle("Thử thách ngân sách 💸"),
-          _buildBudgetGrid(),
-
-          // 8. FOODTOUR
-          _buildSectionTitle("Foodtour không lối về 🍜"),
-          _buildHorizontalList(HomeMockData.food, isCircle: true),
-
-          // 9. SHORTS (VIDEO)
-          _buildSectionTitle("Trekka Shorts 🎬"),
-          _buildShortsList(),
-
-          // PADDING BOTTOM
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          // Weather Compact (Icon + Temp)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.wb_sunny_rounded, color: Colors.orangeAccent, size: 14),
+                const SizedBox(width: 6),
+                Text("24°C",
+                    style: GoogleFonts.inter(
+                        fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // --- WIDGETS CON (SLIVERS) ---
+  Widget _buildAvatar(String? url, double radius) {
+    ImageProvider img = (url != null)
+        ? NetworkImage(url)
+        : const AssetImage('assets/images/welcome.jpg') as ImageProvider;
 
-  // 1. App Bar
-  Widget _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: AppTheme.backgroundColor,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      expandedHeight: 130, // Tăng chiều cao để chứa Search bar
-
-      // 1. TOP BAR: Avatar + Greeting + Icons
-      title: Row(
-        children: [
-          const CircleAvatar(
-            radius: 20,
-            backgroundImage: AssetImage('assets/images/welcome.jpg'), // Avatar User
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Chào Trekker 👋",
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text("Sẵn sàng khám phá?",
-                  style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey)),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-          onPressed: () {
-            // TODO: Navigate to Notifications
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.settings_outlined, color: Colors.white),
-          onPressed: () {
-            context.push('/settings'); // Chuyển sang màn Settings
-          },
-        ),
-        const SizedBox(width: 8),
-      ],
-
-      // 2. BOTTOM: WEATHER & LOCATION WIDGET
-      bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(90),
-        child: SizedBox.shrink(), // Weather widget will be in the body
-      ),
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppTheme.surfaceColor,
+      backgroundImage: img,
     );
   }
 
-  // Helper Title
+  // --- CÁC WIDGET SECTION KHÁC (Giữ nguyên logic của bạn, chỉ chỉnh UI nhẹ) ---
+
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -131,36 +319,41 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text("Xem tất cả", style: GoogleFonts.inter(fontSize: 12, color: AppTheme.primaryColor)),
+            Text(title,
+                style: GoogleFonts.inter(
+                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            // Icon arrow thay vì text "Xem tất cả" để clean hơn
+            const Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.textGrey),
           ],
         ),
       ),
     );
   }
 
-  // 2. Hero Slider
+  // Hero Slider
   Widget _buildHeroSlider() {
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: 220,
+        height: 200, // Giảm chiều cao chút cho cân đối
         child: PageView.builder(
-          controller: PageController(viewportFraction: 0.9), // Để lộ 1 chút card sau
+          controller: PageController(viewportFraction: 0.88),
+          padEnds: false, // Căn trái
           itemCount: HomeMockData.aiRecommendations.length,
           itemBuilder: (context, index) {
             final item = HomeMockData.aiRecommendations[index];
             return Container(
-              margin: const EdgeInsets.only(right: 12),
+              margin: const EdgeInsets.only(left: 20), // Margin trái thay vì phải
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                image: DecorationImage(
-                  image: AssetImage(item.imageUrl),
-                  fit: BoxFit.cover,
-                ),
-              ),
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(image: AssetImage(item.imageUrl), fit: BoxFit.cover),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4))
+                  ]),
               child: Stack(
                 children: [
-                  // Gradient Overlay
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
@@ -171,20 +364,29 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  // Text Content
                   Positioned(
-                    bottom: 20, left: 20, right: 20,
+                    bottom: 16,
+                    left: 16,
+                    right: 16,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(8)),
-                          child: Text("Gợi ý cho bạn", style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
+                          decoration: BoxDecoration(
+                              color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(6)),
+                          child: Text("AI Gợi ý",
+                              style: GoogleFonts.inter(
+                                  fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
                         ),
-                        const SizedBox(height: 8),
-                        Text(item.title, style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                        Text(item.subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+                        const SizedBox(height: 6),
+                        Text(item.title,
+                            style: GoogleFonts.inter(
+                                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(item.subtitle,
+                            style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   )
@@ -197,11 +399,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 3. Quick Categories (Youth Focus)
+  // Quick Categories
   Widget _buildQuickCategories() {
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: 100,
+        height: 90,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 20),
@@ -213,16 +415,19 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   Container(
-                    height: 60, width: 60,
+                    height: 56,
+                    width: 56,
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceColor,
+                      color: const Color(0xFF2A2A3E), // Màu nền tối nhẹ
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                      border: Border.all(color: Colors.white10),
                     ),
-                    child: Center(child: Text(cat['icon'], style: const TextStyle(fontSize: 24))),
+                    child: Center(child: Text(cat['icon'], style: const TextStyle(fontSize: 22))),
                   ),
                   const SizedBox(height: 8),
-                  Text(cat['label'], style: GoogleFonts.inter(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500)),
+                  Text(cat['label'],
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500)),
                 ],
               ),
             );
@@ -232,11 +437,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 4 & 6. Horizontal List (Generic)
   Widget _buildHorizontalList(List<Place> items, {bool isLarge = false, bool isCircle = false}) {
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: isCircle ? 140 : 200, // Chiều cao tùy chỉnh
+        height: isCircle ? 140 : 180,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 20),
@@ -244,29 +448,25 @@ class _HomePageState extends State<HomePage> {
           itemBuilder: (context, index) {
             final item = items[index];
             if (isCircle) {
-              // Giao diện tròn cho Food
               return Container(
                 width: 100,
                 margin: const EdgeInsets.only(right: 16),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundImage: AssetImage(item.imageUrl),
-                    ),
+                    CircleAvatar(radius: 40, backgroundImage: AssetImage(item.imageUrl)),
                     const SizedBox(height: 8),
                     Text(item.title,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                        style: GoogleFonts.inter(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
                   ],
                 ),
               );
             }
-            // Giao diện Card chữ nhật thường
             return Container(
-              width: 150,
+              width: 140,
               margin: const EdgeInsets.only(right: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,11 +480,18 @@ class _HomePageState extends State<HomePage> {
                           Image.asset(item.imageUrl, fit: BoxFit.cover),
                           if (item.tag != null)
                             Positioned(
-                              top: 8, left: 8,
+                              top: 8,
+                              left: 8,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
-                                child: Text(item.tag!, style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                                decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: Text(item.tag!,
+                                    style: const TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             )
                         ],
@@ -292,8 +499,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey)),
+                  Text(item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(item.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 11, color: AppTheme.textGrey)),
                 ],
               ),
             );
@@ -303,76 +517,68 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Events Near You Section
   Widget _buildEventsSection() {
     final mockEvents = [
       Event(
-        title: "Food Festival Hà Nội 2025",
-        date: "15-17 Dec",
-        location: "Hoàng Hoa Thám, Ba Đình",
-        imageUrl: "assets/images/welcome.jpg",
-        category: "Ẩm thực",
-      ),
+          title: "Food Festival 2025",
+          date: "15-17 Dec",
+          location: "Hoàng Hoa Thám",
+          imageUrl: "assets/images/welcome.jpg",
+          category: "Ẩm thực"),
       Event(
-        title: "Chợ đêm phố cổ cuối tuần",
-        date: "Thứ 7-CN hàng tuần",
-        location: "Phố cổ Hà Nội",
-        imageUrl: "assets/images/welcome.jpg",
-        category: "Văn hóa",
-      ),
-      Event(
-        title: "Live Music tại Acoustic Cafe",
-        date: "Hôm nay, 20:00",
-        location: "Tây Hồ, Hà Nội",
-        imageUrl: "assets/images/welcome.jpg",
-        category: "Âm nhạc",
-      ),
+          title: "Chợ đêm phố cổ",
+          date: "T7-CN",
+          location: "Hoàn Kiếm",
+          imageUrl: "assets/images/welcome.jpg",
+          category: "Văn hóa"),
     ];
-
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      sliver: SliverList(
-        delegate: SliverChildListDelegate([
-          EventsNearYouWidget(events: mockEvents),
-        ]),
-      ),
+      sliver:
+          SliverList(delegate: SliverChildListDelegate([EventsNearYouWidget(events: mockEvents)])),
     );
   }
 
-  // 5. Budget Grid (SliverGrid)
   Widget _buildBudgetGrid() {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.4, // Card ngang
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.5,
         ),
         delegate: SliverChildBuilderDelegate(
-              (context, index) {
+          (context, index) {
             final item = HomeMockData.budget[index];
             return Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(image: AssetImage(item.imageUrl), fit: BoxFit.cover),
-              ),
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(image: AssetImage(item.imageUrl), fit: BoxFit.cover)),
               child: Stack(
                 children: [
                   Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.9)]),
-                    ),
-                  ),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)]))),
                   Positioned(
-                    bottom: 12, left: 12, right: 12,
+                    bottom: 12,
+                    left: 12,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.price, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.primaryColor)),
-                        Text(item.title, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(item.price,
+                            style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.primaryColor)),
+                        Text(item.title,
+                            style: GoogleFonts.inter(
+                                fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
                       ],
                     ),
                   )
@@ -386,38 +592,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // 7. Shorts (Video Dọc)
   Widget _buildShortsList() {
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: 250, // Chiều cao lớn cho video dọc
+        height: 220,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 20),
-          itemCount: 5, // Dummy 5 videos
+          itemCount: 5,
           itemBuilder: (context, index) {
             return Container(
-              width: 140, // Tỷ lệ 9:16 thu nhỏ
+              width: 120,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 color: AppTheme.surfaceColor,
                 border: Border.all(color: Colors.white10),
                 image: const DecorationImage(
-                  // Dùng ảnh tạm, thực tế là video thumbnail
-                  image: AssetImage('assets/images/welcome.png'),
-                  fit: BoxFit.cover,
-                ),
+                    image: AssetImage('assets/images/welcome.jpg'), fit: BoxFit.cover),
               ),
-              child: Stack(
-                children: [
-                  const Center(child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 40)),
-                  Positioned(
-                    bottom: 10, left: 10,
-                    child: Text("Review Hà Giang\n4N3Đ", style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                  )
-                ],
-              ),
+              child: const Center(
+                  child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 32)),
             );
           },
         ),
