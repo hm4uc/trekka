@@ -7,6 +7,7 @@ import '../../../../core/theme/app_themes.dart';
 import '../../../destinations/domain/entities/destination.dart';
 import '../../../destinations/presentation/bloc/destination_bloc.dart';
 import '../../../destinations/presentation/bloc/destination_event.dart';
+import '../../../trips/presentation/widgets/add_to_trip_modal.dart';
 import './destination_reviews_page.dart';
 
 class DestinationDetailPage extends StatefulWidget {
@@ -20,18 +21,35 @@ class DestinationDetailPage extends StatefulWidget {
 
 class _DestinationDetailPageState extends State<DestinationDetailPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final ScrollController _scrollController = ScrollController();
   bool _isAppBarCollapsed = false;
-  bool _isSaved = false;
   bool _isLiked = false;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _isSaved = widget.destination.totalSaves > 0;
     _isLiked = widget.destination.totalLikes > 0;
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+
+    _animationController.forward();
 
     _scrollController.addListener(() {
       setState(() {
@@ -43,7 +61,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _animationController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -77,18 +95,40 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
     }
   }
 
-  void _toggleSave() {
-    setState(() {
-      _isSaved = !_isSaved;
-    });
-    context.read<DestinationBloc>().add(SaveDestinationEvent(widget.destination.id));
+  bool _isOpenNow() {
+    final now = DateTime.now();
+    final dayOfWeek = _getDayKey(now.weekday);
+
+    if (widget.destination.openingHours != null &&
+        widget.destination.openingHours!.containsKey(dayOfWeek)) {
+      final hours = widget.destination.openingHours![dayOfWeek]!;
+      final parts = hours.split('-');
+      if (parts.length == 2) {
+        final openTime = parts[0].trim();
+        final closeTime = parts[1].trim();
+        final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+        return currentTime.compareTo(openTime) >= 0 && currentTime.compareTo(closeTime) <= 0;
+      }
+    }
+    return false;
   }
+
 
   void _toggleLike() {
     setState(() {
       _isLiked = !_isLiked;
     });
     context.read<DestinationBloc>().add(LikeDestinationEvent(widget.destination.id));
+  }
+
+
+  void _showAddToTripModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddToTripModal(destinationId: widget.destination.id),
+    );
   }
 
   @override
@@ -99,34 +139,26 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Collapsible App Bar with Image
           _buildSliverAppBar(),
-
-          // Content
           SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title & Actions
-                _buildHeader(),
-
-                // Stats (Rating, Reviews, Likes, etc.)
-                _buildStats(),
-
-                // Opening Hours & Distance
-                _buildQuickInfo(),
-
-                // Description
-                _buildDescription(),
-
-                // Location Map Preview
-                _buildLocationSection(),
-
-                // Reviews Section
-                _buildReviewsSection(),
-
-                const SizedBox(height: 100),
-              ],
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    _buildStats(),
+                    _buildQuickInfo(),
+                    _buildAISummary(),
+                    _buildDescription(),
+                    _buildLocationSection(),
+                    _buildReviewsSection(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -137,19 +169,22 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
 
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 300,
+      expandedHeight: 350,
       pinned: true,
       backgroundColor: AppTheme.backgroundColor,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
-            shape: BoxShape.circle,
+      leading: Hero(
+        tag: 'back_button_${widget.destination.id}',
+        child: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          onPressed: () => context.pop(),
         ),
-        onPressed: () => context.pop(),
       ),
       actions: [
         IconButton(
@@ -268,12 +303,6 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
               ),
               const SizedBox(width: 12),
               _buildActionButton(
-                icon: _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                onTap: _toggleSave,
-                color: _isSaved ? AppTheme.primaryColor : Colors.white,
-              ),
-              const SizedBox(width: 8),
-              _buildActionButton(
                 icon: _isLiked ? Icons.favorite : Icons.favorite_border,
                 onTap: _toggleLike,
                 color: _isLiked ? Colors.red : Colors.white,
@@ -344,13 +373,6 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
             value: '${widget.destination.totalLikes}',
             label: 'Lượt thích',
             color: Colors.red,
-          ),
-          _buildDivider(),
-          _buildStatItem(
-            icon: Icons.bookmark,
-            value: '${widget.destination.totalSaves}',
-            label: 'Đã lưu',
-            color: AppTheme.primaryColor,
           ),
         ],
       ),
@@ -477,6 +499,71 @@ class _DestinationDetailPageState extends State<DestinationDetailPage>
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAISummary() {
+    if (widget.destination.aiSummary == null || widget.destination.aiSummary!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryColor.withOpacity(0.15),
+            Colors.purple.withOpacity(0.15),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'AI Insights',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.destination.aiSummary!,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.9),
+              height: 1.6,
             ),
           ),
         ],

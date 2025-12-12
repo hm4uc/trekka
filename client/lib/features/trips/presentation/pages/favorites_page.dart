@@ -77,9 +77,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
         ),
         child: Row(
           children: [
-            _buildTab("Đã lưu", true),
-            _buildTab("Đã thích", false),
-            _buildTab("Check-in", false),
+            _buildTab("Đã thích", true),
+            _buildTab("Đã check-in", false),
           ],
         ),
       ),
@@ -185,7 +184,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.bookmark_border,
+                Icons.favorite_border,
                 color: AppTheme.primaryColor,
                 size: 64,
               ),

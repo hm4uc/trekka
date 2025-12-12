@@ -264,7 +264,7 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
         onSelected: (_) => _onFilterSelected(value),
         backgroundColor: AppTheme.surfaceColor,
         selectedColor: AppTheme.primaryColor,
-        checkmarkColor: Colors.black,
+        showCheckmark: false,
         side: BorderSide(
           color: isSelected ? AppTheme.primaryColor : Colors.white10,
           width: 1,

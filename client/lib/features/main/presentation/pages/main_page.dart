@@ -32,15 +32,78 @@ class MainView extends StatefulWidget {
   State<MainView> createState() => _MainViewState();
 }
 
-class _MainViewState extends State<MainView> {
+class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _offsetAnimation;
+  bool _isBottomBarVisible = true;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controller for bottom bar
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(0.0, 1.0),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
     // Fetch user profile when entering main screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthBloc>().add(AuthGetProfileRequested());
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification) {
+      final scrollPosition = notification.metrics.pixels;
+
+      // Always show bottom bar when at the top (with small threshold)
+      if (scrollPosition <= 50) {
+        if (!_isBottomBarVisible) {
+          setState(() {
+            _isBottomBarVisible = true;
+          });
+          _animationController.reverse();
+        }
+        return;
+      }
+
+      // Only hide/show when there's significant scroll movement
+      if (notification.scrollDelta != null && notification.scrollDelta!.abs() > 2) {
+        // User is scrolling down (hiding bottom bar)
+        if (notification.scrollDelta! > 0 && scrollPosition > 100) {
+          if (_isBottomBarVisible) {
+            setState(() {
+              _isBottomBarVisible = false;
+            });
+            _animationController.forward();
+          }
+        }
+        // User is scrolling up (showing bottom bar)
+        else if (notification.scrollDelta! < 0) {
+          if (!_isBottomBarVisible) {
+            setState(() {
+              _isBottomBarVisible = true;
+            });
+            _animationController.reverse();
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -63,16 +126,32 @@ class _MainViewState extends State<MainView> {
     return BlocBuilder<MainCubit, int>(
       builder: (context, currentIndex) {
         return Scaffold(
-          extendBody: true, // Cho nội dung tràn xuống dưới bottom bar
-          body: IndexedStack(
-            index: currentIndex,
-            children: pages,
-          ),
-          bottomNavigationBar: TrekkaBottomBar(
-            currentIndex: currentIndex,
-            onTap: (index) {
-              context.read<MainCubit>().changeTab(index);
+          extendBody: true,
+          body: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              _onScrollNotification(notification);
+              return false;
             },
+            child: IndexedStack(
+              index: currentIndex,
+              children: pages,
+            ),
+          ),
+          bottomNavigationBar: SlideTransition(
+            position: _offsetAnimation,
+            child: TrekkaBottomBar(
+              currentIndex: currentIndex,
+              onTap: (index) {
+                context.read<MainCubit>().changeTab(index);
+                // Show bottom bar when user taps
+                if (!_isBottomBarVisible) {
+                  setState(() {
+                    _isBottomBarVisible = true;
+                  });
+                  _animationController.reverse();
+                }
+              },
+            ),
           ),
         );
       },

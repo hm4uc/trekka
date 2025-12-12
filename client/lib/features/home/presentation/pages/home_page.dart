@@ -117,9 +117,9 @@ class _HomePageState extends State<HomePage> {
       floating: false,
       pinned: true,
       elevation: 0,
-      expandedHeight: 200,
+      expandedHeight: 185,
       // Chiều cao khi mở rộng
-      collapsedHeight: 70,
+      collapsedHeight: 60,
       // Chiều cao khi thu gọn
 
       // Nút hành động (Notification, Settings)
@@ -270,7 +270,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("$displayName",
+                Text(displayName,
                     style: GoogleFonts.inter(
                         fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
@@ -317,7 +317,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

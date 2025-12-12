@@ -194,27 +194,6 @@ class DestinationCard extends StatelessWidget {
               ),
             ),
           ),
-
-        // Save Button
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            height: 32,
-            width: 32,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              destination.totalSaves > 0
-                  ? Icons.bookmark
-                  : Icons.bookmark_border,
-              color: AppTheme.primaryColor,
-              size: 18,
-            ),
-          ),
-        ),
       ],
     );
   }

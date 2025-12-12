@@ -270,7 +270,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
       },
       backgroundColor: AppTheme.surfaceColor,
       selectedColor: AppTheme.primaryColor,
-      checkmarkColor: Colors.black,
+      showCheckmark: false,
       side: BorderSide(
         color: isSelected ? AppTheme.primaryColor : Colors.white10,
       ),
