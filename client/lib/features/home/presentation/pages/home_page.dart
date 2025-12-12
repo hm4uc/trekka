@@ -125,14 +125,16 @@ class _HomePageState extends State<HomePage> {
       // Nút hành động (Notification, Settings)
       actions: [
         Container(
-          margin: const EdgeInsets.only(right: 8),
+          margin: const EdgeInsets.only(right: 4),
           decoration: BoxDecoration(
             color: _isCollapsed ? Colors.transparent : Colors.black12, // Nền mờ khi mở rộng
             shape: BoxShape.circle,
           ),
           child: IconButton(
             icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 24),
-            onPressed: () {},
+            onPressed: () {
+              //todo
+            },
           ),
         ),
         Container(
@@ -315,7 +317,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
