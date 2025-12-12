@@ -79,3 +79,12 @@ class SaveDestinationEvent extends DestinationEvent {
   List<Object?> get props => [destinationId];
 }
 
+class CheckinDestinationEvent extends DestinationEvent {
+  final String destinationId;
+
+  const CheckinDestinationEvent(this.destinationId);
+
+  @override
+  List<Object?> get props => [destinationId];
+}
+

@@ -25,6 +25,7 @@ import 'features/destinations/domain/usecases/get_categories.dart';
 import 'features/destinations/domain/usecases/get_destinations.dart';
 import 'features/destinations/domain/usecases/like_destination.dart';
 import 'features/destinations/domain/usecases/save_destination.dart';
+import 'features/destinations/domain/usecases/checkin_destination.dart';
 import 'features/destinations/presentation/bloc/destination_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
@@ -92,6 +93,7 @@ Future<void> init() async {
         getCategories: sl(),
         likeDestination: sl(),
         saveDestination: sl(),
+        checkinDestination: sl(),
       ));
 
   // Use cases
@@ -99,6 +101,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetCategories(sl()));
   sl.registerLazySingleton(() => LikeDestination(sl()));
   sl.registerLazySingleton(() => SaveDestination(sl()));
+  sl.registerLazySingleton(() => CheckinDestination(sl()));
 
   // Repository
   sl.registerLazySingleton<DestinationRepository>(

@@ -270,7 +270,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Chào $displayName",
+                Text("$displayName",
                     style: GoogleFonts.inter(
                         fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
               ],
@@ -317,7 +317,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

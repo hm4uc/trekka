@@ -15,16 +15,32 @@ class ExplorePage extends StatefulWidget {
   State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> {
+class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCategoryId;
+  String _selectedFilter = 'popular'; // popular, nearby, cheap, rating
   final ScrollController _scrollController = ScrollController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+    _animationController.forward();
+
     // Fetch initial data
-    context.read<DestinationBloc>().add(const GetDestinationsEvent());
+    context.read<DestinationBloc>().add(GetDestinationsEvent(
+      sortBy: _getSortByValue(_selectedFilter) ?? 'rating',
+    ));
 
     // Pagination listener
     _scrollController.addListener(_onScroll);
@@ -68,14 +84,44 @@ class _ExplorePageState extends State<ExplorePage> {
         search: _searchController.text.isNotEmpty
             ? _searchController.text
             : null,
+        sortBy: _getSortByValue(_selectedFilter) ?? 'rating',
       ),
     );
+  }
+
+  void _onFilterSelected(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+    context.read<DestinationBloc>().add(
+      GetDestinationsEvent(
+        categoryId: _selectedCategoryId,
+        search: _searchController.text.isNotEmpty
+            ? _searchController.text
+            : null,
+        sortBy: _getSortByValue(filter) ?? 'rating',
+      ),
+    );
+  }
+
+  String? _getSortByValue(String filter) {
+    switch (filter) {
+      case 'nearby':
+        return 'distance';
+      case 'popular':
+        return 'rating';
+      case 'cheap':
+        return 'price';
+      default:
+        return 'rating';
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -89,6 +135,9 @@ class _ExplorePageState extends State<ExplorePage> {
         slivers: [
           // App Bar with Search
           _buildSliverAppBar(),
+
+          // Filter Chips (Gần bạn, Phổ biến, Giá rẻ)
+          _buildFilterChips(),
 
           // Category Filters
           _buildCategoryFilters(),
@@ -147,6 +196,80 @@ class _ExplorePageState extends State<ExplorePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 60,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Row(
+          children: [
+            Text(
+              "Tất cả địa điểm",
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: AppTheme.textGrey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildFilterChip('Gần bạn', 'nearby', Icons.near_me),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Phổ biến', 'popular', Icons.trending_up),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Giá rẻ', 'cheap', Icons.attach_money),
+                  const SizedBox(width: 8),
+                  _buildFilterChip('Đánh giá cao', 'rating', Icons.star),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value, IconData icon) {
+    final isSelected = _selectedFilter == value;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: FilterChip(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.black : AppTheme.textGrey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isSelected ? Colors.black : Colors.white,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        selected: isSelected,
+        onSelected: (_) => _onFilterSelected(value),
+        backgroundColor: AppTheme.surfaceColor,
+        selectedColor: AppTheme.primaryColor,
+        checkmarkColor: Colors.black,
+        side: BorderSide(
+          color: isSelected ? AppTheme.primaryColor : Colors.white10,
+          width: 1,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }
