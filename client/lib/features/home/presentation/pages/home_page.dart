@@ -70,28 +70,39 @@ class _HomePageState extends State<HomePage> {
               // 1. APP BAR (COLLAPSIBLE HEADER)
               _buildSliverAppBar(context, displayName, avatarUrl),
 
-              // 2. HERO SLIDER (AI SUGGESTION)
-              _buildSectionTitle("Dành riêng cho bạn ✦"),
-              _buildHeroSlider(),
+              // 2. AI TRIP PLANNER CTA (HERO CARD)
+              _buildAITripPlannerCTA(),
 
               // 3. YOUTH CATEGORIES
-              _buildSectionTitle("Hôm nay đi đâu?"),
+              _buildSectionTitle("Hôm nay đi đâu?", onTap: () {
+                context.push('/explore-detail', extra: {'filter': 'popular'});
+              }),
               _buildQuickCategories(),
 
               // 4. EVENTS NEAR YOU
-              _buildSectionTitle("Sự kiện gần bạn 🎉"),
+              _buildSectionTitle("Sự kiện gần bạn 🎉", onTap: () {
+                // Navigate to events list or explore with event filter if available
+                // For now, let's go to explore with 'nearby' filter
+                context.push('/explore-detail', extra: {'filter': 'nearby'});
+              }),
               _buildEventsSection(),
 
               // 5. TRENDING
-              _buildSectionTitle("Xu hướng tuần này 🔥"),
+              _buildSectionTitle("Xu hướng tuần này 🔥", onTap: () {
+                context.push('/explore-detail', extra: {'filter': 'popular'});
+              }),
               _buildHorizontalList(HomeMockData.trending, isLarge: false),
 
               // 6. BUDGET CHALLENGE
-              _buildSectionTitle("Thử thách ngân sách 💸"),
+              _buildSectionTitle("Thử thách ngân sách 💸", onTap: () {
+                context.push('/explore-detail', extra: {'filter': 'cheap'});
+              }),
               _buildBudgetGrid(),
 
               // 7. FOODTOUR
-              _buildSectionTitle("Foodtour không lối về 🍜"),
+              _buildSectionTitle("Foodtour không lối về 🍜", onTap: () {
+                context.push('/explore-detail', extra: {'categoryId': 'food_drink'});
+              }),
               _buildHorizontalList(HomeMockData.food, isCircle: true),
 
               // 8. SHORTS
@@ -117,7 +128,7 @@ class _HomePageState extends State<HomePage> {
       floating: false,
       pinned: true,
       elevation: 0,
-      expandedHeight: 185,
+      expandedHeight: 200,
       // Chiều cao khi mở rộng
       collapsedHeight: 60,
       // Chiều cao khi thu gọn
@@ -212,8 +223,8 @@ class _HomePageState extends State<HomePage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.primaryColor.withOpacity(0.15),
-                  AppTheme.surfaceColor.withOpacity(0.8),
+                  AppTheme.primaryColor.withValues(alpha: 0.15),
+                  AppTheme.surfaceColor.withValues(alpha: 0.8),
                 ],
               ),
               border: Border.all(color: Colors.white10),
@@ -240,7 +251,7 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text("AQI 45 (Tốt)",
@@ -314,92 +325,28 @@ class _HomePageState extends State<HomePage> {
 
   // --- CÁC WIDGET SECTION KHÁC (Giữ nguyên logic của bạn, chỉ chỉnh UI nhẹ) ---
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {VoidCallback? onTap}) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title,
-                style: GoogleFonts.inter(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            // Icon arrow thay vì text "Xem tất cả" để clean hơn
-            const Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.textGrey),
-          ],
+        child: GestureDetector(
+          onTap: onTap,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title,
+                  style: GoogleFonts.inter(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              // Icon arrow thay vì text "Xem tất cả" để clean hơn
+              const Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.textGrey),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Hero Slider
-  Widget _buildHeroSlider() {
-    return SliverToBoxAdapter(
-      child: SizedBox(
-        height: 200, // Giảm chiều cao chút cho cân đối
-        child: PageView.builder(
-          controller: PageController(viewportFraction: 0.88),
-          padEnds: false, // Căn trái
-          itemCount: HomeMockData.aiRecommendations.length,
-          itemBuilder: (context, index) {
-            final item = HomeMockData.aiRecommendations[index];
-            return Container(
-              margin: const EdgeInsets.only(left: 20), // Margin trái thay vì phải
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  image: DecorationImage(image: AssetImage(item.imageUrl), fit: BoxFit.cover),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4))
-                  ]),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                              color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(6)),
-                          child: Text("AI Gợi ý",
-                              style: GoogleFonts.inter(
-                                  fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(item.title,
-                            style: GoogleFonts.inter(
-                                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                        Text(item.subtitle,
-                            style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+
 
   // Quick Categories
   Widget _buildQuickCategories() {
@@ -412,25 +359,38 @@ class _HomePageState extends State<HomePage> {
           itemCount: HomeMockData.categories.length,
           itemBuilder: (context, index) {
             final cat = HomeMockData.categories[index];
-            return Container(
-              margin: const EdgeInsets.only(right: 20),
-              child: Column(
-                children: [
-                  Container(
-                    height: 56,
-                    width: 56,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A3E), // Màu nền tối nhẹ
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white10),
+            return GestureDetector(
+              onTap: () {
+                // Map category label/icon to ID if possible, or just pass label for now
+                // Assuming HomeMockData.categories has 'id' or we map it
+                // For simplicity, let's assume we can map or pass null
+                // In a real app, HomeMockData should have IDs.
+                // Let's try to map some common ones or just open explore
+                String? catId;
+                if (cat['label'] == 'Cafe') catId = 'fa590a55-b561-423b-b914-d6028def638a'; // Example ID from API docs
+
+                context.push('/explore-detail', extra: {'categoryId': catId});
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 20),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 56,
+                      width: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A3E), // Màu nền tối nhẹ
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Center(child: Text(cat['icon'], style: const TextStyle(fontSize: 22))),
                     ),
-                    child: Center(child: Text(cat['icon'], style: const TextStyle(fontSize: 22))),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(cat['label'],
-                      style: GoogleFonts.inter(
-                          fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500)),
-                ],
+                    const SizedBox(height: 8),
+                    Text(cat['label'],
+                        style: GoogleFonts.inter(
+                            fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500)),
+                  ],
+                ),
               ),
             );
           },
@@ -566,7 +526,7 @@ class _HomePageState extends State<HomePage> {
                           gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)]))),
+                              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)]))),
                   Positioned(
                     bottom: 12,
                     left: 12,
@@ -619,6 +579,172 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+    );
+  }
+
+  // AI TRIP PLANNER CTA CARD
+  Widget _buildAITripPlannerCTA() {
+    return SliverToBoxAdapter(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppTheme.primaryColor,
+              AppTheme.primaryColor.withValues(alpha: 0.7),
+              Colors.purple.shade700,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              // Navigate to AI Trip Planner
+              context.push('/ai-trip-planner');
+            },
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon & Badge
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.stars, color: Colors.white, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              'AI Powered',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  Text(
+                    'Tạo lịch trình\nthông minh với AI',
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Description
+                  Text(
+                    'AI sẽ giúp bạn lên kế hoạch chi tiết dựa trên sở thích, ngân sách và thời gian của bạn',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // CTA Button
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Bắt đầu ngay',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.arrow_forward,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Quick Stats
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _buildQuickStat(Icons.schedule, '5 phút'),
+                      const SizedBox(width: 16),
+                      _buildQuickStat(Icons.check_circle_outline, 'Miễn phí'),
+                      const SizedBox(width: 16),
+                      _buildQuickStat(Icons.favorite, '1000+ người dùng'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStat(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 16),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
     );
   }
 }

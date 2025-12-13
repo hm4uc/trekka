@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'app.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -11,17 +12,28 @@ void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // 1. Khởi tạo Dependency Injection (đợi nó load xong SharedPreferences, v.v.)
+  // Initialize EasyLocalization
+  await EasyLocalization.ensureInitialized();
+
+  // Initialize Dependency Injection
   await di.init();
 
   runApp(
-    // 2. Cung cấp AuthBloc cho toàn bộ ứng dụng
-    MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(create: (context) => di.sl<AuthBloc>()),
-        BlocProvider<PreferencesBloc>(create: (context) => di.sl<PreferencesBloc>()),
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('vi', 'VN'),
+        Locale('en', 'US'),
       ],
-      child: const TrekkaApp(),
+      path: 'assets/translations',
+      fallbackLocale: const Locale('vi', 'VN'),
+      startLocale: const Locale('vi', 'VN'),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(create: (context) => di.sl<AuthBloc>()),
+          BlocProvider<PreferencesBloc>(create: (context) => di.sl<PreferencesBloc>()),
+        ],
+        child: const TrekkaApp(),
+      ),
     ),
   );
 }

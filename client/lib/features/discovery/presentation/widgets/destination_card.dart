@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../destinations/domain/entities/destination.dart';
-import '../pages/destination_detail_page.dart';
 
 class DestinationCard extends StatelessWidget {
   final Destination destination;
@@ -14,12 +14,7 @@ class DestinationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DestinationDetailPage(destination: destination),
-          ),
-        );
+        context.push('/destination-detail/${destination.id}', extra: destination);
       },
       child: Hero(
         tag: 'destination_${destination.id}',
@@ -207,4 +202,3 @@ class DestinationCard extends StatelessWidget {
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(price);
   }
 }
-

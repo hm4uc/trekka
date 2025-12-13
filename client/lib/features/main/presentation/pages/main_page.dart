@@ -70,9 +70,10 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
   void _onScrollNotification(ScrollNotification notification) {
     if (notification is ScrollUpdateNotification) {
       final scrollPosition = notification.metrics.pixels;
+      final scrollDelta = notification.scrollDelta ?? 0;
 
-      // Always show bottom bar when at the top (with small threshold)
-      if (scrollPosition <= 50) {
+      // Always show bottom bar when near the top (increased threshold to handle bounce)
+      if (scrollPosition < 100) {
         if (!_isBottomBarVisible) {
           setState(() {
             _isBottomBarVisible = true;
@@ -83,9 +84,9 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
       }
 
       // Only hide/show when there's significant scroll movement
-      if (notification.scrollDelta != null && notification.scrollDelta!.abs() > 2) {
+      if (scrollDelta.abs() > 2) {
         // User is scrolling down (hiding bottom bar)
-        if (notification.scrollDelta! > 0 && scrollPosition > 100) {
+        if (scrollDelta > 0) {
           if (_isBottomBarVisible) {
             setState(() {
               _isBottomBarVisible = false;
@@ -94,7 +95,7 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
           }
         }
         // User is scrolling up (showing bottom bar)
-        else if (notification.scrollDelta! < 0) {
+        else if (scrollDelta < 0) {
           if (!_isBottomBarVisible) {
             setState(() {
               _isBottomBarVisible = true;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_themes.dart';
 
 class JourneyPage extends StatefulWidget {
@@ -28,108 +29,139 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // App Bar
-          _buildSliverAppBar(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(),
 
-          // Tab Bar
-          _buildTabBar(),
+            // Tab Bar
+            _buildTabBar(),
 
-          // Content
-          SliverFillRemaining(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildUpcomingTrips(),
-                _buildOngoingTrips(),
-                _buildCompletedTrips(),
-              ],
+            // Content
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildDraftTrips(),
+                  _buildActiveTrips(),
+                  _buildCompletedTrips(),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Navigate to create trip page
-        },
-        backgroundColor: AppTheme.primaryColor,
-        icon: const Icon(Icons.add, color: Colors.black),
-        label: Text(
-          "Tạo chuyến đi",
-          style: GoogleFonts.inter(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          ],
         ),
       ),
+      floatingActionButton: _buildFAB(),
     );
   }
 
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      backgroundColor: AppTheme.backgroundColor,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      expandedHeight: 100,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          "Hành trình",
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Hành trình",
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Quản lý các chuyến đi của bạn",
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppTheme.textGrey,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: const Icon(Icons.search, color: Colors.white, size: 20),
+            ),
+            onPressed: () {},
+          ),
+        ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search, color: Colors.white),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.filter_list, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
   Widget _buildTabBar() {
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: _StickyTabBarDelegate(
-        TabBar(
-          controller: _tabController,
-          indicatorColor: AppTheme.primaryColor,
-          indicatorWeight: 3,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textGrey,
-          labelStyle: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-          unselectedLabelStyle: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.normal,
-          ),
-          tabs: const [
-            Tab(text: "Sắp tới"),
-            Tab(text: "Đang diễn ra"),
-            Tab(text: "Hoàn thành"),
-          ],
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(20),
         ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelColor: Colors.black,
+        unselectedLabelColor: AppTheme.textGrey,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
+        unselectedLabelStyle: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        padding: const EdgeInsets.all(4),
+        tabs: const [
+          Tab(text: "Nháp"),
+          Tab(text: "Đang đi"),
+          Tab(text: "Hoàn thành"),
+        ],
       ),
     );
   }
 
-  Widget _buildUpcomingTrips() {
+  Widget _buildDraftTrips() {
+    // Mock draft trips
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: 3,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      itemCount: 2,
+      itemBuilder: (context, index) {
+        return _buildTripCard(
+          title: "Hà Nội - Thủ đô ngàn năm",
+          destination: "Hà Nội",
+          date: "Chưa xác định",
+          duration: "2N1Đ",
+          imageUrl: "assets/images/welcome.jpg",
+          status: "draft",
+          progress: 0.3,
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveTrips() {
+    // Mock active trips
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      itemCount: 1,
       itemBuilder: (context, index) {
         return _buildTripCard(
           title: "Hà Giang - Cao nguyên đá",
@@ -137,24 +169,18 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           date: "15 - 19 Dec 2025",
           duration: "4N3Đ",
           imageUrl: "assets/images/welcome.jpg",
-          status: "upcoming",
+          status: "active",
+          progress: 0.6,
         );
       },
     );
   }
 
-  Widget _buildOngoingTrips() {
-    return _buildEmptyState(
-      icon: Icons.luggage,
-      title: "Chưa có chuyến đi nào",
-      subtitle: "Các chuyến đi đang diễn ra\nsẽ hiển thị ở đây",
-    );
-  }
-
   Widget _buildCompletedTrips() {
+    // Mock completed trips
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: 2,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      itemCount: 3,
       itemBuilder: (context, index) {
         return _buildTripCard(
           title: "Đà Lạt - Thành phố ngàn hoa",
@@ -163,6 +189,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           duration: "2N1Đ",
           imageUrl: "assets/images/welcome.jpg",
           status: "completed",
+          progress: 1.0,
         );
       },
     );
@@ -175,194 +202,414 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
     required String duration,
     required String imageUrl,
     required String status,
+    required double progress,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.asset(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            Stack(
+              children: [
+                Image.asset(
                   imageUrl,
-                  height: 160,
+                  height: 140,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 140,
+                      color: AppTheme.backgroundColor,
+                      child: const Icon(Icons.image, size: 50, color: Colors.white30),
+                    );
+                  },
                 ),
-              ),
-              // Status Badge
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getStatusText(status),
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                // Gradient overlay
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.7),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: AppTheme.primaryColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      destination,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppTheme.textGrey,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.access_time, size: 16, color: AppTheme.primaryColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      duration,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppTheme.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 16, color: AppTheme.textGrey),
-                    const SizedBox(width: 4),
-                    Text(
-                      date,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppTheme.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.primaryColor,
-                          side: const BorderSide(color: AppTheme.primaryColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                // Status Badge
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(status),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: Text(
-                          "Chi tiết",
-                          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _getStatusIcon(status),
+                          size: 12,
+                          color: Colors.white,
                         ),
-                        child: Text(
-                          status == "completed" ? "Xem lại" : "Chỉnh sửa",
+                        const SizedBox(width: 4),
+                        Text(
+                          _getStatusText(status),
                           style: GoogleFonts.inter(
-                            color: Colors.black,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Info Row 1
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        destination,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppTheme.textGrey,
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(Icons.schedule_outlined, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        duration,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppTheme.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Info Row 2
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, size: 16, color: AppTheme.textGrey),
+                      const SizedBox(width: 6),
+                      Text(
+                        date,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppTheme.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Progress bar (only for active trips)
+                  if (status == 'active') ...[
+                    const SizedBox(height: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tiến độ chuyến đi',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: AppTheme.textGrey,
+                              ),
+                            ),
+                            Text(
+                              '${(progress * 100).toInt()}%',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: AppTheme.backgroundColor,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 14),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            // Navigate to trip timeline
+                            context.push('/trip-timeline/1');
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white30),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            "Chi tiết",
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // TODO: Navigate to edit or review
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            _getActionButtonText(status),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState({
+  Widget _buildFAB() {
+    return FloatingActionButton.extended(
+      onPressed: () {
+        _showCreateTripOptions();
+      },
+      backgroundColor: AppTheme.primaryColor,
+      elevation: 4,
+      icon: const Icon(Icons.add, color: Colors.black, size: 22),
+      label: Text(
+        "Tạo chuyến đi",
+        style: GoogleFonts.inter(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
+  void _showCreateTripOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white30,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tạo chuyến đi mới',
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // AI Option
+                    _buildCreateOption(
+                      icon: Icons.auto_awesome,
+                      title: 'Tạo với AI',
+                      subtitle: 'AI sẽ giúp bạn lên kế hoạch chi tiết',
+                      color: AppTheme.primaryColor,
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.push('/ai-trip-planner');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Manual Option
+                    _buildCreateOption(
+                      icon: Icons.edit_outlined,
+                      title: 'Tạo thủ công',
+                      subtitle: 'Tự do tùy chỉnh theo ý bạn',
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.push('/manual-trip-creator');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateOption({
     required IconData icon,
     required String title,
     required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
   }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 24),
             ),
-            child: Icon(icon, color: AppTheme.primaryColor, size: 64),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppTheme.textGrey,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 14),
-          ),
-        ],
+            const Icon(Icons.arrow_forward_ios, color: AppTheme.textGrey, size: 16),
+          ],
+        ),
       ),
     );
   }
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'upcoming':
-        return Colors.blue;
-      case 'ongoing':
+      case 'draft':
+        return Colors.orange;
+      case 'active':
         return Colors.green;
       case 'completed':
         return AppTheme.textGrey;
@@ -371,43 +618,43 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
     }
   }
 
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'draft':
+        return Icons.edit_outlined;
+      case 'active':
+        return Icons.navigation;
+      case 'completed':
+        return Icons.check_circle;
+      default:
+        return Icons.circle;
+    }
+  }
+
   String _getStatusText(String status) {
     switch (status) {
-      case 'upcoming':
-        return 'Sắp tới';
-      case 'ongoing':
-        return 'Đang diễn ra';
+      case 'draft':
+        return 'Nháp';
+      case 'active':
+        return 'Đang đi';
       case 'completed':
         return 'Hoàn thành';
       default:
         return 'Chưa xác định';
     }
   }
-}
 
-// Custom delegate for sticky tab bar
-class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-
-  _StickyTabBarDelegate(this.tabBar);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: AppTheme.backgroundColor,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) {
-    return false;
+  String _getActionButtonText(String status) {
+    switch (status) {
+      case 'draft':
+        return 'Chỉnh sửa';
+      case 'active':
+        return 'Xem tiến độ';
+      case 'completed':
+        return 'Xem lại';
+      default:
+        return 'Xem';
+    }
   }
 }
 

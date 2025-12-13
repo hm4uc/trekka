@@ -9,7 +9,16 @@ import '../widgets/destination_card.dart';
 import '../widgets/category_filter_chips.dart';
 
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({super.key});
+  final String? initialCategory;
+  final String? initialFilter;
+  final String? initialSearch;
+
+  const ExplorePage({
+    super.key,
+    this.initialCategory,
+    this.initialFilter,
+    this.initialSearch,
+  });
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -27,6 +36,14 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
   void initState() {
     super.initState();
 
+    _selectedCategoryId = widget.initialCategory;
+    if (widget.initialFilter != null) {
+      _selectedFilter = widget.initialFilter!;
+    }
+    if (widget.initialSearch != null) {
+      _searchController.text = widget.initialSearch!;
+    }
+
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
@@ -40,6 +57,8 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
     // Fetch initial data
     context.read<DestinationBloc>().add(GetDestinationsEvent(
       sortBy: _getSortByValue(_selectedFilter) ?? 'rating',
+      categoryId: _selectedCategoryId,
+      search: _searchController.text.isNotEmpty ? _searchController.text : null,
     ));
 
     // Pagination listener

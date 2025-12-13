@@ -22,6 +22,7 @@ dependencies:
   flutter_native_splash: ^2.4.7
   intl: ^0.20.2
   url_launcher: ^6.3.2    # Mở links và maps
+  easy_localization: ^3.0.7  # Đa ngôn ngữ
 
 dev_dependencies:
   flutter_test:
