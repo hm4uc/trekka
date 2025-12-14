@@ -327,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
             border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
           ),
           child: Text(
-            "#$label",
+            label,
             style: GoogleFonts.inter(
                 color: AppTheme.primaryColor, fontWeight: FontWeight.w600, fontSize: 13),
           ),

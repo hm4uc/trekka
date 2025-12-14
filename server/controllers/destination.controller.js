@@ -121,28 +121,10 @@ async function likeDestination(req, res, next) {
 
         res.status(StatusCodes.OK).json({
             status: 'success',
-            message: 'Đã like địa điểm',
+            message: result.isLiked ? 'Đã like địa điểm' : 'Đã bỏ like địa điểm',
             data: {
+                isLiked: result.isLiked,
                 total_likes: result.total_likes
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
-}
-
-async function saveDestination(req, res, next) {
-    try {
-        const { id } = req.params;
-        const userId = req.user.profileId;
-
-        const result = await destinationService.saveDestination(id, userId);
-
-        res.status(StatusCodes.OK).json({
-            status: 'success',
-            message: 'Đã lưu địa điểm',
-            data: {
-                total_saves: result.total_saves
             }
         });
     } catch (error) {
@@ -207,7 +189,6 @@ export default {
     getCategoriesByTravelStyle,
     getAiPicks,
     likeDestination,
-    saveDestination,
     checkinDestination,
     createDestination,
     updateDestination

@@ -48,7 +48,8 @@ const DestinationCategory = sequelize.define('DestinationCategory', {
     }
 }, {
     tableName: 'destination_categories',
-    timestamps: true // Thêm timestamps để theo dõi
+    timestamps: true,
+    underscored: true
 });
 
 export default DestinationCategory;

@@ -1,10 +1,17 @@
 import express from "express";
 import swaggerDocs from "./swagger.js";
 import sequelize from "./database/db.js";
+// Import associations FIRST before routes
+import "./models/associations.js";
 import mainRouter from "./routes/main.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import destinationRoutes from "./routes/destination.routes.js";
+import tripRoutes from "./routes/trip.routes.js";
+import eventRoutes from "./routes/event.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
+import groupRoutes from "./routes/group.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import userService from "./services/user.service.js";
 import cors from "cors";
@@ -52,6 +59,11 @@ app.use("/", mainRouter);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/destinations", destinationRoutes);
+app.use("/trips", tripRoutes);
+app.use("/events", eventRoutes);
+app.use("/reviews", reviewRoutes);
+app.use("/groups", groupRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Swagger (⚠️ thêm trước app.listen)
 swaggerDocs(app);
