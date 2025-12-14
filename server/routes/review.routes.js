@@ -61,6 +61,11 @@ const router = express.Router();
  * /reviews:
  *   post:
  *     summary: Tạo đánh giá mới
+ *     description: |
+ *       Tạo đánh giá cho địa điểm HOẶC sự kiện (chỉ chọn 1 trong 2).
+ *
+ *       **LƯU Ý**: Chỉ gửi field bạn cần (destId hoặc eventId), KHÔNG gửi field kia hoặc để null.
+ *       KHÔNG sử dụng chuỗi rỗng ("").
  *     tags: [Reviews]
  *     security:
  *       - bearerAuth: []
@@ -76,21 +81,41 @@ const router = express.Router();
  *               destId:
  *                 type: string
  *                 format: uuid
- *                 description: ID địa điểm (destId hoặc eventId bắt buộc)
+ *                 nullable: true
+ *                 description: ID địa điểm (chọn destId HOẶC eventId, không được cả 2). Bỏ qua field này khi đánh giá event.
  *               eventId:
  *                 type: string
  *                 format: uuid
- *                 description: ID sự kiện (destId hoặc eventId bắt buộc)
+ *                 nullable: true
+ *                 description: ID sự kiện (chọn destId HOẶC eventId, không được cả 2). Bỏ qua field này khi đánh giá destination.
  *               rating:
  *                 type: integer
  *                 minimum: 1
  *                 maximum: 5
+ *                 example: 5
  *               comment:
  *                 type: string
+ *                 example: "Không gian đẹp, nhiều tranh ấn tượng!"
  *               images:
  *                 type: array
  *                 items:
  *                   type: string
+ *                 example: ["https://example.com/image1.jpg"]
+ *           examples:
+ *             reviewDestination:
+ *               summary: Đánh giá địa điểm (chỉ gửi destId)
+ *               value:
+ *                 destId: "123e4567-e89b-12d3-a456-426614174000"
+ *                 rating: 5
+ *                 comment: "Quán cafe rất đẹp!"
+ *                 images: []
+ *             reviewEvent:
+ *               summary: Đánh giá sự kiện (chỉ gửi eventId)
+ *               value:
+ *                 eventId: "123e4567-e89b-12d3-a456-426614174001"
+ *                 rating: 4
+ *                 comment: "Sự kiện tổ chức tốt!"
+ *                 images: []
  *     responses:
  *       201:
  *         description: Created
@@ -101,12 +126,14 @@ const router = express.Router();
  *               properties:
  *                 status:
  *                   type: string
+ *                   example: success
  *                 message:
  *                   type: string
+ *                   example: Review created successfully
  *                 data:
  *                   $ref: '#/components/schemas/Review'
  *       400:
- *         description: Bad request
+ *         description: Bad request - Either destId or eventId must be provided (not both)
  */
 router.post('/', authenticate, reviewController.createReview);
 

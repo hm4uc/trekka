@@ -161,7 +161,7 @@ router.put('/:id', authenticate, groupController.updateGroup);
  * @swagger
  * /groups/{id}:
  *   delete:
- *     summary: Xóa nhóm (Creator only)
+ *     summary: Xóa nhóm (Admin only)
  *     tags: [Groups]
  *     security:
  *       - bearerAuth: []
@@ -223,7 +223,7 @@ router.post('/:id/members', authenticate, groupController.addMember);
  * @swagger
  * /groups/{id}/members/{memberId}:
  *   delete:
- *     summary: Xóa thành viên khỏi nhóm (Admin only)
+ *     summary: Xóa thành viên khỏi nhóm (Admin)
  *     tags: [Groups]
  *     security:
  *       - bearerAuth: []
@@ -244,7 +244,7 @@ router.post('/:id/members', authenticate, groupController.addMember);
  *       200:
  *         description: Success
  *       400:
- *         description: Cannot remove creator
+ *         description: Cannot remove admin
  *       403:
  *         description: Only admin can remove members
  */

@@ -1,23 +1,26 @@
 import {Review, Destination, Event, Profile} from '../models/associations.js';
-import {Op} from 'sequelize';
 
 // Create review
 async function createReview(userId, {destId, eventId, rating, comment, images}) {
-    if (!destId && !eventId) {
+    // Convert empty strings to null
+    const cleanDestId = destId && destId.trim() !== '' ? destId : null;
+    const cleanEventId = eventId && eventId.trim() !== '' ? eventId : null;
+
+    if (!cleanDestId && !cleanEventId) {
         const error = new Error('Either destId or eventId must be provided');
         error.statusCode = 400;
         throw error;
     }
 
-    if (destId && eventId) {
+    if (cleanDestId && cleanEventId) {
         const error = new Error('Cannot review both destination and event at once');
         error.statusCode = 400;
         throw error;
     }
 
     // Check if destination/event exists
-    if (destId) {
-        const destination = await Destination.findOne({where: {id: destId}});
+    if (cleanDestId) {
+        const destination = await Destination.findOne({where: {id: cleanDestId}});
         if (!destination) {
             const error = new Error('Destination not found');
             error.statusCode = 404;
@@ -25,8 +28,8 @@ async function createReview(userId, {destId, eventId, rating, comment, images}) 
         }
     }
 
-    if (eventId) {
-        const event = await Event.findOne({where: {id: eventId}});
+    if (cleanEventId) {
+        const event = await Event.findOne({where: {id: cleanEventId}});
         if (!event) {
             const error = new Error('Event not found');
             error.statusCode = 404;
@@ -39,8 +42,8 @@ async function createReview(userId, {destId, eventId, rating, comment, images}) 
 
     const review = await Review.create({
         user_id: userId,
-        dest_id: destId,
-        event_id: eventId,
+        dest_id: cleanDestId,
+        event_id: cleanEventId,
         rating,
         comment,
         images: images || [],
@@ -48,8 +51,8 @@ async function createReview(userId, {destId, eventId, rating, comment, images}) 
     });
 
     // Update destination/event rating
-    if (destId) {
-        await updateDestinationRating(destId);
+    if (cleanDestId) {
+        await updateDestinationRating(cleanDestId);
     }
 
     return review;

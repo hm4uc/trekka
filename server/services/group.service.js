@@ -1,5 +1,4 @@
 import {Group, GroupMember, TripShare, GroupComment, Trip, Profile} from '../models/associations.js';
-import {Op} from 'sequelize';
 
 // Create group
 async function createGroup(userId, {group_name, group_description, group_avatar}) {
@@ -182,12 +181,24 @@ async function addMemberToGroup(groupId, userId, {memberEmail}) {
 
 // Remove member from group
 async function removeMemberFromGroup(groupId, userId, memberId) {
+    const group = await Group.findOne({
+        where: {id: groupId, is_active: true}
+    });
+
+    if (!group) {
+        const error = new Error('Group not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Check if user is admin or creator
+    const isCreator = group.created_by === userId;
     const adminMember = await GroupMember.findOne({
         where: {group_id: groupId, user_id: userId, role: 'admin'}
     });
 
-    if (!adminMember) {
-        const error = new Error('Only admin can remove members');
+    if (!isCreator && !adminMember) {
+        const error = new Error('Only admin or creator can remove members');
         error.statusCode = 403;
         throw error;
     }
@@ -203,7 +214,6 @@ async function removeMemberFromGroup(groupId, userId, memberId) {
     }
 
     // Cannot remove creator
-    const group = await Group.findOne({where: {id: groupId}});
     if (group.created_by === memberId) {
         const error = new Error('Cannot remove group creator');
         error.statusCode = 400;

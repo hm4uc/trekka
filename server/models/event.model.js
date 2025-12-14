@@ -35,10 +35,12 @@ const Event = sequelize.define('Event', {
     event_start: {
         type: DataTypes.DATE,
         allowNull: false,
+        field: 'event_start'
     },
     event_end: {
         type: DataTypes.DATE,
         allowNull: false,
+        field: 'event_end'
     },
     event_ticket_price: {
         type: DataTypes.DECIMAL(12, 2),
