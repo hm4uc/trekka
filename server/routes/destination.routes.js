@@ -472,37 +472,6 @@ router.get('/:id/nearby', destinationController.getNearbyDestinations);
  */
 router.post('/:id/like', authenticate, destinationController.likeDestination);
 
-/**
- * @swagger
- * /destinations/{id}/save:
- *   post:
- *     summary: Lưu địa điểm vào danh sách yêu thích
- *     tags: [Destinations]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Success
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 message:
- *                   type: string
- *                   example: "Đã lưu địa điểm"
- */
-router.post('/:id/save', authenticate, destinationController.saveDestination);
 
 /**
  * @swagger

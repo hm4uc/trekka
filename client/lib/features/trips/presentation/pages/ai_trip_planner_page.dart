@@ -103,7 +103,7 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
             const SizedBox(height: 24),
 
             // Budget
-            _buildLabel('Ngân sách mỗi người'),
+            _buildLabel('Ngân sách mỗi người / ngày'),
             _buildBudgetSlider(),
             const SizedBox(height: 24),
 

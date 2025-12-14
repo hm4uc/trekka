@@ -1,5 +1,5 @@
 import {Op, fn, col, literal} from 'sequelize';
-import {Destination, DestinationCategory} from '../models/associations.js';
+import {Destination, DestinationCategory, UserFeedback, Profile} from '../models/associations.js';
 import {isValidTravelStyle} from '../config/travelConstants.js';
 
 async function getAllDestinations({
@@ -262,28 +262,43 @@ async function likeDestination(id, userId) {
         throw error;
     }
 
-    // TODO: Record user interaction in user_interactions table
-    // For now, just increment count
-    await destination.increment('total_likes');
-
-    return destination;
-}
-
-async function saveDestination(id, userId) {
-    const destination = await Destination.findOne({
-        where: {id, is_active: true}
+    // Check if user already liked this destination
+    const existingLike = await UserFeedback.findOne({
+        where: {
+            user_id: userId,
+            target_id: id,
+            feedback_target_type: 'destination',
+            feedback_type: 'like'
+        }
     });
 
-    if (!destination) {
-        const error = new Error('Destination not found');
-        error.statusCode = 404;
-        throw error;
+    if (existingLike) {
+        // Unlike - remove the feedback
+        await existingLike.destroy();
+        await destination.decrement('total_likes');
+        await Profile.decrement('total_likes', { where: { id: userId } });
+
+        return {
+            ...destination.toJSON(),
+            isLiked: false
+        };
+    } else {
+        // Like - create new feedback
+        await UserFeedback.create({
+            user_id: userId,
+            target_id: id,
+            feedback_target_type: 'destination',
+            feedback_type: 'like'
+        });
+
+        await destination.increment('total_likes');
+        await Profile.increment('total_likes', { where: { id: userId } });
+
+        return {
+            ...destination.toJSON(),
+            isLiked: true
+        };
     }
-
-    // TODO: Add to user's saved destinations
-    await destination.increment('total_saves');
-
-    return destination;
 }
 
 async function checkinDestination(id, userId) {
@@ -297,8 +312,37 @@ async function checkinDestination(id, userId) {
         throw error;
     }
 
-    // TODO: Record check-in in user_checkins table
+    // Check if already checked in
+    const existingCheckin = await UserFeedback.findOne({
+        where: {
+            user_id: userId,
+            target_id: id,
+            feedback_target_type: 'destination',
+            feedback_type: 'checkin'
+        }
+    });
+
+    if (existingCheckin) {
+        const error = new Error('Already checked in at this destination');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Create check-in record
+    await UserFeedback.create({
+        user_id: userId,
+        target_id: id,
+        feedback_target_type: 'destination',
+        feedback_type: 'checkin',
+        metadata: {
+            checkin_time: new Date(),
+            lat: destination.lat,
+            lng: destination.lng
+        }
+    });
+
     await destination.increment('total_checkins');
+    await Profile.increment('total_checkins', { where: { id: userId } });
 
     return destination;
 }
@@ -342,7 +386,6 @@ export default {
     getCategoriesByTravelStyle,
     getAiPicks,
     likeDestination,
-    saveDestination,
     checkinDestination,
     createDestination,
     updateDestination
