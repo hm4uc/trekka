@@ -1,6 +1,37 @@
 import {Op} from 'sequelize';
 import {Trip, TripDestination, TripEvent, Destination, Event, Profile} from '../models/associations.js';
 
+// Helper function to validate trip_type and participant_count consistency
+function validateTripTypeAndParticipantCount(tripType, participantCount) {
+    const rules = {
+        'solo': { min: 1, max: 1 },
+        'couple': { min: 2, max: 2 },
+        'family': { min: 3, max: null },
+        'friends': { min: 2, max: null },
+        'group': { min: 3, max: null }
+    };
+
+    const rule = rules[tripType];
+
+    if (!rule) {
+        const error = new Error(`Invalid trip_type: ${tripType}. Must be one of: solo, couple, family, friends, group`);
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (participantCount < rule.min) {
+        const error = new Error(`Invalid participant_count for trip_type "${tripType}". Must be at least ${rule.min}`);
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (rule.max !== null && participantCount > rule.max) {
+        const error = new Error(`Invalid participant_count for trip_type "${tripType}". Must be exactly ${rule.max}`);
+        error.statusCode = 400;
+        throw error;
+    }
+}
+
 // Get all trips of a user
 async function getUserTrips(userId, {page = 1, limit = 10, status}) {
     const offset = (page - 1) * limit;
@@ -104,6 +135,26 @@ async function getTripById(tripId, userId) {
 
 // Create new trip
 async function createTrip(userId, data) {
+    // Validate trip_type and participant_count
+    if (data.trip_type && data.participant_count !== undefined) {
+        validateTripTypeAndParticipantCount(data.trip_type, data.participant_count);
+    } else if (data.trip_type && data.participant_count === undefined) {
+        // Auto-set participant_count based on trip_type
+        const defaultCounts = {
+            'solo': 1,
+            'couple': 2,
+            'family': 3,
+            'friends': 2,
+            'group': 3
+        };
+        data.participant_count = defaultCounts[data.trip_type] || 1;
+    } else if (!data.trip_type && data.participant_count !== undefined) {
+        // Auto-set trip_type based on participant_count
+        if (data.participant_count === 1) data.trip_type = 'solo';
+        else if (data.participant_count === 2) data.trip_type = 'couple';
+        else data.trip_type = 'group';
+    }
+
     const trip = await Trip.create({
         ...data,
         user_id: userId
@@ -123,6 +174,12 @@ async function updateTrip(tripId, userId, data) {
         error.statusCode = 404;
         throw error;
     }
+
+    // Validate trip_type and participant_count if either is being updated
+    const newTripType = data.trip_type || trip.trip_type;
+    const newParticipantCount = data.participant_count !== undefined ? data.participant_count : trip.participant_count;
+
+    validateTripTypeAndParticipantCount(newTripType, newParticipantCount);
 
     await trip.update(data);
     return trip;

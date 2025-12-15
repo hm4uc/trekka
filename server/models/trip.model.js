@@ -51,6 +51,14 @@ const Trip = sequelize.define('Trip', {
         type: DataTypes.ENUM('solo', 'couple', 'family', 'friends', 'group'),
         defaultValue: 'solo',
     },
+    participant_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+        validate: {
+            min: 1
+        },
+        comment: 'Số lượng người tham gia chuyến đi'
+    },
     visibility: {
         type: DataTypes.ENUM('private', 'friends', 'public'),
         defaultValue: 'private',

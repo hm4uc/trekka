@@ -49,6 +49,24 @@ const router = express.Router();
  *         trip_type:
  *           type: string
  *           enum: [solo, couple, family, friends, group]
+ *           description: |
+ *             Loại chuyến đi (phải phù hợp với participant_count):
+ *             - solo: 1 người
+ *             - couple: 2 người
+ *             - family: >= 3 người
+ *             - friends: >= 2 người
+ *             - group: >= 3 người
+ *         participant_count:
+ *           type: integer
+ *           minimum: 1
+ *           example: 2
+ *           description: |
+ *             Số lượng người tham gia chuyến đi (phải phù hợp với trip_type):
+ *             - Nếu trip_type là 'solo': phải là 1
+ *             - Nếu trip_type là 'couple': phải là 2
+ *             - Nếu trip_type là 'family': tối thiểu 3
+ *             - Nếu trip_type là 'friends': tối thiểu 2
+ *             - Nếu trip_type là 'group': tối thiểu 3
  *         visibility:
  *           type: string
  *           enum: [private, friends, public]
@@ -179,12 +197,32 @@ router.get('/:id', authenticate, tripController.getTripById);
  *               trip_type:
  *                 type: string
  *                 enum: [solo, couple, family, friends, group]
+ *                 description: |
+ *                   Loại chuyến đi. Quy tắc với participant_count:
+ *                   - solo: chỉ 1 người
+ *                   - couple: chỉ 2 người
+ *                   - family: tối thiểu 3 người
+ *                   - friends: tối thiểu 2 người
+ *                   - group: tối thiểu 3 người
+ *               participant_count:
+ *                 type: integer
+ *                 minimum: 1
+ *                 example: 2
+ *                 description: |
+ *                   Số lượng người tham gia. Phải phù hợp với trip_type:
+ *                   - solo: phải là 1
+ *                   - couple: phải là 2
+ *                   - family: >= 3
+ *                   - friends: >= 2
+ *                   - group: >= 3
  *               visibility:
  *                 type: string
  *                 enum: [private, friends, public]
  *     responses:
  *       201:
  *         description: Created
+ *       400:
+ *         description: Validation error (trip_type và participant_count không phù hợp)
  */
 router.post('/', authenticate, tripController.createTrip);
 
@@ -214,9 +252,19 @@ router.post('/', authenticate, tripController.createTrip);
  *                 type: string
  *               trip_budget:
  *                 type: number
+ *               trip_type:
+ *                 type: string
+ *                 enum: [solo, couple, family, friends, group]
+ *                 description: Nếu thay đổi trip_type, phải đảm bảo participant_count phù hợp
+ *               participant_count:
+ *                 type: integer
+ *                 minimum: 1
+ *                 description: Nếu thay đổi participant_count, phải đảm bảo phù hợp với trip_type
  *     responses:
  *       200:
  *         description: Success
+ *       400:
+ *         description: Validation error (trip_type và participant_count không phù hợp)
  *       404:
  *         description: Trip not found
  */

@@ -59,10 +59,6 @@ const Destination = sequelize.define('Destination', {
         type: DataTypes.INTEGER,
         defaultValue: 0,
     },
-    total_saves: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-    },
     total_checkins: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
