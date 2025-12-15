@@ -86,7 +86,7 @@ const router = express.Router();
  *         total_likes:
  *           type: integer
  *           example: 45
- *         total_saves:
+ *         total_checkins:
  *           type: integer
  *           example: 30
  *         tags:

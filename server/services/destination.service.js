@@ -64,7 +64,7 @@ async function getAllDestinations({
             orderClause = [['avg_cost', 'DESC']];
             break;
         case 'popularity':
-            orderClause = [['total_likes', 'DESC'], ['total_saves', 'DESC']];
+            orderClause = [['total_likes', 'DESC'], ['total_checkins', 'DESC']];
             break;
     }
 

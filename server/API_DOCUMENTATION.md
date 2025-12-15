@@ -587,6 +587,7 @@ Lấy danh sách chuyến đi của user
         "trip_status": "draft",
         "trip_transport": "walking",
         "trip_type": "solo",
+        "participant_count": 1,
         "visibility": "private",
         "total_distance": 0,
         "total_duration": 0,
@@ -668,6 +669,7 @@ Tạo chuyến đi mới
   "trip_budget": 600000,
   "trip_transport": "walking",
   "trip_type": "solo",
+  "participant_count": 1,
   "visibility": "private"
 }
 ```
@@ -694,7 +696,8 @@ Cập nhật chuyến đi
 ```json
 {
   "trip_title": "Hai ngày khám phá Hà Nội",
-  "trip_budget": 800000
+  "trip_budget": 800000,
+  "participant_count": 2
 }
 ```
 
