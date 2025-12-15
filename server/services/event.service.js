@@ -203,12 +203,60 @@ async function updateEvent(id, data) {
     return event;
 }
 
+// Check-in at event
+async function checkinEvent(id, userId) {
+    const event = await Event.findOne({
+        where: {id, is_active: true}
+    });
+
+    if (!event) {
+        const error = new Error('Event not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Check if already checked in
+    const existingCheckin = await UserFeedback.findOne({
+        where: {
+            user_id: userId,
+            target_id: id,
+            feedback_target_type: 'event',
+            feedback_type: 'checkin'
+        }
+    });
+
+    if (existingCheckin) {
+        const error = new Error('Already checked in at this event');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    // Create check-in record
+    await UserFeedback.create({
+        user_id: userId,
+        target_id: id,
+        feedback_target_type: 'event',
+        feedback_type: 'checkin',
+        metadata: {
+            checkin_time: new Date(),
+            lat: event.lat,
+            lng: event.lng
+        }
+    });
+
+    await event.increment('total_attendees');
+    await Profile.increment('total_checkins', {where: {id: userId}});
+
+    return event;
+}
+
 export default {
     getAllEvents,
     getEventById,
     getUpcomingEvents,
     likeEvent,
     createEvent,
-    updateEvent
+    updateEvent,
+    checkinEvent
 };
 

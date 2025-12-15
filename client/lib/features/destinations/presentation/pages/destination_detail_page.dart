@@ -3,12 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_themes.dart';
+import '../../../../injection_container.dart';
 import '../../domain/entities/destination.dart';
-// import '../../bloc/destination_bloc.dart';
-// import '../../bloc/destination_event.dart';
+import '../bloc/destination_detail_cubit.dart';
+import '../bloc/destination_detail_state.dart';
 import '../../../discovery/presentation/pages/destination_reviews_page.dart';
 
-class DestinationDetailPage extends StatefulWidget {
+class DestinationDetailPage extends StatelessWidget {
   final String destinationId;
   final Destination? destination;
 
@@ -19,95 +20,158 @@ class DestinationDetailPage extends StatefulWidget {
   });
 
   @override
-  State<DestinationDetailPage> createState() => _DestinationDetailPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => sl<DestinationDetailCubit>()
+        ..loadDestinationDetail(destinationId),
+      child: _DestinationDetailPageContent(
+        destinationId: destinationId,
+        initialDestination: destination,
+      ),
+    );
+  }
 }
 
-class _DestinationDetailPageState extends State<DestinationDetailPage> {
-  int _currentImageIndex = 0;
-  bool _isSaved = false;
-  bool _isLiked = false;
-  late Map<String, dynamic> _destination;
+class _DestinationDetailPageContent extends StatefulWidget {
+  final String destinationId;
+  final Destination? initialDestination;
+
+  const _DestinationDetailPageContent({
+    required this.destinationId,
+    this.initialDestination,
+  });
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.destination != null) {
-      _destination = {
-        'id': widget.destination!.id,
-        'name': widget.destination!.name,
-        'description': widget.destination!.description,
-        'address': widget.destination!.address,
-        'avgCost': widget.destination!.avgCost ?? 0.0,
-        'rating': widget.destination!.rating,
-        'totalReviews': widget.destination!.totalReviews,
-        'totalLikes': widget.destination!.totalLikes,
-        'images': widget.destination!.images.isNotEmpty
-            ? widget.destination!.images
-            : ['https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800'],
-        'openingHours': widget.destination!.openingHours ?? {},
-        'aiSummary': widget.destination!.aiSummary ?? 'Chưa có tóm tắt từ AI.',
-        'tags': widget.destination!.tags,
-        'category': widget.destination!.category?.name ?? 'Địa điểm',
-      };
-    } else {
-      _destination = _mockDestination;
-    }
-  }
+  State<_DestinationDetailPageContent> createState() =>
+      _DestinationDetailPageContentState();
+}
 
-  // Mock data - replace with API call
-  final _mockDestination = {
-    'id': '1',
-    'name': 'The Ylang Coffee - Hồ Gươm',
-    'description': 'Quán cafe view hồ đẹp, không gian yên tĩnh phù hợp làm việc và hẹn hò. Đồ uống đa dạng, giá cả hợp lý.',
-    'address': '2 Lê Thạch, Hoàn Kiếm, Hà Nội',
-    'avgCost': 80000.0,
-    'rating': 4.5,
-    'totalReviews': 120,
-    'totalLikes': 450,
-    'images': [
-      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800',
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800',
-      'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800',
-    ],
-    'openingHours': {
-      'monday': '08:00-22:00',
-      'tuesday': '08:00-22:00',
-      'wednesday': '08:00-22:00',
-      'thursday': '08:00-22:00',
-      'friday': '08:00-23:00',
-      'saturday': '08:00-23:00',
-      'sunday': '08:00-22:00',
-    },
-    'aiSummary': 'Không gian yên tĩnh, phù hợp làm việc và hẹn hò. View hồ đẹp, giá trung bình.',
-    'tags': ['wifi', 'view', 'quiet', 'work-friendly'],
-    'category': 'Cafe',
-  };
+class _DestinationDetailPageContentState
+    extends State<_DestinationDetailPageContent> {
+  int _currentImageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    return BlocConsumer<DestinationDetailCubit, DestinationDetailState>(
+      listener: (context, state) {
+        if (state is DestinationDetailActionSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+        } else if (state is DestinationDetailActionError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is DestinationDetailLoading) {
+          return Scaffold(
+            backgroundColor: AppTheme.backgroundColor,
+            body: const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            ),
+          );
+        }
+
+        if (state is DestinationDetailError) {
+          return Scaffold(
+            backgroundColor: AppTheme.backgroundColor,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Không thể tải dữ liệu',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppTheme.textGrey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      context
+                          .read<DestinationDetailCubit>()
+                          .loadDestinationDetail(widget.destinationId);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: const Text('Thử lại'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (state is! DestinationDetailLoaded) {
+          return Scaffold(
+            backgroundColor: AppTheme.backgroundColor,
+            body: const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            ),
+          );
+        }
+
+        final destination = state.destination;
+        final isLiked = state.isLiked;
+        final isSaved = state.isSaved;
+
+        return _buildContent(context, destination, isLiked, isSaved);
+      },
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    Destination destination,
+    bool isLiked,
+    bool isSaved,
+  ) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Stack(
         children: [
           CustomScrollView(
             slivers: [
-              _buildSliverAppBar(),
+              _buildSliverAppBar(destination, isLiked),
               SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
-                    _buildStatusBadge(),
+                    _buildHeader(destination),
+                    _buildStatusBadge(destination),
                     const SizedBox(height: 16),
-                    _buildAISummary(),
+                    _buildAISummary(destination),
                     const SizedBox(height: 16),
-                    _buildDescription(),
+                    _buildDescription(destination),
                     const SizedBox(height: 16),
-                    _buildInfoSection(),
+                    _buildInfoSection(destination),
                     const SizedBox(height: 16),
-                    _buildOpeningHours(),
+                    _buildOpeningHours(destination),
                     const SizedBox(height: 16),
-                    _buildReviewsSection(),
+                    _buildReviewsSection(destination),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -116,13 +180,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ),
         ],
       ),
-
-      // Bottom Action Bar
-      bottomNavigationBar: _buildBottomBar(),
+      bottomNavigationBar: _buildBottomBar(context, destination),
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(Destination destination, bool isLiked) {
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -147,11 +209,11 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ),
           child: IconButton(
             icon: Icon(
-              _isLiked ? Icons.favorite : Icons.favorite_border,
-              color: _isLiked ? Colors.red : Colors.white,
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              color: isLiked ? Colors.red : Colors.white,
             ),
             onPressed: () {
-              setState(() => _isLiked = !_isLiked);
+              context.read<DestinationDetailCubit>().toggleLike();
             },
           ),
         ),
@@ -163,7 +225,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ),
           child: IconButton(
             icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: _shareDestination,
+            onPressed: () => _shareDestination(destination),
           ),
         ),
       ],
@@ -172,12 +234,14 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           fit: StackFit.expand,
           children: [
             PageView.builder(
-              itemCount: (_destination['images'] as List?)?.length ?? 0,
+              itemCount: destination.images.isNotEmpty ? destination.images.length : 1,
               onPageChanged: (index) {
                 setState(() => _currentImageIndex = index);
               },
               itemBuilder: (context, index) {
-                final images = (_destination['images'] as List?) ?? [];
+                final images = destination.images.isNotEmpty
+                    ? destination.images
+                    : ['https://via.placeholder.com/800x400?text=No+Image'];
                 return Image.network(
                   images[index],
                   fit: BoxFit.cover,
@@ -204,7 +268,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      AppTheme.backgroundColor.withOpacity(0.8),
+                      AppTheme.backgroundColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -212,35 +276,36 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             ),
 
             // Image indicators
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  (_destination['images'] as List?)?.length ?? 0,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentImageIndex == index ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _currentImageIndex == index
-                          ? AppTheme.primaryColor
-                          : Colors.white30,
-                      borderRadius: BorderRadius.circular(4),
+            if (destination.images.isNotEmpty && destination.images.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    destination.images.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentImageIndex == index ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentImageIndex == index
+                            ? AppTheme.primaryColor
+                            : Colors.white30,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Destination destination) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -255,7 +320,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _destination['category'] as String,
+                  destination.category?.name ?? 'Địa điểm',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -267,7 +332,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
               Icon(Icons.star, color: Colors.amber, size: 20),
               const SizedBox(width: 4),
               Text(
-                (_destination['rating'] as double).toStringAsFixed(1),
+                destination.rating.toStringAsFixed(1),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -275,7 +340,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                 ),
               ),
               Text(
-                ' (${_destination['totalReviews']})',
+                ' (${destination.totalReviews})',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppTheme.textGrey,
@@ -285,7 +350,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            _destination['name'] as String,
+            destination.name,
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -300,7 +365,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  _destination['address'] as String,
+                  destination.address,
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppTheme.textGrey,
@@ -314,76 +379,123 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
-  Widget _buildStatusBadge() {
-    final now = DateTime.now();
-    final currentDay = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'][now.weekday - 1];
-    final hours = (_destination['openingHours'] as Map)[currentDay] as String;
-    final parts = hours.split('-');
-    final openTime = TimeOfDay(hour: int.parse(parts[0].split(':')[0]), minute: int.parse(parts[0].split(':')[1]));
-    final closeTime = TimeOfDay(hour: int.parse(parts[1].split(':')[0]), minute: int.parse(parts[1].split(':')[1]));
-
-    final nowMinutes = now.hour * 60 + now.minute;
-    final openMinutes = openTime.hour * 60 + openTime.minute;
-    final closeMinutes = closeTime.hour * 60 + closeTime.minute;
-
-    String status;
-    Color statusColor;
-    IconData statusIcon;
-
-    if (nowMinutes >= openMinutes && nowMinutes < closeMinutes) {
-      if (closeMinutes - nowMinutes <= 60) {
-        status = 'Sắp đóng cửa';
-        statusColor = Colors.orange;
-        statusIcon = Icons.access_time;
-      } else {
-        status = 'Đang mở cửa';
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-      }
-    } else {
-      status = 'Đã đóng cửa';
-      statusColor = Colors.red;
-      statusIcon = Icons.cancel;
+  Widget _buildStatusBadge(Destination destination) {
+    // Check if opening hours exist
+    if (destination.openingHours == null || destination.openingHours!.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: statusColor.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: statusColor.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(statusIcon, size: 16, color: statusColor),
-            const SizedBox(width: 6),
-            Text(
-              status,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: statusColor,
-              ),
-            ),
-            if (status == 'Sắp đóng cửa') ...[
+    final now = DateTime.now();
+    final currentDay = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][now.weekday - 1];
+    final hours = destination.openingHours![currentDay];
+
+    if (hours == null || hours == 'Closed') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cancel, size: 16, color: Colors.red),
+              const SizedBox(width: 6),
               Text(
-                ' • Đóng cửa lúc ${parts[1]}',
+                'Đã đóng cửa',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: statusColor.withOpacity(0.8),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
                 ),
               ),
             ],
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    }
+
+    final parts = hours.split('-');
+    if (parts.length != 2) return const SizedBox.shrink();
+
+    try {
+      final openParts = parts[0].split(':');
+      final closeParts = parts[1].split(':');
+      final openTime = TimeOfDay(hour: int.parse(openParts[0]), minute: int.parse(openParts[1]));
+      final closeTime = TimeOfDay(hour: int.parse(closeParts[0]), minute: int.parse(closeParts[1]));
+
+      final nowMinutes = now.hour * 60 + now.minute;
+      final openMinutes = openTime.hour * 60 + openTime.minute;
+      final closeMinutes = closeTime.hour * 60 + closeTime.minute;
+
+      String status;
+      Color statusColor;
+      IconData statusIcon;
+
+      if (nowMinutes >= openMinutes && nowMinutes < closeMinutes) {
+        if (closeMinutes - nowMinutes <= 60) {
+          status = 'Sắp đóng cửa';
+          statusColor = Colors.orange;
+          statusIcon = Icons.access_time;
+        } else {
+          status = 'Đang mở cửa';
+          statusColor = Colors.green;
+          statusIcon = Icons.check_circle;
+        }
+      } else {
+        status = 'Đã đóng cửa';
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel;
+      }
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(statusIcon, size: 16, color: statusColor),
+              const SizedBox(width: 6),
+              Text(
+                status,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: statusColor,
+                ),
+              ),
+              if (status == 'Sắp đóng cửa') ...[
+                Text(
+                  ' • Đóng cửa lúc ${parts[1]}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: statusColor.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
   }
 
-  Widget _buildAISummary() {
+  Widget _buildAISummary(Destination destination) {
+    if (destination.aiSummary == null || destination.aiSummary!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -391,12 +503,12 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTheme.primaryColor.withOpacity(0.15),
-              Colors.purple.withOpacity(0.1),
+              AppTheme.primaryColor.withValues(alpha: 0.15),
+              Colors.purple.withValues(alpha: 0.1),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,7 +516,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.2),
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.auto_awesome, color: AppTheme.primaryColor, size: 20),
@@ -424,7 +536,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _destination['aiSummary'] as String,
+                    destination.aiSummary!,
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: Colors.white,
@@ -440,7 +552,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
-  Widget _buildDescription() {
+  Widget _buildDescription(Destination destination) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -456,56 +568,59 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            _destination['description'] as String,
+            destination.description,
             style: GoogleFonts.inter(
               fontSize: 14,
               color: AppTheme.textGrey,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: (_destination['tags'] as List).map((tag) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceColor,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Text(
-                  '#$tag',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppTheme.primaryColor,
+          if (destination.tags.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: destination.tags.map((tag) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white10),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
+                  child: Text(
+                    '#$tag',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildInfoSection() {
+  Widget _buildInfoSection(Destination destination) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildInfoRow(
-            Icons.attach_money,
-            'Chi phí trung bình',
-            NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0)
-                .format(_destination['avgCost']),
-          ),
-          const SizedBox(height: 12),
+          if (destination.avgCost != null)
+            _buildInfoRow(
+              Icons.attach_money,
+              'Chi phí trung bình',
+              NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0)
+                  .format(destination.avgCost),
+            ),
+          if (destination.avgCost != null) const SizedBox(height: 12),
           _buildInfoRow(
             Icons.favorite,
             'Lượt thích',
-            '${_destination['totalLikes']} người yêu thích',
+            '${destination.totalLikes} người yêu thích',
           ),
         ],
       ),
@@ -525,7 +640,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.2),
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppTheme.primaryColor, size: 20),
@@ -559,10 +674,14 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
-  Widget _buildOpeningHours() {
-    final hours = _destination['openingHours'] as Map;
+  Widget _buildOpeningHours(Destination destination) {
+    if (destination.openingHours == null || destination.openingHours!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final hours = destination.openingHours!;
     final days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
-    final keys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -587,6 +706,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             ),
             child: Column(
               children: List.generate(7, (index) {
+                final dayHours = hours[keys[index]] ?? 'Không có thông tin';
                 return Padding(
                   padding: EdgeInsets.only(bottom: index < 6 ? 8 : 0),
                   child: Row(
@@ -600,7 +720,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
                         ),
                       ),
                       Text(
-                        hours[keys[index]] as String,
+                        dayHours,
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -618,7 +738,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
-  Widget _buildReviewsSection() {
+  Widget _buildReviewsSection(Destination destination) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -637,7 +757,14 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
               ),
               TextButton(
                 onPressed: () {
-                  // Navigate to reviews page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DestinationReviewsPage(
+                        destination: destination,
+                      ),
+                    ),
+                  );
                 },
                 child: Text(
                   'Xem tất cả',
@@ -756,7 +883,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
 
 
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(BuildContext context, Destination destination) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -775,16 +902,14 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
               ),
               child: IconButton(
                 onPressed: () {
-                  if (widget.destination != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DestinationReviewsPage(
-                          destination: widget.destination!,
-                        ),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DestinationReviewsPage(
+                        destination: destination,
                       ),
-                    );
-                  }
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
                 tooltip: 'Viết đánh giá',
@@ -795,7 +920,9 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             // Check-in Button
             Expanded(
               child: OutlinedButton(
-                onPressed: _checkIn,
+                onPressed: () {
+                  context.read<DestinationDetailCubit>().performCheckin();
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: const BorderSide(color: Colors.white30),
@@ -819,7 +946,7 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
             Expanded(
               flex: 2,
               child: ElevatedButton.icon(
-                onPressed: _addToTrip,
+                onPressed: () => _addToTrip(destination),
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: Text(
                   'Lên lịch',
@@ -844,46 +971,20 @@ class _DestinationDetailPageState extends State<DestinationDetailPage> {
     );
   }
 
-  void _shareDestination() {
+  void _shareDestination(Destination destination) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đang chia sẻ địa điểm...'),
+      SnackBar(
+        content: Text('Đang chia sẻ ${destination.name}...'),
         backgroundColor: AppTheme.primaryColor,
       ),
     );
   }
 
-  void _checkIn() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceColor,
-        title: Text(
-          'Check-in thành công!',
-          style: GoogleFonts.inter(color: Colors.white),
-        ),
-        content: Text(
-          'Bạn đã check-in tại ${_destination['name']}',
-          style: GoogleFonts.inter(color: AppTheme.textGrey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Đóng',
-              style: GoogleFonts.inter(color: AppTheme.primaryColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addToTrip() {
+  void _addToTrip(Destination destination) {
     // TODO: Show Add to Trip modal
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã thêm vào lịch trình!'),
+      SnackBar(
+        content: Text('Đã thêm ${destination.name} vào lịch trình!'),
         backgroundColor: AppTheme.primaryColor,
       ),
     );

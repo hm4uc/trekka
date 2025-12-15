@@ -22,11 +22,15 @@ import 'features/destinations/data/datasources/destination_remote_data_source.da
 import 'features/destinations/data/repositories/destination_repository_impl.dart';
 import 'features/destinations/domain/repositories/destination_repository.dart';
 import 'features/destinations/domain/usecases/get_categories.dart';
+import 'features/destinations/domain/usecases/get_categories_by_travel_style.dart';
 import 'features/destinations/domain/usecases/get_destinations.dart';
+import 'features/destinations/domain/usecases/get_destination_by_id.dart';
+import 'features/destinations/domain/usecases/get_nearby_destinations.dart';
 import 'features/destinations/domain/usecases/like_destination.dart';
 import 'features/destinations/domain/usecases/save_destination.dart';
 import 'features/destinations/domain/usecases/checkin_destination.dart';
 import 'features/destinations/presentation/bloc/destination_bloc.dart';
+import 'features/destinations/presentation/bloc/destination_detail_cubit.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -91,6 +95,16 @@ Future<void> init() async {
   sl.registerFactory(() => DestinationBloc(
         getDestinations: sl(),
         getCategories: sl(),
+        getCategoriesByTravelStyle: sl(),
+        likeDestination: sl(),
+        saveDestination: sl(),
+        checkinDestination: sl(),
+      ));
+
+  // Cubit
+  sl.registerFactory(() => DestinationDetailCubit(
+        getDestinationById: sl(),
+        getNearbyDestinations: sl(),
         likeDestination: sl(),
         saveDestination: sl(),
         checkinDestination: sl(),
@@ -98,7 +112,10 @@ Future<void> init() async {
 
   // Use cases
   sl.registerLazySingleton(() => GetDestinations(sl()));
+  sl.registerLazySingleton(() => GetDestinationById(sl()));
+  sl.registerLazySingleton(() => GetNearbyDestinations(sl()));
   sl.registerLazySingleton(() => GetCategories(sl()));
+  sl.registerLazySingleton(() => GetCategoriesByTravelStyle(sl()));
   sl.registerLazySingleton(() => LikeDestination(sl()));
   sl.registerLazySingleton(() => SaveDestination(sl()));
   sl.registerLazySingleton(() => CheckinDestination(sl()));

@@ -556,6 +556,146 @@ Like/Unlike sự kiện (toggle)
 
 ---
 
+#### **POST /events/:id/checkin** 🔒
+Check-in tại sự kiện
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Đã check-in tại sự kiện",
+  "data": {
+    "id": "uuid",
+    "event_name": "Hanoi Art Exhibition 2025",
+    "total_attendees": 151
+  }
+}
+```
+
+**Error (400):**
+```json
+{
+  "status": "error",
+  "message": "Already checked in at this event"
+}
+```
+
+---
+
+### 3.2. User Activity Routes (`/user`)
+
+#### **GET /user/liked** 🔒
+Lấy danh sách địa điểm và sự kiện đã like
+
+**Query Parameters:**
+- `page` (default: 1): Số trang
+- `limit` (default: 10): Số lượng items mỗi trang
+- `type`: destination | event (optional - không truyền sẽ lấy cả 2)
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "total": 25,
+    "currentPage": 1,
+    "totalPages": 3,
+    "data": [
+      {
+        "type": "destination",
+        "liked_at": "2025-01-14T10:30:00.000Z",
+        "id": "uuid",
+        "dest_name": "The Ylang Coffee",
+        "dest_description": "Quán cafe view Hồ Gươm",
+        "dest_avg_cost": 80000,
+        "dest_category_id": "cafe",
+        "lat": 21.0285,
+        "lng": 105.8542,
+        "total_likes": 150,
+        "total_checkins": 80
+      },
+      {
+        "type": "event",
+        "liked_at": "2025-01-13T15:20:00.000Z",
+        "id": "uuid",
+        "event_name": "Hanoi Art Exhibition 2025",
+        "event_description": "Triển lãm nghệ thuật hiện đại",
+        "event_ticket_price": 50000,
+        "event_start": "2025-01-15T15:00:00.000Z",
+        "event_end": "2025-01-15T20:00:00.000Z",
+        "total_likes": 81,
+        "total_attendees": 151
+      }
+    ]
+  }
+}
+```
+
+**Example with type filter:**
+```
+GET /user/liked?type=destination&page=1&limit=10
+```
+
+---
+
+#### **GET /user/checkins** 🔒
+Lấy danh sách địa điểm và sự kiện đã check-in
+
+**Query Parameters:**
+- `page` (default: 1): Số trang
+- `limit` (default: 10): Số lượng items mỗi trang
+- `type`: destination | event (optional - không truyền sẽ lấy cả 2)
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "total": 15,
+    "currentPage": 1,
+    "totalPages": 2,
+    "data": [
+      {
+        "type": "destination",
+        "checkin_at": "2025-01-14T14:30:00.000Z",
+        "checkin_metadata": {
+          "checkin_time": "2025-01-14T14:30:00.000Z",
+          "lat": 21.0285,
+          "lng": 105.8542
+        },
+        "id": "uuid",
+        "dest_name": "The Ylang Coffee",
+        "dest_description": "Quán cafe view Hồ Gươm",
+        "dest_avg_cost": 80000,
+        "total_likes": 150,
+        "total_checkins": 81
+      },
+      {
+        "type": "event",
+        "checkin_at": "2025-01-15T15:00:00.000Z",
+        "checkin_metadata": {
+          "checkin_time": "2025-01-15T15:00:00.000Z",
+          "lat": 21.0245,
+          "lng": 105.8512
+        },
+        "id": "uuid",
+        "event_name": "Hanoi Art Exhibition 2025",
+        "event_ticket_price": 50000,
+        "event_start": "2025-01-15T15:00:00.000Z",
+        "total_attendees": 151
+      }
+    ]
+  }
+}
+```
+
+**Example with type filter:**
+```
+GET /user/checkins?type=event&page=1&limit=5
+```
+
+---
+
 ## 4. MODULE: TRIPS (Quản lý chuyến đi)
 
 ### 4.1. Trip Routes (`/trips`)
