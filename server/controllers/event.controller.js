@@ -113,12 +113,30 @@ async function updateEvent(req, res, next) {
     }
 }
 
+async function checkinEvent(req, res, next) {
+    try {
+        const {id} = req.params;
+        const userId = req.user.profileId;
+
+        const result = await eventService.checkinEvent(id, userId);
+
+        res.status(StatusCodes.OK).json({
+            status: 'success',
+            message: 'Đã check-in tại sự kiện',
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export default {
     getAllEvents,
     getEventById,
     getUpcomingEvents,
     likeEvent,
     createEvent,
-    updateEvent
+    updateEvent,
+    checkinEvent
 };
 

@@ -95,6 +95,27 @@ class CategoryFilterChips extends StatelessWidget {
     switch (iconName.toLowerCase()) {
       case 'coffee':
         return Icons.coffee;
+      case 'palette':
+        return Icons.palette;
+      case 'glass-cheers':
+      case 'cocktail':
+        return Icons.local_bar;
+      case 'monument':
+        return Icons.museum; // Flutter doesn't have monument, use museum
+      case 'water':
+        return Icons.water;
+      case 'landmark':
+        return Icons.account_balance;
+      case 'tree':
+      case 'park':
+        return Icons.park;
+      case 'utensils':
+      case 'restaurant':
+        return Icons.restaurant;
+      case 'shopping-bag':
+        return Icons.shopping_bag;
+      case 'hamburger':
+        return Icons.fastfood;
       case 'umbrella-beach':
       case 'beach':
         return Icons.beach_access;
@@ -102,22 +123,11 @@ class CategoryFilterChips extends StatelessWidget {
         return Icons.terrain;
       case 'temple':
         return Icons.temple_buddhist;
-      case 'landmark':
-        return Icons.account_balance;
-      case 'tree':
-        return Icons.park;
-      case 'water':
-        return Icons.water;
       case 'film':
+      case 'movie':
         return Icons.movie;
-      case 'utensils':
-        return Icons.restaurant;
-      case 'shopping-bag':
-        return Icons.shopping_bag;
       case 'city':
         return Icons.location_city;
-      case 'cocktail':
-        return Icons.local_bar;
       case 'spa':
         return Icons.spa;
       case 'store':

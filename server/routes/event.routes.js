@@ -284,6 +284,46 @@ router.post('/:id/like', authenticate, eventController.likeEvent);
 
 /**
  * @swagger
+ * /events/{id}/checkin:
+ *   post:
+ *     summary: Check-in tại sự kiện
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: "Đã check-in tại sự kiện"
+ *                 data:
+ *                   $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Already checked in at this event
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Event not found
+ */
+router.post('/:id/checkin', authenticate, eventController.checkinEvent);
+
+/**
+ * @swagger
  * /events:
  *   post:
  *     summary: Tạo sự kiện mới (Admin)

@@ -61,6 +61,15 @@ class GetDestinationsEvent extends DestinationEvent {
 
 class GetCategoriesEvent extends DestinationEvent {}
 
+class GetCategoriesByTravelStyleEvent extends DestinationEvent {
+  final String travelStyle;
+
+  const GetCategoriesByTravelStyleEvent(this.travelStyle);
+
+  @override
+  List<Object?> get props => [travelStyle];
+}
+
 class LikeDestinationEvent extends DestinationEvent {
   final String destinationId;
 

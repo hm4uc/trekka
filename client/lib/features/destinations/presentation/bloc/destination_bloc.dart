@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/destination.dart';
 import '../../domain/usecases/get_categories.dart';
+import '../../domain/usecases/get_categories_by_travel_style.dart';
 import '../../domain/usecases/get_destinations.dart';
 import '../../domain/usecases/like_destination.dart';
 import '../../domain/usecases/save_destination.dart';
@@ -11,6 +12,7 @@ import 'destination_state.dart';
 class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
   final GetDestinations getDestinations;
   final GetCategories getCategories;
+  final GetCategoriesByTravelStyle getCategoriesByTravelStyle;
   final LikeDestination likeDestination;
   final SaveDestination saveDestination;
   final CheckinDestination checkinDestination;
@@ -20,12 +22,14 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
   DestinationBloc({
     required this.getDestinations,
     required this.getCategories,
+    required this.getCategoriesByTravelStyle,
     required this.likeDestination,
     required this.saveDestination,
     required this.checkinDestination,
   }) : super(DestinationInitial()) {
     on<GetDestinationsEvent>(_onGetDestinations);
     on<GetCategoriesEvent>(_onGetCategories);
+    on<GetCategoriesByTravelStyleEvent>(_onGetCategoriesByTravelStyle);
     on<LikeDestinationEvent>(_onLikeDestination);
     on<SaveDestinationEvent>(_onSaveDestination);
     on<CheckinDestinationEvent>(_onCheckinDestination);
@@ -113,6 +117,24 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
     Emitter<DestinationState> emit,
   ) async {
     final result = await getCategories();
+
+    result.fold(
+      (failure) => emit(DestinationError(failure.message)),
+      (categories) {
+        _categories = categories;
+        if (state is DestinationLoaded) {
+          final currentState = state as DestinationLoaded;
+          emit(currentState.copyWith(categories: categories));
+        }
+      },
+    );
+  }
+
+  Future<void> _onGetCategoriesByTravelStyle(
+    GetCategoriesByTravelStyleEvent event,
+    Emitter<DestinationState> emit,
+  ) async {
+    final result = await getCategoriesByTravelStyle(event.travelStyle);
 
     result.fold(
       (failure) => emit(DestinationError(failure.message)),

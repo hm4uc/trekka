@@ -7,6 +7,7 @@ import '../../../destinations/presentation/bloc/destination_event.dart';
 import '../../../destinations/presentation/bloc/destination_state.dart';
 import '../widgets/destination_card.dart';
 import '../widgets/category_filter_chips.dart';
+import '../widgets/travel_style_filter.dart';
 
 class ExplorePage extends StatefulWidget {
   final String? initialCategory;
@@ -27,6 +28,7 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCategoryId;
+  String? _selectedTravelStyle;
   String _selectedFilter = 'popular'; // popular, nearby, cheap, rating
   final ScrollController _scrollController = ScrollController();
   late AnimationController _animationController;
@@ -108,6 +110,33 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
     );
   }
 
+  void _onTravelStyleSelected(String? travelStyle) {
+    setState(() {
+      _selectedTravelStyle = travelStyle;
+      _selectedCategoryId = null; // Reset category when changing travel style
+    });
+
+    if (travelStyle == null) {
+      // Load all categories
+      context.read<DestinationBloc>().add(GetCategoriesEvent());
+    } else {
+      // Load categories by travel style
+      context.read<DestinationBloc>().add(
+        GetCategoriesByTravelStyleEvent(travelStyle),
+      );
+    }
+
+    // Reload destinations
+    context.read<DestinationBloc>().add(
+      GetDestinationsEvent(
+        search: _searchController.text.isNotEmpty
+            ? _searchController.text
+            : null,
+        sortBy: _getSortByValue(_selectedFilter) ?? 'rating',
+      ),
+    );
+  }
+
   void _onFilterSelected(String filter) {
     setState(() {
       _selectedFilter = filter;
@@ -157,6 +186,9 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
 
           // Filter Chips (Gần bạn, Phổ biến, Giá rẻ)
           _buildFilterChips(),
+
+          // Travel Style Filter (Nature, Food, Culture, etc.)
+          _buildTravelStyleFilter(),
 
           // Category Filters
           _buildCategoryFilters(),
@@ -289,6 +321,15 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
           width: 1,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+    );
+  }
+
+  Widget _buildTravelStyleFilter() {
+    return SliverToBoxAdapter(
+      child: TravelStyleFilter(
+        selectedTravelStyle: _selectedTravelStyle,
+        onStyleSelected: _onTravelStyleSelected,
       ),
     );
   }
