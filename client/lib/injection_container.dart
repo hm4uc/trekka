@@ -42,6 +42,16 @@ import 'features/events/domain/usecases/get_events.dart';
 import 'features/events/domain/usecases/get_upcoming_events.dart';
 import 'features/events/domain/usecases/like_event.dart';
 import 'features/events/presentation/bloc/event_bloc.dart';
+import 'features/reviews/data/datasources/review_remote_data_source.dart';
+import 'features/reviews/data/repositories/review_repository_impl.dart';
+import 'features/reviews/domain/repositories/review_repository.dart';
+import 'features/reviews/domain/usecases/create_review.dart';
+import 'features/reviews/domain/usecases/delete_review.dart';
+import 'features/reviews/domain/usecases/get_destination_reviews.dart';
+import 'features/reviews/domain/usecases/get_my_reviews.dart';
+import 'features/reviews/domain/usecases/mark_review_helpful.dart';
+import 'features/reviews/domain/usecases/update_review.dart';
+import 'features/reviews/presentation/bloc/review_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -170,6 +180,35 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<EventRemoteDataSource>(
     () => EventRemoteDataSourceImpl(sl()),
+  );
+
+  //! Features - Reviews
+  // Bloc
+  sl.registerFactory(() => ReviewBloc(
+        getDestinationReviews: sl(),
+        getMyReviews: sl(),
+        createReview: sl(),
+        updateReview: sl(),
+        deleteReview: sl(),
+        markReviewHelpful: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetDestinationReviews(sl()));
+  sl.registerLazySingleton(() => GetMyReviews(sl()));
+  sl.registerLazySingleton(() => CreateReview(sl()));
+  sl.registerLazySingleton(() => UpdateReview(sl()));
+  sl.registerLazySingleton(() => DeleteReview(sl()));
+  sl.registerLazySingleton(() => MarkReviewHelpful(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<ReviewRemoteDataSource>(
+    () => ReviewRemoteDataSourceImpl(sl()),
   );
 
   //! Core
