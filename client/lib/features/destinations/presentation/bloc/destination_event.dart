@@ -97,3 +97,38 @@ class CheckinDestinationEvent extends DestinationEvent {
   List<Object?> get props => [destinationId];
 }
 
+class GetLikedItemsEvent extends DestinationEvent {
+  final int page;
+  final int limit;
+  final String? type;
+  final bool loadMore;
+
+  const GetLikedItemsEvent({
+    this.page = 1,
+    this.limit = 10,
+    this.type = 'destination',
+    this.loadMore = false,
+  });
+
+  @override
+  List<Object?> get props => [page, limit, type, loadMore];
+}
+
+class GetCheckedInItemsEvent extends DestinationEvent {
+  final int page;
+  final int limit;
+  final String? type;
+  final bool loadMore;
+
+  const GetCheckedInItemsEvent({
+    this.page = 1,
+    this.limit = 10,
+    this.type = 'destination',
+    this.loadMore = false,
+  });
+
+  @override
+  List<Object?> get props => [page, limit, type, loadMore];
+}
+
+

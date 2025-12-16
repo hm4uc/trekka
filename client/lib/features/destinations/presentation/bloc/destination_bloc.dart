@@ -6,6 +6,8 @@ import '../../domain/usecases/get_destinations.dart';
 import '../../domain/usecases/like_destination.dart';
 import '../../domain/usecases/save_destination.dart';
 import '../../domain/usecases/checkin_destination.dart';
+import '../../domain/usecases/get_liked_items.dart';
+import '../../domain/usecases/get_checked_in_items.dart';
 import 'destination_event.dart';
 import 'destination_state.dart';
 
@@ -16,6 +18,8 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
   final LikeDestination likeDestination;
   final SaveDestination saveDestination;
   final CheckinDestination checkinDestination;
+  final GetLikedItems getLikedItems;
+  final GetCheckedInItems getCheckedInItems;
 
   List<DestinationCategory> _categories = [];
 
@@ -26,6 +30,8 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
     required this.likeDestination,
     required this.saveDestination,
     required this.checkinDestination,
+    required this.getLikedItems,
+    required this.getCheckedInItems,
   }) : super(DestinationInitial()) {
     on<GetDestinationsEvent>(_onGetDestinations);
     on<GetCategoriesEvent>(_onGetCategories);
@@ -33,6 +39,8 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
     on<LikeDestinationEvent>(_onLikeDestination);
     on<SaveDestinationEvent>(_onSaveDestination);
     on<CheckinDestinationEvent>(_onCheckinDestination);
+    on<GetLikedItemsEvent>(_onGetLikedItems);
+    on<GetCheckedInItemsEvent>(_onGetCheckedInItems);
   }
 
   Future<void> _onGetDestinations(
@@ -309,5 +317,106 @@ class DestinationBloc extends Bloc<DestinationEvent, DestinationState> {
       },
     );
   }
-}
 
+  Future<void> _onGetLikedItems(
+    GetLikedItemsEvent event,
+    Emitter<DestinationState> emit,
+  ) async {
+    // If loading more, show loading state with current data
+    if (event.loadMore && state is LikedItemsLoaded) {
+      final currentState = state as LikedItemsLoaded;
+      emit(LikedItemsLoadingMore(currentState.items));
+    } else {
+      emit(LikedItemsLoading());
+    }
+
+    final result = await getLikedItems(
+      page: event.page,
+      limit: event.limit,
+      type: event.type,
+    );
+
+    result.fold(
+      (failure) => emit(DestinationError(failure.message)),
+      (userActivityResult) {
+        final hasMore = userActivityResult.currentPage < userActivityResult.totalPages;
+
+        // If loading more, append to existing list
+        if (event.loadMore && state is LikedItemsLoadingMore) {
+          final currentState = state as LikedItemsLoadingMore;
+          final updatedItems = [
+            ...currentState.currentItems,
+            ...userActivityResult.items,
+          ];
+
+          emit(LikedItemsLoaded(
+            items: updatedItems,
+            currentPage: userActivityResult.currentPage,
+            totalPages: userActivityResult.totalPages,
+            total: userActivityResult.total,
+            hasMore: hasMore,
+          ));
+        } else {
+          emit(LikedItemsLoaded(
+            items: userActivityResult.items,
+            currentPage: userActivityResult.currentPage,
+            totalPages: userActivityResult.totalPages,
+            total: userActivityResult.total,
+            hasMore: hasMore,
+          ));
+        }
+      },
+    );
+  }
+
+  Future<void> _onGetCheckedInItems(
+    GetCheckedInItemsEvent event,
+    Emitter<DestinationState> emit,
+  ) async {
+    // If loading more, show loading state with current data
+    if (event.loadMore && state is CheckedInItemsLoaded) {
+      final currentState = state as CheckedInItemsLoaded;
+      emit(CheckedInItemsLoadingMore(currentState.items));
+    } else {
+      emit(CheckedInItemsLoading());
+    }
+
+    final result = await getCheckedInItems(
+      page: event.page,
+      limit: event.limit,
+      type: event.type,
+    );
+
+    result.fold(
+      (failure) => emit(DestinationError(failure.message)),
+      (userActivityResult) {
+        final hasMore = userActivityResult.currentPage < userActivityResult.totalPages;
+
+        // If loading more, append to existing list
+        if (event.loadMore && state is CheckedInItemsLoadingMore) {
+          final currentState = state as CheckedInItemsLoadingMore;
+          final updatedItems = [
+            ...currentState.currentItems,
+            ...userActivityResult.items,
+          ];
+
+          emit(CheckedInItemsLoaded(
+            items: updatedItems,
+            currentPage: userActivityResult.currentPage,
+            totalPages: userActivityResult.totalPages,
+            total: userActivityResult.total,
+            hasMore: hasMore,
+          ));
+        } else {
+          emit(CheckedInItemsLoaded(
+            items: userActivityResult.items,
+            currentPage: userActivityResult.currentPage,
+            totalPages: userActivityResult.totalPages,
+            total: userActivityResult.total,
+            hasMore: hasMore,
+          ));
+        }
+      },
+    );
+  }
+}

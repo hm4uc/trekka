@@ -7,7 +7,7 @@ import '../../../auth/presentation/pages/profile_page.dart';
 import '../../../destinations/presentation/bloc/destination_bloc.dart';
 import '../../../discovery/presentation/pages/explore_page.dart';
 import '../../../home/presentation/pages/home_page.dart';
-import '../../../trips/presentation/pages/favorites_page.dart';
+import '../../../trips/presentation/pages/favorites_page_wrapper.dart';
 import '../../../trips/presentation/pages/journey_page.dart';
 import '../cubit/main_cubit.dart';
 import '../widgets/trekka_bottom_bar.dart';
@@ -119,7 +119,7 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
       const JourneyPage(), // Tab 2
       BlocProvider(
         create: (_) => sl<DestinationBloc>(),
-        child: const FavoritesPage(),
+        child: const FavoritesPageWrapper(),
       ), // Tab 3
       const ProfilePage(), // Tab 4
     ];

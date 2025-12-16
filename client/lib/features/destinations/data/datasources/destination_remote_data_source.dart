@@ -27,6 +27,16 @@ abstract class DestinationRemoteDataSource {
   Future<List<DestinationCategoryModel>> getCategories();
   Future<List<DestinationCategoryModel>> getCategoriesByTravelStyle(
       String travelStyle);
+  Future<Map<String, dynamic>> getLikedItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  });
+  Future<Map<String, dynamic>> getCheckedInItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  });
 }
 
 class DestinationRemoteDataSourceImpl implements DestinationRemoteDataSource {
@@ -123,5 +133,40 @@ class DestinationRemoteDataSourceImpl implements DestinationRemoteDataSource {
     final List<dynamic> data = response['data'];
     return data.map((json) => DestinationCategoryModel.fromJson(json)).toList();
   }
+
+  @override
+  Future<Map<String, dynamic>> getLikedItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+
+    if (type != null) queryParams['type'] = type;
+
+    final response = await apiClient.get('/user/liked', queryParameters: queryParams);
+    return response;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCheckedInItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+
+    if (type != null) queryParams['type'] = type;
+
+    final response = await apiClient.get('/user/checkins', queryParameters: queryParams);
+    return response;
+  }
 }
+
 
