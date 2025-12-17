@@ -48,6 +48,7 @@ import 'features/reviews/domain/repositories/review_repository.dart';
 import 'features/reviews/domain/usecases/create_review.dart';
 import 'features/reviews/domain/usecases/delete_review.dart';
 import 'features/reviews/domain/usecases/get_destination_reviews.dart';
+import 'features/reviews/domain/usecases/get_event_reviews.dart';
 import 'features/reviews/domain/usecases/get_my_reviews.dart';
 import 'features/reviews/domain/usecases/mark_review_helpful.dart';
 import 'features/reviews/domain/usecases/update_review.dart';
@@ -186,6 +187,7 @@ Future<void> init() async {
   // Bloc
   sl.registerFactory(() => ReviewBloc(
         getDestinationReviews: sl(),
+        getEventReviews: sl(),
         getMyReviews: sl(),
         createReview: sl(),
         updateReview: sl(),
@@ -195,6 +197,7 @@ Future<void> init() async {
 
   // Use cases
   sl.registerLazySingleton(() => GetDestinationReviews(sl()));
+  sl.registerLazySingleton(() => GetEventReviews(sl()));
   sl.registerLazySingleton(() => GetMyReviews(sl()));
   sl.registerLazySingleton(() => CreateReview(sl()));
   sl.registerLazySingleton(() => UpdateReview(sl()));

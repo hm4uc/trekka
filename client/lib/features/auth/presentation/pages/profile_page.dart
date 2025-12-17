@@ -25,8 +25,10 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     // Gọi API lấy từ điển Constants (để map ID -> Label sở thích)
+    // Và refresh profile để lấy dữ liệu mới nhất
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
+      context.read<AuthBloc>().add(AuthGetProfileRequested());
     });
   }
 
@@ -35,19 +37,6 @@ class _ProfilePageState extends State<ProfilePage> {
     context.read<AuthBloc>().add(AuthGetProfileRequested());
     context.read<PreferencesBloc>().add(GetTravelConstantsEvent());
     await Future.delayed(const Duration(seconds: 1));
-  }
-
-  void _handleItemTap(String title) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Tính năng '$title' đang phát triển!",
-            style: const TextStyle(color: Colors.white)),
-        backgroundColor: AppTheme.surfaceColor,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
   @override
@@ -61,6 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
             body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
           );
         }
+
 
         return Scaffold(
           backgroundColor: AppTheme.backgroundColor,
@@ -103,14 +93,41 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   const SizedBox(height: 24),
                   _buildEditButton(context, user),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
+
+                  // Stats Section Header
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.bar_chart_rounded,
+                        color: AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Thống kê hoạt động',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
                   // Stats Row
                   Row(
                     children: [
-                      Expanded(child: _buildStatCard("42", "Điểm đến")),
+                      Expanded(child: _buildStatCard(
+                        "${user.totalDestinationsJoined ?? 0}",
+                        "Điểm đến"
+                      )),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildStatCard("15", "Sự kiện")),
+                      Expanded(child: _buildStatCard(
+                        "${user.totalEventsJoined ?? 0}",
+                        "Sự kiện"
+                      )),
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -330,7 +347,7 @@ class _ProfilePageState extends State<ProfilePage> {
           decoration: BoxDecoration(
             color: const Color(0xFF1E3E36),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
           ),
           child: Text(
             label,
@@ -343,19 +360,54 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatCard(String value, String label) {
+    // Choose icon based on label
+    IconData icon = label.contains('Điểm') ? Icons.place_rounded : Icons.event_rounded;
+    Color iconColor = label.contains('Điểm') ? AppTheme.primaryColor : Colors.amber;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
       ),
       child: Column(
         children: [
-          Text(value,
-              style: GoogleFonts.inter(
-                  fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          // Icon with background
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Value
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.inter(fontSize: 13, color: Colors.white60)),
+          // Label
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.white60,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );

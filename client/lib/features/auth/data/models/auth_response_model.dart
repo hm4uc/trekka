@@ -14,6 +14,8 @@ class UserModel extends User {
     super.bio,
     super.budget,
     super.preferences,
+    super.totalDestinationsJoined,
+    super.totalEventsJoined,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class UserModel extends User {
       token = json['token'];
     }
 
+
     // Xử lý tuổi - nhận cả số và chuỗi
     int? ageValue;
     if (userData['usr_age'] != null) {
@@ -46,6 +49,30 @@ class UserModel extends User {
         ageValue = int.tryParse(userData['usr_age']);
       } else if (userData['usr_age'] is num) {
         ageValue = (userData['usr_age'] as num).toInt();
+      }
+    }
+
+    // Xử lý total_destinations_joined - nhận cả số và chuỗi
+    int? totalDestinations;
+    if (userData['total_destinations_joined'] != null) {
+      if (userData['total_destinations_joined'] is int) {
+        totalDestinations = userData['total_destinations_joined'];
+      } else if (userData['total_destinations_joined'] is String) {
+        totalDestinations = int.tryParse(userData['total_destinations_joined']);
+      } else if (userData['total_destinations_joined'] is num) {
+        totalDestinations = (userData['total_destinations_joined'] as num).toInt();
+      }
+    }
+
+    // Xử lý total_events_joined - nhận cả số và chuỗi
+    int? totalEvents;
+    if (userData['total_events_joined'] != null) {
+      if (userData['total_events_joined'] is int) {
+        totalEvents = userData['total_events_joined'];
+      } else if (userData['total_events_joined'] is String) {
+        totalEvents = int.tryParse(userData['total_events_joined']);
+      } else if (userData['total_events_joined'] is num) {
+        totalEvents = (userData['total_events_joined'] as num).toInt();
       }
     }
 
@@ -64,6 +91,8 @@ class UserModel extends User {
           ? double.tryParse(userData['usr_budget'])
           : (userData['usr_budget'] as num?)?.toDouble(),
       preferences: (userData['usr_preferences'] as List?)?.map((e) => e.toString()).toList(),
+      totalDestinationsJoined: totalDestinations,
+      totalEventsJoined: totalEvents,
     );
   }
 
@@ -81,6 +110,8 @@ class UserModel extends User {
       'usr_bio': bio,
       'usr_budget': budget,
       'usr_preferences': preferences,
+      'total_destinations_joined': totalDestinationsJoined,
+      'total_events_joined': totalEventsJoined,
     };
   }
 }

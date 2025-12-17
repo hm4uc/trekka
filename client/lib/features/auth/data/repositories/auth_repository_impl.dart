@@ -68,6 +68,8 @@ class AuthRepositoryImpl implements AuthRepository {
         bio: remoteUser.bio,
         budget: remoteUser.budget,
         preferences: remoteUser.preferences,
+        totalDestinationsJoined: remoteUser.totalDestinationsJoined,
+        totalEventsJoined: remoteUser.totalEventsJoined,
       );
       await localDataSource.cacheUser(userWithToken);
       return Right(userWithToken);
@@ -146,6 +148,8 @@ class AuthRepositoryImpl implements AuthRepository {
         bio: updatedUserRemote.bio,
         budget: updatedUserRemote.budget,
         preferences: updatedUserRemote.preferences,
+        totalDestinationsJoined: updatedUserRemote.totalDestinationsJoined,
+        totalEventsJoined: updatedUserRemote.totalEventsJoined,
       );
 
       // 3. Cập nhật Cache Local

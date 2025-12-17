@@ -41,6 +41,12 @@ class _ReviewsListPageState extends State<ReviewsListPage> {
               sortBy: _sortBy,
             ),
           );
+    } else if (widget.eventId != null) {
+      context.read<ReviewBloc>().add(
+            events.GetEventReviewsEvent(
+              eventId: widget.eventId!,
+            ),
+          );
     }
   }
 
@@ -83,7 +89,7 @@ class _ReviewsListPageState extends State<ReviewsListPage> {
             color: Colors.white,
           ),
         ),
-        actions: [
+        actions: widget.destId != null ? [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort, color: Colors.white),
             color: const Color(0xFF2A2A3C),
@@ -100,7 +106,7 @@ class _ReviewsListPageState extends State<ReviewsListPage> {
               _buildSortMenuItem('helpful', 'Hữu ích nhất'),
             ],
           ),
-        ],
+        ] : null,
       ),
       body: BlocBuilder<ReviewBloc, ReviewState>(
         builder: (context, state) {
