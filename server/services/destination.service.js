@@ -1,5 +1,5 @@
 import {Op, fn, col, literal} from 'sequelize';
-import {Destination, DestinationCategory, UserFeedback, Profile} from '../models/associations.js';
+import {Destination, DestinationCategory, UserFeedback} from '../models/associations.js';
 import {isValidTravelStyle} from '../config/travelConstants.js';
 
 async function getAllDestinations({
@@ -276,7 +276,6 @@ async function likeDestination(id, userId) {
         // Unlike - remove the feedback
         await existingLike.destroy();
         await destination.decrement('total_likes');
-        await Profile.decrement('total_likes', { where: { id: userId } });
 
         return {
             ...destination.toJSON(),
@@ -292,7 +291,6 @@ async function likeDestination(id, userId) {
         });
 
         await destination.increment('total_likes');
-        await Profile.increment('total_likes', { where: { id: userId } });
 
         return {
             ...destination.toJSON(),
@@ -342,7 +340,6 @@ async function checkinDestination(id, userId) {
     });
 
     await destination.increment('total_checkins');
-    await Profile.increment('total_checkins', { where: { id: userId } });
 
     return destination;
 }

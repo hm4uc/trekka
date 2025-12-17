@@ -1,5 +1,5 @@
 import {Op, literal} from 'sequelize';
-import {Event, UserFeedback, Profile} from '../models/associations.js';
+import {Event, UserFeedback} from '../models/associations.js';
 
 // Get all events
 async function getAllEvents({
@@ -152,7 +152,6 @@ async function likeEvent(id, userId) {
     if (existingLike) {
         await existingLike.destroy();
         await event.decrement('total_likes');
-        await Profile.decrement('total_likes', {where: {id: userId}});
 
         return {
             ...event.toJSON(),
@@ -167,7 +166,6 @@ async function likeEvent(id, userId) {
         });
 
         await event.increment('total_likes');
-        await Profile.increment('total_likes', {where: {id: userId}});
 
         return {
             ...event.toJSON(),
@@ -245,7 +243,6 @@ async function checkinEvent(id, userId) {
     });
 
     await event.increment('total_attendees');
-    await Profile.increment('total_checkins', {where: {id: userId}});
 
     return event;
 }
