@@ -45,6 +45,20 @@ abstract class DestinationRepository {
   /// Get categories by travel style
   Future<Either<Failure, List<DestinationCategory>>> getCategoriesByTravelStyle(
       String travelStyle);
+
+  /// Get liked items (destinations/events)
+  Future<Either<Failure, UserActivityResult>> getLikedItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  });
+
+  /// Get checked-in items (destinations/events)
+  Future<Either<Failure, UserActivityResult>> getCheckedInItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  });
 }
 
 class DestinationsResult {
@@ -61,3 +75,16 @@ class DestinationsResult {
   });
 }
 
+class UserActivityResult {
+  final int total;
+  final int currentPage;
+  final int totalPages;
+  final List<Destination> items;
+
+  UserActivityResult({
+    required this.total,
+    required this.currentPage,
+    required this.totalPages,
+    required this.items,
+  });
+}

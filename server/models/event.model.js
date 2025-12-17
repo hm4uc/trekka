@@ -77,6 +77,14 @@ const Event = sequelize.define('Event', {
         type: DataTypes.INTEGER,
         defaultValue: 0,
     },
+    rating: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0,
+    },
+    total_reviews: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+    },
     is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

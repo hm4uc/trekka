@@ -9,7 +9,9 @@ import '../../../destinations/presentation/bloc/destination_state.dart';
 import '../../../discovery/presentation/widgets/destination_card.dart';
 
 class FavoritesPage extends StatefulWidget {
-  const FavoritesPage({super.key});
+  final int initialTab;
+
+  const FavoritesPage({super.key, this.initialTab = 0});
 
   @override
   State<FavoritesPage> createState() => _FavoritesPageState();
@@ -17,18 +19,30 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String? _selectedTypeFilter; // 'destination' or 'event' or null (all)
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTab);
     _tabController.addListener(() {
-      setState(() {});
+      if (_tabController.indexIsChanging) {
+        // Fetch data when tab changes
+        if (_tabController.index == 0) {
+          // Liked tab - refresh data
+          context.read<DestinationBloc>().add(const GetLikedItemsEvent(limit: 20));
+        } else {
+          // Checked-in tab - refresh data
+          context.read<DestinationBloc>().add(const GetCheckedInItemsEvent(limit: 20));
+        }
+      }
     });
-    // Fetch saved destinations
-    // For now, we'll use the same destinations endpoint
-    // In the future, add a separate API endpoint for saved destinations
-    context.read<DestinationBloc>().add(const GetDestinationsEvent(limit: 20));
+    // Fetch initial data based on initialTab
+    if (widget.initialTab == 0) {
+      context.read<DestinationBloc>().add(const GetLikedItemsEvent(limit: 20));
+    } else {
+      context.read<DestinationBloc>().add(const GetCheckedInItemsEvent(limit: 20));
+    }
   }
 
   @override
@@ -49,6 +63,9 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
           // Tabs
           _buildTabs(),
+
+          // Filter Chips
+          _buildFilterChips(),
 
           // Tab Content
           SliverFillRemaining(
@@ -122,10 +139,76 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
     );
   }
 
+  Widget _buildFilterChips() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 50,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            _buildFilterChip(
+              label: 'Tất cả',
+              value: null,
+              isSelected: _selectedTypeFilter == null,
+            ),
+            const SizedBox(width: 8),
+            _buildFilterChip(
+              label: 'Địa điểm',
+              value: 'destination',
+              isSelected: _selectedTypeFilter == 'destination',
+            ),
+            const SizedBox(width: 8),
+            _buildFilterChip(
+              label: 'Sự kiện',
+              value: 'event',
+              isSelected: _selectedTypeFilter == 'event',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required String? value,
+    required bool isSelected,
+  }) {
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _selectedTypeFilter = selected ? value : null;
+        });
+        // Refresh data with filter
+        if (_tabController.index == 0) {
+          context.read<DestinationBloc>().add(
+                GetLikedItemsEvent(limit: 20, type: _selectedTypeFilter),
+              );
+        } else {
+          context.read<DestinationBloc>().add(
+                GetCheckedInItemsEvent(limit: 20, type: _selectedTypeFilter),
+              );
+        }
+      },
+      backgroundColor: AppTheme.surfaceColor,
+      selectedColor: AppTheme.primaryColor,
+      labelStyle: GoogleFonts.inter(
+        color: isSelected ? Colors.black : Colors.white70,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      side: BorderSide(
+        color: isSelected ? AppTheme.primaryColor : Colors.white10,
+      ),
+    );
+  }
+
   Widget _buildLikedTab() {
     return BlocBuilder<DestinationBloc, DestinationState>(
       builder: (context, state) {
-        if (state is DestinationLoading) {
+        if (state is LikedItemsLoading) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primaryColor),
           );
@@ -141,23 +224,31 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
                 Text(
                   state.message,
                   style: GoogleFonts.inter(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<DestinationBloc>().add(
+                          const GetLikedItemsEvent(limit: 20),
+                        );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                  child: const Text("Thử lại", style: TextStyle(color: Colors.black)),
                 ),
               ],
             ),
           );
         }
 
-        if (state is DestinationLoaded) {
-          // Filter destinations that have been liked
-          final savedDestinations = state.destinations
-              .where((dest) => dest.totalLikes > 0)
-              .toList();
-
-          if (savedDestinations.isEmpty) {
+        if (state is LikedItemsLoaded) {
+          if (state.items.isEmpty) {
             return _buildEmptyState(
               icon: Icons.favorite_border,
-              title: "Chưa có địa điểm yêu thích",
-              subtitle: "Khám phá và lưu các địa điểm\nbạn yêu thích để xem lại sau",
+              title: "Chưa có địa điểm hay sự kiện\nyêu thích",
+              subtitle: "Khám phá và lưu các địa điểm hoặc sự kiện\nbạn yêu thích để xem lại sau",
             );
           }
 
@@ -169,9 +260,9 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
               crossAxisSpacing: 16,
               childAspectRatio: 0.75,
             ),
-            itemCount: savedDestinations.length,
+            itemCount: state.items.length,
             itemBuilder: (context, index) {
-              final destination = savedDestinations[index];
+              final destination = state.items[index];
               return DestinationCard(destination: destination);
             },
           );
@@ -179,8 +270,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
         return _buildEmptyState(
           icon: Icons.favorite_border,
-          title: "Chưa có địa điểm yêu thích",
-          subtitle: "Khám phá và lưu các địa điểm\nbạn yêu thích để xem lại sau",
+          title: "Chưa có địa điểm hay sự kiện\nyêu thích",
+          subtitle: "Khám phá và lưu các địa điểm hoặc sự kiện\nbạn yêu thích để xem lại sau",
         );
       },
     );
@@ -189,7 +280,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
   Widget _buildCheckedInTab() {
     return BlocBuilder<DestinationBloc, DestinationState>(
       builder: (context, state) {
-        if (state is DestinationLoading) {
+        if (state is CheckedInItemsLoading) {
           return const Center(
             child: CircularProgressIndicator(color: AppTheme.primaryColor),
           );
@@ -205,31 +296,39 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
                 Text(
                   state.message,
                   style: GoogleFonts.inter(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<DestinationBloc>().add(
+                          const GetCheckedInItemsEvent(limit: 20),
+                        );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                  child: const Text("Thử lại", style: TextStyle(color: Colors.black)),
                 ),
               ],
             ),
           );
         }
 
-        if (state is DestinationLoaded) {
-          // Filter destinations that have been checked in
-          final checkedInDestinations = state.destinations
-              .where((dest) => dest.totalCheckins > 0)
-              .toList();
-
-          if (checkedInDestinations.isEmpty) {
+        if (state is CheckedInItemsLoaded) {
+          if (state.items.isEmpty) {
             return _buildEmptyState(
               icon: Icons.location_on_outlined,
-              title: "Chưa check-in địa điểm nào",
-              subtitle: "Check-in tại các địa điểm bạn ghé thăm\nđể lưu lại kỷ niệm",
+              title: "Chưa check-in địa điểm hay sự kiện nào",
+              subtitle: "Check-in tại các địa điểm hoặc sự kiện\nbạn ghé thăm để lưu lại kỷ niệm",
             );
           }
 
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-            itemCount: checkedInDestinations.length,
+            itemCount: state.items.length,
             itemBuilder: (context, index) {
-              final destination = checkedInDestinations[index];
+              final destination = state.items[index];
               return _buildCheckedInCard(destination);
             },
           );
@@ -237,8 +336,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
         return _buildEmptyState(
           icon: Icons.location_on_outlined,
-          title: "Chưa check-in địa điểm nào",
-          subtitle: "Check-in tại các địa điểm bạn ghé thăm\nđể lưu lại kỷ niệm",
+          title: "Chưa check-in địa điểm hay sự kiện nào",
+          subtitle: "Check-in tại các địa điểm hoặc sự kiện\nbạn ghé thăm để lưu lại kỷ niệm",
         );
       },
     );
@@ -429,6 +528,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
           const SizedBox(height: 24),
           Text(
             title,
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 18,

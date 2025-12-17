@@ -153,5 +153,70 @@ class DestinationRepositoryImpl implements DestinationRepository {
       return Left(ServerFailure('Lỗi không xác định', 500));
     }
   }
-}
 
+  @override
+  Future<Either<Failure, UserActivityResult>> getLikedItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  }) async {
+    try {
+      final response = await remoteDataSource.getLikedItems(
+        page: page,
+        limit: limit,
+        type: type,
+      );
+
+      final data = response['data'];
+      final items = (data['data'] as List)
+          .map((json) => DestinationModel.fromJson(json))
+          .toList();
+
+      final result = UserActivityResult(
+        total: data['total'],
+        currentPage: data['currentPage'],
+        totalPages: data['totalPages'],
+        items: items,
+      );
+
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, e.statusCode));
+    } catch (e) {
+      return Left(ServerFailure('Lỗi không xác định: ${e.toString()}', 500));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserActivityResult>> getCheckedInItems({
+    int page = 1,
+    int limit = 10,
+    String? type,
+  }) async {
+    try {
+      final response = await remoteDataSource.getCheckedInItems(
+        page: page,
+        limit: limit,
+        type: type,
+      );
+
+      final data = response['data'];
+      final items = (data['data'] as List)
+          .map((json) => DestinationModel.fromJson(json))
+          .toList();
+
+      final result = UserActivityResult(
+        total: data['total'],
+        currentPage: data['currentPage'],
+        totalPages: data['totalPages'],
+        items: items,
+      );
+
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, e.statusCode));
+    } catch (e) {
+      return Left(ServerFailure('Lỗi không xác định: ${e.toString()}', 500));
+    }
+  }
+}

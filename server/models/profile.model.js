@@ -68,16 +68,6 @@ const Profile = sequelize.define('Profile', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
-    total_likes: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        comment: 'Tổng số địa điểm đã like'
-    },
-    total_checkins: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        comment: 'Tổng số lần check-in'
-    },
     is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

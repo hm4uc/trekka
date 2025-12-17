@@ -17,8 +17,13 @@ import '../../../../injection_container.dart';
 import '../../features/destinations/presentation/bloc/destination_bloc.dart';
 import '../../features/discovery/presentation/pages/explore_page.dart';
 import '../../features/events/presentation/pages/event_detail_page.dart';
+import '../../features/events/presentation/pages/events_list_page.dart';
+import '../../features/events/domain/entities/event.dart';
+import '../../features/events/presentation/bloc/event_bloc.dart';
 import '../../features/destinations/presentation/pages/destination_detail_page.dart';
 import '../../features/destinations/domain/entities/destination.dart';
+import '../../features/trips/presentation/pages/favorites_page.dart';
+import '../../features/trips/presentation/pages/my_trips_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -99,8 +104,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/event-detail/:eventId',
       builder: (context, state) {
-        final eventId = state.pathParameters['eventId'] ?? '';
-        return EventDetailPage(eventId: eventId);
+        final event = state.extra as Event?;
+        if (event == null) {
+          // If no event provided, navigate back or show error
+          return Scaffold(
+            body: Center(
+              child: Text('Event not found'),
+            ),
+          );
+        }
+        return EventDetailPage(event: event);
       },
     ),
     GoRoute(
@@ -113,6 +126,33 @@ final GoRouter appRouter = GoRouter(
           destinationId: destinationId,
           destination: destination,
         );
+      },
+    ),
+    GoRoute(
+      path: '/events',
+      builder: (context, state) {
+        return BlocProvider(
+          create: (context) => sl<EventBloc>(),
+          child: const EventsListPage(),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/favorites',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final initialTab = extra?['initialTab'] as int? ?? 0;
+
+        return BlocProvider(
+          create: (context) => sl<DestinationBloc>(),
+          child: FavoritesPage(initialTab: initialTab),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/my-trips',
+      builder: (context, state) {
+        return const MyTripsPage();
       },
     ),
   ],

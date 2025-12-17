@@ -121,13 +121,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   // 6. MENU
                   _buildMenuItem(Icons.calendar_today, "Lịch trình của tôi",
-                      () => _handleItemTap("Lịch trình")),
+                      () => context.push('/my-trips')),
                   _buildMenuItem(
-                      Icons.favorite, "Địa điểm yêu thích", () => _handleItemTap("Yêu thích")),
+                      Icons.favorite,
+                      "Địa điểm yêu thích",
+                      () => context.push('/favorites', extra: {'initialTab': 0})),
                   _buildMenuItem(
-                      Icons.location_on, "Địa điểm đã đi", () => _handleItemTap("Check-in")),
+                      Icons.location_on,
+                      "Địa điểm đã đi",
+                      () => context.push('/favorites', extra: {'initialTab': 1})),
                   _buildMenuItem(
-                      Icons.celebration, "Sự kiện đã tham gia", () => _handleItemTap("Sự kiện")),
+                      Icons.celebration,
+                      "Sự kiện đã tham gia",
+                      () => context.push('/favorites', extra: {'initialTab': 1})),
 
                   const SizedBox(height: 100),
                 ],

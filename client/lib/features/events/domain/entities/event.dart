@@ -2,80 +2,74 @@ import 'package:equatable/equatable.dart';
 
 class Event extends Equatable {
   final String id;
-  final String name;
-  final String description;
-  final String location;
+  final String eventName;
+  final String eventDescription;
+  final String eventLocation;
   final double lat;
   final double lng;
-  final DateTime startTime;
-  final DateTime endTime;
-  final double? ticketPrice;
+  final DateTime eventStart;
+  final DateTime eventEnd;
+  final double eventTicketPrice;
+  final String eventType;
+  final String eventOrganizer;
+  final int eventCapacity;
+  final List<String> eventTags;
   final List<String> images;
-  final String? category;
-  final bool isFeatured;
-  final bool isActive;
+  final String? contactInfo;
   final int totalAttendees;
-  final String? organizerName;
-  final String? organizerContact;
+  final int totalLikes;
+  final bool isActive;
+  final bool isFeatured;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const Event({
     required this.id,
-    required this.name,
-    required this.description,
-    required this.location,
+    required this.eventName,
+    required this.eventDescription,
+    required this.eventLocation,
     required this.lat,
     required this.lng,
-    required this.startTime,
-    required this.endTime,
-    this.ticketPrice,
+    required this.eventStart,
+    required this.eventEnd,
+    required this.eventTicketPrice,
+    required this.eventType,
+    required this.eventOrganizer,
+    required this.eventCapacity,
+    required this.eventTags,
     required this.images,
-    this.category,
-    required this.isFeatured,
-    required this.isActive,
+    this.contactInfo,
     required this.totalAttendees,
-    this.organizerName,
-    this.organizerContact,
+    required this.totalLikes,
+    required this.isActive,
+    required this.isFeatured,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   @override
   List<Object?> get props => [
         id,
-        name,
-        description,
-        location,
+        eventName,
+        eventDescription,
+        eventLocation,
         lat,
         lng,
-        startTime,
-        endTime,
-        ticketPrice,
+        eventStart,
+        eventEnd,
+        eventTicketPrice,
+        eventType,
+        eventOrganizer,
+        eventCapacity,
+        eventTags,
         images,
-        category,
-        isFeatured,
-        isActive,
+        contactInfo,
         totalAttendees,
-        organizerName,
-        organizerContact,
+        totalLikes,
+        isActive,
+        isFeatured,
+        createdAt,
+        updatedAt,
       ];
-
-  bool get isHappening {
-    final now = DateTime.now();
-    return now.isAfter(startTime) && now.isBefore(endTime);
-  }
-
-  bool get isUpcoming {
-    return DateTime.now().isBefore(startTime);
-  }
-
-  bool get isPast {
-    return DateTime.now().isAfter(endTime);
-  }
-
-  Duration get timeUntilStart {
-    return startTime.difference(DateTime.now());
-  }
-
-  Duration get timeUntilEnd {
-    return endTime.difference(DateTime.now());
-  }
 }
 

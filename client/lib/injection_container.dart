@@ -29,8 +29,29 @@ import 'features/destinations/domain/usecases/get_nearby_destinations.dart';
 import 'features/destinations/domain/usecases/like_destination.dart';
 import 'features/destinations/domain/usecases/save_destination.dart';
 import 'features/destinations/domain/usecases/checkin_destination.dart';
+import 'features/destinations/domain/usecases/get_liked_items.dart';
+import 'features/destinations/domain/usecases/get_checked_in_items.dart';
 import 'features/destinations/presentation/bloc/destination_bloc.dart';
 import 'features/destinations/presentation/bloc/destination_detail_cubit.dart';
+import 'features/events/data/datasources/event_remote_data_source.dart';
+import 'features/events/data/repositories/event_repository_impl.dart';
+import 'features/events/domain/repositories/event_repository.dart';
+import 'features/events/domain/usecases/checkin_event.dart';
+import 'features/events/domain/usecases/get_event_by_id.dart';
+import 'features/events/domain/usecases/get_events.dart';
+import 'features/events/domain/usecases/get_upcoming_events.dart';
+import 'features/events/domain/usecases/like_event.dart';
+import 'features/events/presentation/bloc/event_bloc.dart';
+import 'features/reviews/data/datasources/review_remote_data_source.dart';
+import 'features/reviews/data/repositories/review_repository_impl.dart';
+import 'features/reviews/domain/repositories/review_repository.dart';
+import 'features/reviews/domain/usecases/create_review.dart';
+import 'features/reviews/domain/usecases/delete_review.dart';
+import 'features/reviews/domain/usecases/get_destination_reviews.dart';
+import 'features/reviews/domain/usecases/get_my_reviews.dart';
+import 'features/reviews/domain/usecases/mark_review_helpful.dart';
+import 'features/reviews/domain/usecases/update_review.dart';
+import 'features/reviews/presentation/bloc/review_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -99,6 +120,8 @@ Future<void> init() async {
         likeDestination: sl(),
         saveDestination: sl(),
         checkinDestination: sl(),
+        getLikedItems: sl(),
+        getCheckedInItems: sl(),
       ));
 
   // Cubit
@@ -119,6 +142,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LikeDestination(sl()));
   sl.registerLazySingleton(() => SaveDestination(sl()));
   sl.registerLazySingleton(() => CheckinDestination(sl()));
+  sl.registerLazySingleton(() => GetLikedItems(sl()));
+  sl.registerLazySingleton(() => GetCheckedInItems(sl()));
 
   // Repository
   sl.registerLazySingleton<DestinationRepository>(
@@ -128,6 +153,62 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<DestinationRemoteDataSource>(
     () => DestinationRemoteDataSourceImpl(sl()),
+  );
+
+  //! Features - Events
+  // Bloc
+  sl.registerFactory(() => EventBloc(
+        getEvents: sl(),
+        getUpcomingEvents: sl(),
+        getEventById: sl(),
+        likeEvent: sl(),
+        checkinEvent: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetEvents(sl()));
+  sl.registerLazySingleton(() => GetUpcomingEvents(sl()));
+  sl.registerLazySingleton(() => GetEventById(sl()));
+  sl.registerLazySingleton(() => LikeEvent(sl()));
+  sl.registerLazySingleton(() => CheckinEvent(sl()));
+
+  // Repository
+  sl.registerLazySingleton<EventRepository>(
+    () => EventRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<EventRemoteDataSource>(
+    () => EventRemoteDataSourceImpl(sl()),
+  );
+
+  //! Features - Reviews
+  // Bloc
+  sl.registerFactory(() => ReviewBloc(
+        getDestinationReviews: sl(),
+        getMyReviews: sl(),
+        createReview: sl(),
+        updateReview: sl(),
+        deleteReview: sl(),
+        markReviewHelpful: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetDestinationReviews(sl()));
+  sl.registerLazySingleton(() => GetMyReviews(sl()));
+  sl.registerLazySingleton(() => CreateReview(sl()));
+  sl.registerLazySingleton(() => UpdateReview(sl()));
+  sl.registerLazySingleton(() => DeleteReview(sl()));
+  sl.registerLazySingleton(() => MarkReviewHelpful(sl()));
+
+  // Repository
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<ReviewRemoteDataSource>(
+    () => ReviewRemoteDataSourceImpl(sl()),
   );
 
   //! Core

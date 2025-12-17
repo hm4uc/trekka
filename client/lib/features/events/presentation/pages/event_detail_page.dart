@@ -1,164 +1,104 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_themes.dart';
+import '../../domain/entities/event.dart';
+import '../bloc/event_bloc.dart';
+import '../bloc/event_event.dart';
+import '../bloc/event_state.dart';
 
-class EventDetailPage extends StatefulWidget {
-  final String eventId;
+class EventDetailPage extends StatelessWidget {
+  final Event event;
 
-  const EventDetailPage({
-    super.key,
-    required this.eventId,
-  });
-
-  @override
-  State<EventDetailPage> createState() => _EventDetailPageState();
-}
-
-class _EventDetailPageState extends State<EventDetailPage> {
-  Timer? _countdownTimer;
-  Duration _timeRemaining = Duration.zero;
-
-  // Mock data - replace with API call
-  final _event = {
-    'id': '1',
-    'name': 'Hanoi Art Exhibition 2025',
-    'description': 'Triển lãm nghệ thuật quy tụ các họa sĩ nổi tiếng trong nước và quốc tế. Trưng bày hơn 100 tác phẩm nghệ thuật đương đại.',
-    'location': 'Tràng Tiền Plaza, Hoàn Kiếm, Hà Nội',
-    'startTime': DateTime(2025, 12, 15, 15, 0),
-    'endTime': DateTime(2025, 12, 15, 21, 0),
-    'ticketPrice': 50000.0,
-    'image': 'https://images.unsplash.com/photo-1531058020387-3be344556be6?w=800',
-    'category': 'Nghệ thuật',
-    'organizer': 'Hanoi Art Center',
-    'attendees': 245,
-    'maxCapacity': 500,
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _startCountdown();
-  }
-
-  @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    super.dispose();
-  }
-
-  void _startCountdown() {
-    _updateTimeRemaining();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateTimeRemaining();
-    });
-  }
-
-  void _updateTimeRemaining() {
-    final now = DateTime.now();
-    final startTime = _event['startTime'] as DateTime;
-
-    setState(() {
-      if (now.isBefore(startTime)) {
-        _timeRemaining = startTime.difference(now);
-      } else {
-        _timeRemaining = Duration.zero;
-        _countdownTimer?.cancel();
-      }
-    });
-  }
+  const EventDetailPage({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 16),
-                _buildCountdownSection(),
-                const SizedBox(height: 16),
-                _buildEventInfo(),
-                const SizedBox(height: 16),
-                _buildDescription(),
-                const SizedBox(height: 16),
-                _buildLocationSection(),
-                const SizedBox(height: 16),
-                _buildAttendeesSection(),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
+      body: BlocListener<EventBloc, EventState>(
+        listener: (context, state) {
+          if (state is EventActionSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          if (state is EventError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        child: CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context),
+            _buildEventInfo(context),
+          ],
+        ),
       ),
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 250,
+      expandedHeight: 300,
       pinned: true,
       backgroundColor: AppTheme.backgroundColor,
-      leading: Container(
-        margin: const EdgeInsets.all(8),
-        decoration: const BoxDecoration(
-          color: Colors.black54,
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      actions: [
-        Container(
-          margin: const EdgeInsets.all(8),
-          decoration: const BoxDecoration(
-            color: Colors.black54,
+      leading: IconButton(
+        icon: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
-          child: IconButton(
-            icon: const Icon(Icons.share, color: Colors.white),
-            onPressed: _shareEvent,
-          ),
+          child: const Icon(Icons.arrow_back, color: Colors.white),
         ),
-      ],
+        onPressed: () => Navigator.pop(context),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              _event['image'] as String,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: AppTheme.surfaceColor,
-                  child: const Icon(Icons.event, size: 100, color: Colors.white30),
-                );
-              },
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 80,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      AppTheme.backgroundColor.withOpacity(0.8),
-                    ],
-                  ),
+            if (event.images.isNotEmpty)
+              Image.network(
+                event.images.first,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppTheme.surfaceColor,
+                    child: const Icon(
+                      Icons.event,
+                      size: 100,
+                      color: AppTheme.primaryColor,
+                    ),
+                  );
+                },
+              )
+            else
+              Container(
+                color: AppTheme.surfaceColor,
+                child: const Icon(
+                  Icons.event,
+                  size: 100,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    AppTheme.backgroundColor.withValues(alpha: 0.8),
+                  ],
                 ),
               ),
             ),
@@ -168,203 +108,259 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildHeader() {
-    final startTime = _event['startTime'] as DateTime;
-    final endTime = _event['endTime'] as DateTime;
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              _event['category'] as String,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _event['name'] as String,
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 16, color: AppTheme.textGrey),
-              const SizedBox(width: 6),
-              Text(
-                '${DateFormat('dd/MM/yyyy').format(startTime)} • ${DateFormat('HH:mm').format(startTime)} - ${DateFormat('HH:mm').format(endTime)}',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: AppTheme.textGrey,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(Icons.location_on, size: 16, color: AppTheme.textGrey),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _event['location'] as String,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppTheme.textGrey,
+  Widget _buildEventInfo(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Event Type & Featured Badge
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getEventTypeColor(event.eventType).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getEventTypeLabel(event.eventType),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: _getEventTypeColor(event.eventType),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+                const SizedBox(width: 8),
+                if (event.isFeatured)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Nổi bật',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-  Widget _buildCountdownSection() {
-    if (_timeRemaining == Duration.zero) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                'Sự kiện đang diễn ra',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final days = _timeRemaining.inDays;
-    final hours = _timeRemaining.inHours % 24;
-    final minutes = _timeRemaining.inMinutes % 60;
-    final seconds = _timeRemaining.inSeconds % 60;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.2),
-              Colors.purple.withOpacity(0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
+            // Event Name
             Text(
-              'Sự kiện bắt đầu sau',
+              event.eventName,
               style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppTheme.textGrey,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
+
+            // Stats Row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildCountdownItem(days.toString(), 'Ngày'),
-                _buildCountdownItem(hours.toString().padLeft(2, '0'), 'Giờ'),
-                _buildCountdownItem(minutes.toString().padLeft(2, '0'), 'Phút'),
-                _buildCountdownItem(seconds.toString().padLeft(2, '0'), 'Giây'),
+                _buildStatItem(
+                  Icons.favorite,
+                  '${event.totalLikes}',
+                  Colors.red.shade400,
+                ),
+                const SizedBox(width: 20),
+                _buildStatItem(
+                  Icons.people,
+                  '${event.totalAttendees}/${event.eventCapacity}',
+                  AppTheme.primaryColor,
+                ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // Date & Time
+            _buildInfoSection(
+              Icons.calendar_today,
+              'Thời gian',
+              _formatEventDate(event.eventStart, event.eventEnd),
+            ),
+            const SizedBox(height: 16),
+
+            // Location
+            _buildInfoSection(
+              Icons.location_on,
+              'Địa điểm',
+              event.eventLocation,
+            ),
+            const SizedBox(height: 16),
+
+            // Organizer
+            _buildInfoSection(
+              Icons.business,
+              'Ban tổ chức',
+              event.eventOrganizer,
+            ),
+            const SizedBox(height: 16),
+
+            // Price
+            _buildInfoSection(
+              Icons.attach_money,
+              'Giá vé',
+              _formatPrice(event.eventTicketPrice),
+            ),
+            const SizedBox(height: 24),
+
+            // Description
+            Text(
+              'Mô tả',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              event.eventDescription,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppTheme.textGrey,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Tags
+            if (event.eventTags.isNotEmpty) ...[
+              Text(
+                'Tags',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: event.eventTags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.primaryColor),
+                    ),
+                    child: Text(
+                      '#$tag',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+            ],
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<EventBloc>().add(LikeEventEvent(event.id));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.surfaceColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.red.shade400),
+                      ),
+                    ),
+                    icon: Icon(Icons.favorite_border, color: Colors.red.shade400),
+                    label: Text(
+                      'Yêu thích',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<EventBloc>().add(CheckinEventEvent(event.id));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_circle, color: Colors.black),
+                    label: Text(
+                      'Check-in',
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCountdownItem(String value, String label) {
-    return Column(
+  Widget _buildStatItem(IconData icon, String value, Color color) {
+    return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppTheme.backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-          ),
-          child: Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 6),
         Text(
-          label,
+          value,
           style: GoogleFonts.inter(
-            fontSize: 11,
-            color: AppTheme.textGrey,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildEventInfo() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          _buildInfoCard(
-            Icons.confirmation_number,
-            'Giá vé',
-            NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0)
-                .format(_event['ticketPrice']),
-          ),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            Icons.business,
-            'Ban tổ chức',
-            _event['organizer'] as String,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(IconData icon, String label, String value) {
+  Widget _buildInfoSection(IconData icon, String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -377,7 +373,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.2),
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppTheme.primaryColor, size: 20),
@@ -388,18 +384,18 @@ class _EventDetailPageState extends State<EventDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  title,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppTheme.textGrey,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                     color: Colors.white,
                   ),
                 ),
@@ -411,216 +407,59 @@ class _EventDetailPageState extends State<EventDetailPage> {
     );
   }
 
-  Widget _buildDescription() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Về sự kiện này',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _event['description'] as String,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: AppTheme.textGrey,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _getEventTypeColor(String type) {
+    switch (type) {
+      case 'festival':
+        return Colors.purple;
+      case 'concert':
+        return Colors.pink;
+      case 'exhibition':
+        return Colors.blue;
+      case 'workshop':
+        return Colors.green;
+      case 'conference':
+        return Colors.orange;
+      default:
+        return AppTheme.primaryColor;
+    }
   }
 
-  Widget _buildLocationSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Địa điểm',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.location_on,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    _event['location'] as String,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    // Open map
-                  },
-                  icon: const Icon(
-                    Icons.directions,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  String _getEventTypeLabel(String type) {
+    switch (type) {
+      case 'festival':
+        return 'Lễ hội';
+      case 'concert':
+        return 'Hòa nhạc';
+      case 'exhibition':
+        return 'Triển lãm';
+      case 'workshop':
+        return 'Workshop';
+      case 'conference':
+        return 'Hội nghị';
+      default:
+        return type.toUpperCase();
+    }
   }
 
-  Widget _buildAttendeesSection() {
-    final attendees = _event['attendees'] as int;
-    final maxCapacity = _event['maxCapacity'] as int;
-    final percentage = (attendees / maxCapacity * 100).toInt();
+  String _formatEventDate(DateTime start, DateTime end) {
+    final dateFormat = DateFormat('dd/MM/yyyy');
+    final timeFormat = DateFormat('HH:mm');
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Người tham gia',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  '$attendees/$maxCapacity',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AppTheme.textGrey,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: attendees / maxCapacity,
-                minHeight: 8,
-                backgroundColor: Colors.white10,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  percentage > 80 ? Colors.red : AppTheme.primaryColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              percentage > 80
-                  ? 'Chỉ còn ${maxCapacity - attendees} vé!'
-                  : 'Còn ${maxCapacity - attendees} vé',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: percentage > 80 ? Colors.red : AppTheme.textGrey,
-                fontWeight: percentage > 80 ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    if (start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day) {
+      return '${dateFormat.format(start)}\n${timeFormat.format(start)} - ${timeFormat.format(end)}';
+    } else {
+      return '${dateFormat.format(start)} - ${dateFormat.format(end)}';
+    }
   }
 
-  Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        border: const Border(top: BorderSide(color: Colors.white10)),
-      ),
-      child: SafeArea(
-        child: ElevatedButton(
-          onPressed: _addToTrip,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.add_circle_outline, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Thêm vào lịch trình',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _shareEvent() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đang chia sẻ sự kiện...'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
-  }
-
-  void _addToTrip() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã thêm sự kiện vào lịch trình!'),
-        backgroundColor: AppTheme.primaryColor,
-      ),
-    );
+  String _formatPrice(double price) {
+    if (price == 0) {
+      return 'Miễn phí';
+    }
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(price)}đ';
   }
 }
 

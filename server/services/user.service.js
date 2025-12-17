@@ -277,6 +277,8 @@ async function login(loginData) {
 }
 
 async function getProfileById(profileId) {
+    const UserFeedback = (await import('../models/userFeedback.model.js')).default;
+
     const profile = await Profile.findByPk(profileId, {
         attributes: { exclude: ['usr_password_hash', 'reset_password_token', 'reset_password_expires'] }
     });
@@ -287,7 +289,39 @@ async function getProfileById(profileId) {
         throw error;
     }
 
-    return profile;
+    // Tính số lượng destinations đã check-in (chỉ tính checkin, không tính like)
+    const totalDestinationsJoined = await UserFeedback.count({
+        where: {
+            user_id: profileId,
+            feedback_target_type: 'destination',
+            feedback_type: 'checkin'
+        },
+        distinct: true,
+        col: 'target_id'
+    });
+
+    // Tính số lượng events đã check-in (chỉ tính checkin, không tính like)
+    const totalEventsJoined = await UserFeedback.count({
+        where: {
+            user_id: profileId,
+            feedback_target_type: 'event',
+            feedback_type: 'checkin'
+        },
+        distinct: true,
+        col: 'target_id'
+    });
+
+    // Chuyển profile thành object và thêm các trường mới
+    const profileData = profile.toJSON();
+
+    // Thay thế total_likes và total_checkins bằng total_destinations_joined và total_events_joined
+    delete profileData.total_likes;
+    delete profileData.total_checkins;
+
+    profileData.total_destinations_joined = totalDestinationsJoined;
+    profileData.total_events_joined = totalEventsJoined;
+
+    return profileData;
 }
 
 // Cập nhật hàm lấy constants cho FE lúc khởi động app
@@ -408,7 +442,14 @@ async function cleanupExpiredTokens() {
 // Helper function để loại bỏ password hash khi trả về
 function sanitizeProfile(profile) {
     const p = profile.toJSON ? profile.toJSON() : profile;
-    const { usr_password_hash, reset_password_token, reset_password_expires, ...rest } = p;
+    const {
+        usr_password_hash,
+        reset_password_token,
+        reset_password_expires,
+        total_likes,
+        total_checkins,
+        ...rest
+    } = p;
     return rest;
 }
 

@@ -55,6 +55,10 @@ async function createReview(userId, {destId, eventId, rating, comment, images}) 
         await updateDestinationRating(cleanDestId);
     }
 
+    if (cleanEventId) {
+        await updateEventRating(cleanEventId);
+    }
+
     return review;
 }
 
@@ -83,7 +87,16 @@ async function updateDestinationRating(destId) {
         where: {dest_id: destId, is_active: true}
     });
 
-    if (reviews.length === 0) return;
+    if (reviews.length === 0) {
+        await Destination.update(
+            {
+                rating: 0,
+                total_reviews: 0
+            },
+            {where: {id: destId}}
+        );
+        return;
+    }
 
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const avgRating = totalRating / reviews.length;
@@ -94,6 +107,35 @@ async function updateDestinationRating(destId) {
             total_reviews: reviews.length
         },
         {where: {id: destId}}
+    );
+}
+
+// Update event rating
+async function updateEventRating(eventId) {
+    const reviews = await Review.findAll({
+        where: {event_id: eventId, is_active: true}
+    });
+
+    if (reviews.length === 0) {
+        await Event.update(
+            {
+                rating: 0,
+                total_reviews: 0
+            },
+            {where: {id: eventId}}
+        );
+        return;
+    }
+
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const avgRating = totalRating / reviews.length;
+
+    await Event.update(
+        {
+            rating: avgRating,
+            total_reviews: reviews.length
+        },
+        {where: {id: eventId}}
     );
 }
 
@@ -211,9 +253,13 @@ async function updateReview(reviewId, userId, {rating, comment, images}) {
         sentiment
     });
 
-    // Update rating if destination
+    // Update rating if destination or event
     if (review.dest_id) {
         await updateDestinationRating(review.dest_id);
+    }
+
+    if (review.event_id) {
+        await updateEventRating(review.event_id);
     }
 
     return review;
@@ -232,12 +278,17 @@ async function deleteReview(reviewId, userId) {
     }
 
     const destId = review.dest_id;
+    const eventId = review.event_id;
 
     await review.destroy();
 
-    // Update rating if destination
+    // Update rating if destination or event
     if (destId) {
         await updateDestinationRating(destId);
+    }
+
+    if (eventId) {
+        await updateEventRating(eventId);
     }
 
     return {message: 'Review deleted successfully'};
