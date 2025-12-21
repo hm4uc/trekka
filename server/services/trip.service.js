@@ -249,9 +249,9 @@ async function addDestinationToTrip(tripId, userId, {destId, visitOrder, estimat
         dest_id: destId,
         visit_order: visitOrder,
         estimated_time: estimatedTime || destination.recommended_duration,
-        visit_date,
-        start_time,
-        notes
+        visit_date: visitDate,
+        start_time: startTime,
+        notes: notes
     });
 
     return tripDestination;
@@ -295,11 +295,11 @@ async function reorderDestinations(tripId, userId, destinationOrders) {
         throw error;
     }
 
-    // destinationOrders = [{dest_id: 'xxx', visit_order: 1}, ...]
+    // destinationOrders = [{destId: 'xxx', visitOrder: 1}, ...]
     for (const item of destinationOrders) {
         await TripDestination.update(
-            {visit_order: item.visit_order},
-            {where: {trip_id: tripId, dest_id: item.dest_id}}
+            {visit_order: item.visitOrder},
+            {where: {trip_id: tripId, dest_id: item.destId}}
         );
     }
 
@@ -349,7 +349,7 @@ async function addEventToTrip(tripId, userId, {eventId, visitOrder, notes}) {
         trip_id: tripId,
         event_id: eventId,
         visit_order: visitOrder,
-        notes
+        notes: notes
     });
 
     return tripEvent;
