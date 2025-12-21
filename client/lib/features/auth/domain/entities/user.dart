@@ -14,6 +14,8 @@ class User extends Equatable {
   final String? bio;
   final double? budget;
   final List<String>? preferences;
+  final int? totalDestinationsJoined;
+  final int? totalEventsJoined;
 
   const User({
     required this.id,
@@ -28,6 +30,8 @@ class User extends Equatable {
     this.bio,
     this.budget,
     this.preferences,
+    this.totalDestinationsJoined,
+    this.totalEventsJoined,
   });
 
   User copyWith({
@@ -43,6 +47,8 @@ class User extends Equatable {
     String? bio,
     double? budget,
     List<String>? preferences,
+    int? totalDestinationsJoined,
+    int? totalEventsJoined,
   }) {
     return User(
       id: id ?? this.id,
@@ -57,6 +63,8 @@ class User extends Equatable {
       bio: bio ?? this.bio,
       budget: budget ?? this.budget,
       preferences: preferences ?? this.preferences,
+      totalDestinationsJoined: totalDestinationsJoined ?? this.totalDestinationsJoined,
+      totalEventsJoined: totalEventsJoined ?? this.totalEventsJoined,
     );
   }
 
@@ -74,5 +82,7 @@ class User extends Equatable {
         bio,
         budget,
         preferences,
+        totalDestinationsJoined,
+        totalEventsJoined,
       ];
 }

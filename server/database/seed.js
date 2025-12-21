@@ -58,7 +58,7 @@ const seed = async () => {
                 description: "Trái tim của thủ đô Hà Nội, nổi tiếng với Tháp Rùa và Cầu Thê Húc. Nơi lý tưởng để đi dạo và ngắm cảnh.",
                 avg_cost: 0,
                 opening_hours: { mon: "00:00-23:59", tue: "00:00-23:59", wed: "00:00-23:59", thu: "00:00-23:59", fri: "00:00-23:59", sat: "00:00-23:59", sun: "00:00-23:59" },
-                images: ["https://images.unsplash.com/photo-1599835669876-6a8359539679?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://pixabay.com/vi/photos/hanoi-city-vietnam-lake-red-leaves-4166172"],
                 tags: ["walking", "scenic", "landmark", "history"]
             },
             {
@@ -70,7 +70,7 @@ const seed = async () => {
                 description: "Trường đại học đầu tiên của Việt Nam, nơi lưu giữ những giá trị văn hóa và lịch sử lâu đời.",
                 avg_cost: 30000,
                 opening_hours: { mon: "08:00-17:00", tue: "08:00-17:00", wed: "08:00-17:00", thu: "08:00-17:00", fri: "08:00-17:00", sat: "08:00-17:00", sun: "08:00-17:00" },
-                images: ["https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://pixabay.com/vi/photos/hanoi-city-vietnam-lake-red-leaves-4166172"],
                 tags: ["culture", "history", "architecture", "learning"]
             },
             {
@@ -82,7 +82,7 @@ const seed = async () => {
                 description: "Nơi an nghỉ của Chủ tịch Hồ Chí Minh, vị lãnh tụ kính yêu của dân tộc Việt Nam.",
                 avg_cost: 0,
                 opening_hours: { mon: "Closed", tue: "07:30-10:30", wed: "07:30-10:30", thu: "07:30-10:30", fri: "Closed", sat: "07:30-11:00", sun: "07:30-11:00" },
-                images: ["https://images.unsplash.com/photo-1557750255-c76072a7aad1?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://pixabay.com/vi/photos/hanoi-city-vietnam-lake-red-leaves-4166172"],
                 tags: ["history", "politics", "landmark"]
             },
             {
@@ -94,7 +94,7 @@ const seed = async () => {
                 description: "Di sản văn hóa thế giới được UNESCO công nhận, minh chứng cho lịch sử ngàn năm văn hiến.",
                 avg_cost: 30000,
                 opening_hours: { mon: "Closed", tue: "08:00-17:00", wed: "08:00-17:00", thu: "08:00-17:00", fri: "08:00-17:00", sat: "08:00-17:00", sun: "08:00-17:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Doan_Mon_Gate_-_Imperial_Citadel_of_Thang_Long.jpg/1200px-Doan_Mon_Gate_-_Imperial_Citadel_of_Thang_Long.jpg"],
+                images: ["https://pixabay.com/vi/photos/ho%c3%a0ng-th%c3%a0nh-th%c4%83ng-long-hanoi-7202348"],
                 tags: ["history", "unesco", "architecture"]
             },
             {
@@ -106,7 +106,7 @@ const seed = async () => {
                 description: "Khu phố cổ kính với 36 phố phường sầm uất, nơi lưu giữ nét văn hóa truyền thống của người Hà Nội.",
                 avg_cost: 0,
                 opening_hours: { mon: "00:00-23:59", tue: "00:00-23:59", wed: "00:00-23:59", thu: "00:00-23:59", fri: "00:00-23:59", sat: "00:00-23:59", sun: "00:00-23:59" },
-                images: ["https://images.unsplash.com/photo-1509064794184-da9e98584617?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://tl.cdnchinhphu.vn/zoom/700_438/Uploads/images/pho%20co(2).jpg"],
                 tags: ["culture", "shopping", "food", "walking"]
             },
             {
@@ -118,7 +118,7 @@ const seed = async () => {
                 description: "Công trình kiến trúc Gothic đặc sắc, điểm check-in quen thuộc của giới trẻ và du khách.",
                 avg_cost: 0,
                 opening_hours: { mon: "08:00-11:00, 14:00-17:00", tue: "08:00-11:00, 14:00-17:00", wed: "08:00-11:00, 14:00-17:00", thu: "08:00-11:00, 14:00-17:00", fri: "08:00-11:00, 14:00-17:00", sat: "08:00-11:00, 14:00-17:00", sun: "07:00-11:30, 15:00-21:00" },
-                images: ["https://images.unsplash.com/photo-1565622638868-5633392b0e4d?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://pixabay.com/vi/photos/nh%c3%a0-th%e1%bb%9d-c%c3%b4ng-gi%c3%a1o-nh%c3%a0-th%e1%bb%9d-l%e1%bb%9bn-h%c3%a0-n%e1%bb%99i-7589133"],
                 tags: ["architecture", "religion", "photo"]
             },
             {
@@ -130,7 +130,7 @@ const seed = async () => {
                 description: "Ngôi chùa cổ nhất Hà Nội, nằm trên một hòn đảo nhỏ xinh đẹp ở Hồ Tây.",
                 avg_cost: 0,
                 opening_hours: { mon: "08:00-16:00", tue: "08:00-16:00", wed: "08:00-16:00", thu: "08:00-16:00", fri: "08:00-16:00", sat: "08:00-16:00", sun: "08:00-16:00" },
-                images: ["https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://www.pexels.com/photo/tran-quoc-pagoda-in-hanoi-vietnam-25851510"],
                 tags: ["religion", "history", "scenic"]
             },
             {
@@ -142,7 +142,7 @@ const seed = async () => {
                 description: "Hồ nước ngọt lớn nhất Hà Nội, không gian thoáng đãng, lãng mạn, thích hợp ngắm hoàng hôn.",
                 avg_cost: 0,
                 opening_hours: { mon: "00:00-23:59", tue: "00:00-23:59", wed: "00:00-23:59", thu: "00:00-23:59", fri: "00:00-23:59", sat: "00:00-23:59", sun: "00:00-23:59" },
-                images: ["https://images.unsplash.com/photo-1558612616-24571461b0e4?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://www.pexels.com/photo/lake-and-city-behind-16705654"],
                 tags: ["nature", "relax", "sunset", "couple"]
             },
             {
@@ -154,7 +154,7 @@ const seed = async () => {
                 description: "Công trình kiến trúc Pháp kinh điển, nơi diễn ra các sự kiện văn hóa nghệ thuật lớn.",
                 avg_cost: 300000,
                 opening_hours: { mon: "Varies", tue: "Varies", wed: "Varies", thu: "Varies", fri: "Varies", sat: "Varies", sun: "Varies" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Hanoi_Opera_House_2014.jpg/1200px-Hanoi_Opera_House_2014.jpg"],
+                images: ["https://www.pexels.com/photo/facade-of-hanoi-opera-house-in-vietnam-under-gray-sky-11712728/"],
                 tags: ["architecture", "art", "music"]
             },
             {
@@ -166,7 +166,7 @@ const seed = async () => {
                 description: "Minh chứng lịch sử về sự kiên cường của các chiến sĩ cách mạng Việt Nam.",
                 avg_cost: 30000,
                 opening_hours: { mon: "08:00-17:00", tue: "08:00-17:00", wed: "08:00-17:00", thu: "08:00-17:00", fri: "08:00-17:00", sat: "08:00-17:00", sun: "08:00-17:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Maison_Centrale_gate.jpg/1200px-Maison_Centrale_gate.jpg"],
+                images: ["https://vj-prod-website-cms.s3.ap-southeast-1.amazonaws.com/akjsld-1755241485697.jpg"],
                 tags: ["history", "museum", "war"]
             },
             {
@@ -178,7 +178,7 @@ const seed = async () => {
                 description: "Nơi trưng bày, giới thiệu văn hóa của 54 dân tộc anh em Việt Nam.",
                 avg_cost: 40000,
                 opening_hours: { mon: "Closed", tue: "08:30-17:30", wed: "08:30-17:30", thu: "08:30-17:30", fri: "08:30-17:30", sat: "08:30-17:30", sun: "08:30-17:30" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Vietnam_Museum_of_Ethnology_-_main_building.jpg/1200px-Vietnam_Museum_of_Ethnology_-_main_building.jpg"],
+                images: ["https://upload.wikimedia.org/wikipedia/commons/f/f3/Dan_toc_hoc_1.jpg"],
                 tags: ["culture", "museum", "learning", "family"]
             },
             {
@@ -190,7 +190,7 @@ const seed = async () => {
                 description: "Khu chợ đầu mối lớn nhất Hà Nội, sầm uất và đa dạng hàng hóa.",
                 avg_cost: 0,
                 opening_hours: { mon: "06:00-18:00", tue: "06:00-18:00", wed: "06:00-18:00", thu: "06:00-18:00", fri: "06:00-18:00", sat: "06:00-18:00", sun: "06:00-18:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Cho_Dong_Xuan.jpg/1200px-Cho_Dong_Xuan.jpg"],
+                images: ["https://danviet.ex-cdn.com/resize/800x550/files/f1/296231569849192448/2024/7/16/hinh-anh-cho-dong-xuan-co-tich-trong-toi-17211210467121587947688.jpg"],
                 tags: ["shopping", "local", "market"]
             },
             {
@@ -202,81 +202,9 @@ const seed = async () => {
                 description: "Chứng nhân lịch sử vắt ngang sông Hồng, điểm chụp ảnh hoài cổ tuyệt đẹp.",
                 avg_cost: 0,
                 opening_hours: { mon: "00:00-23:59", tue: "00:00-23:59", wed: "00:00-23:59", thu: "00:00-23:59", fri: "00:00-23:59", sat: "00:00-23:59", sun: "00:00-23:59" },
-                images: ["https://images.unsplash.com/photo-1616485962373-48e862496b04?q=80&w=1000&auto=format&fit=crop"],
+                images: ["https://www.pexels.com/photo/people-riding-motorcycles-near-train-3300834/"],
                 tags: ["history", "bridge", "photo", "sunset"]
             },
-            {
-                name: "Đền Ngọc Sơn",
-                categoryName: "Religious Site",
-                address: "Hồ Hoàn Kiếm, Hà Nội",
-                lat: 21.0307,
-                lng: 105.8524,
-                description: "Ngôi đền linh thiêng nằm trên đảo Ngọc giữa hồ Hoàn Kiếm.",
-                avg_cost: 30000,
-                opening_hours: { mon: "08:00-18:00", tue: "08:00-18:00", wed: "08:00-18:00", thu: "08:00-18:00", fri: "08:00-18:00", sat: "08:00-18:00", sun: "08:00-18:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/The_Huc_Bridge_-_Ngoc_Son_Temple.jpg/1200px-The_Huc_Bridge_-_Ngoc_Son_Temple.jpg"],
-                tags: ["religion", "history", "culture"]
-            },
-            {
-                name: "Nhà hát Múa rối Thăng Long",
-                categoryName: "Entertainment",
-                address: "57B Đinh Tiên Hoàng, Hoàn Kiếm, Hà Nội",
-                lat: 21.0303,
-                lng: 105.8533,
-                description: "Nơi thưởng thức nghệ thuật múa rối nước truyền thống độc đáo.",
-                avg_cost: 100000,
-                opening_hours: { mon: "13:00-20:00", tue: "13:00-20:00", wed: "13:00-20:00", thu: "13:00-20:00", fri: "13:00-20:00", sat: "13:00-20:00", sun: "13:00-20:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Water_Puppet_Theatre_Hanoi.jpg/1200px-Water_Puppet_Theatre_Hanoi.jpg"],
-                tags: ["art", "culture", "show"]
-            },
-            {
-                name: "Bảo tàng Mỹ thuật Việt Nam",
-                categoryName: "Museum",
-                address: "66 Nguyễn Thái Học, Ba Đình, Hà Nội",
-                lat: 21.0296,
-                lng: 105.8374,
-                description: "Kho tàng nghệ thuật tạo hình của Việt Nam từ thời tiền sử đến nay.",
-                avg_cost: 40000,
-                opening_hours: { mon: "08:30-17:00", tue: "08:30-17:00", wed: "08:30-17:00", thu: "08:30-17:00", fri: "08:30-17:00", sat: "08:30-17:00", sun: "08:30-17:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Vietnam_National_Museum_of_Fine_Arts.jpg/1200px-Vietnam_National_Museum_of_Fine_Arts.jpg"],
-                tags: ["art", "museum", "culture"]
-            },
-            {
-                name: "Phố Đường Tàu",
-                categoryName: "Cafe",
-                address: "Trần Phú, Hoàn Kiếm, Hà Nội",
-                lat: 21.0300,
-                lng: 105.8430,
-                description: "Địa điểm check-in độc đáo với đường tàu chạy sát nhà dân và các quán cafe.",
-                avg_cost: 50000,
-                opening_hours: { mon: "08:00-22:00", tue: "08:00-22:00", wed: "08:00-22:00", thu: "08:00-22:00", fri: "08:00-22:00", sat: "08:00-22:00", sun: "08:00-22:00" },
-                images: ["https://images.unsplash.com/photo-1595322728368-0260f4053348?q=80&w=1000&auto=format&fit=crop"],
-                tags: ["cafe", "photo", "unique"]
-            },
-            {
-                name: "Lotte Center Hà Nội (Đài quan sát)",
-                categoryName: "Entertainment",
-                address: "54 Liễu Giai, Ba Đình, Hà Nội",
-                lat: 21.0320,
-                lng: 105.8125,
-                description: "Ngắm toàn cảnh Hà Nội từ trên cao tại đài quan sát Lotte.",
-                avg_cost: 230000,
-                opening_hours: { mon: "09:00-23:00", tue: "09:00-23:00", wed: "09:00-23:00", thu: "09:00-23:00", fri: "09:00-23:00", sat: "09:00-23:00", sun: "09:00-23:00" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Lotte_Center_Hanoi.jpg/1200px-Lotte_Center_Hanoi.jpg"],
-                tags: ["view", "modern", "luxury"]
-            },
-            {
-                name: "Làng gốm Bát Tràng",
-                categoryName: "Historical Site",
-                address: "Bát Tràng, Gia Lâm, Hà Nội",
-                lat: 20.9750,
-                lng: 105.9130,
-                description: "Làng nghề gốm sứ truyền thống nổi tiếng lâu đời.",
-                avg_cost: 0,
-                opening_hours: { mon: "08:00-17:30", tue: "08:00-17:30", wed: "08:00-17:30", thu: "08:00-17:30", fri: "08:00-17:30", sat: "08:00-17:30", sun: "08:00-17:30" },
-                images: ["https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Bat_Trang_Pottery_Village.jpg/1200px-Bat_Trang_Pottery_Village.jpg"],
-                tags: ["craft", "culture", "shopping"]
-            }
         ];
 
         const destinationsData = hanoiDestinations.map(dest => ({
@@ -317,17 +245,7 @@ const seed = async () => {
                 lng: 105.8521,
                 type: "workshop", // Using 'workshop' as 'sport' is not in enum if strict, but let's assume flexible or map to closest
                 price: 500000,
-                images: ["https://images.unsplash.com/photo-1552674605-46d536d2e609?q=80&w=1000&auto=format&fit=crop"]
-            },
-            {
-                name: "Lễ hội Âm nhạc Gió Mùa (Monsoon)",
-                description: "Lễ hội âm nhạc quốc tế lớn nhất Hà Nội với sự tham gia của nhiều nghệ sĩ nổi tiếng.",
-                location: "Hoàng thành Thăng Long, Hà Nội",
-                lat: 21.0341,
-                lng: 105.8413,
-                type: "concert",
-                price: 1000000,
-                images: ["https://images.unsplash.com/photo-1459749411177-0473ef71607b?q=80&w=1000&auto=format&fit=crop"]
+                images: ["https://www.pexels.com/photo/energetic-marathon-in-h-i-phong-vietnam-29485297/"]
             },
             {
                 name: "Hội sách Công viên Thống Nhất",
@@ -337,7 +255,7 @@ const seed = async () => {
                 lng: 105.8433,
                 type: "exhibition",
                 price: 0,
-                images: ["https://images.unsplash.com/photo-1524578271613-d550eacf6090?q=80&w=1000&auto=format&fit=crop"]
+                images: ["https://pixabay.com/vi/photos/s%c3%a1ch-b%c3%bccherstapel-c%c3%a2y-r%c6%a1m-v%c4%83n-h%e1%bb%8dc-2085589/"]
             },
             {
                 name: "Triển lãm Nghệ thuật Đương đại",
@@ -347,27 +265,7 @@ const seed = async () => {
                 lng: 105.8153,
                 type: "exhibition",
                 price: 0,
-                images: ["https://images.unsplash.com/photo-1518998053901-5348d3969105?q=80&w=1000&auto=format&fit=crop"]
-            },
-            {
-                name: "Đêm nhạc Jazz tại Nhà hát Lớn",
-                description: "Thưởng thức những giai điệu Jazz cổ điển trong không gian sang trọng.",
-                location: "Nhà hát Lớn Hà Nội",
-                lat: 21.0256,
-                lng: 105.8575,
-                type: "concert",
-                price: 1500000,
-                images: ["https://images.unsplash.com/photo-1511192336575-5a79af67a629?q=80&w=1000&auto=format&fit=crop"]
-            },
-            {
-                name: "Lễ hội Ẩm thực Hồ Tây",
-                description: "Khám phá tinh hoa ẩm thực Hà Nội và quốc tế bên bờ Hồ Tây lộng gió.",
-                location: "Công viên nước Hồ Tây, Hà Nội",
-                lat: 21.0620,
-                lng: 105.8170,
-                type: "festival",
-                price: 100000,
-                images: ["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1000&auto=format&fit=crop"]
+                images: ["https://pixabay.com/vi/photos/tri%e1%bb%83n-l%c3%a3m-vi%e1%bb%87t-nam-7632297/"]
             },
             {
                 name: "Chợ hoa Tết Hàng Lược",
@@ -377,7 +275,7 @@ const seed = async () => {
                 lng: 105.8480,
                 type: "festival",
                 price: 0,
-                images: ["https://images.unsplash.com/photo-1548625361-18886594166d?q=80&w=1000&auto=format&fit=crop"]
+                images: ["https://pixabay.com/vi/photos/con-g%c3%a1i-nh%e1%bb%afng-b%c3%b4ng-hoa-t%e1%ba%bft-ng%c3%a0y-t%e1%ba%bft-8351533/"]
             },
             {
                 name: "Workshop Làm gốm Bát Tràng",
@@ -387,7 +285,7 @@ const seed = async () => {
                 lng: 105.9130,
                 type: "workshop",
                 price: 200000,
-                images: ["https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1000&auto=format&fit=crop"]
+                images: ["https://pixabay.com/vi/photos/b%c3%acnh-%c4%91%e1%bb%93-g%e1%bb%91m-g%e1%bb%91m-s%e1%bb%a9-%c4%91%e1%ba%a5t-nung-64975/"]
             }
         ];
 

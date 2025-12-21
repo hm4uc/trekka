@@ -44,6 +44,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     apiClient.dio.options.headers['Authorization'] = 'Bearer $token';
 
     final response = await apiClient.get('/user/profile');
+
     // Response: { "status": "success", "data": { ... } }
     return UserModel.fromJson(response);
   }

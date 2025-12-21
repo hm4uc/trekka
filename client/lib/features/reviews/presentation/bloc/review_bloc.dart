@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/create_review.dart';
 import '../../domain/usecases/delete_review.dart';
 import '../../domain/usecases/get_destination_reviews.dart';
+import '../../domain/usecases/get_event_reviews.dart';
 import '../../domain/usecases/get_my_reviews.dart';
 import '../../domain/usecases/mark_review_helpful.dart';
 import '../../domain/usecases/update_review.dart';
@@ -10,6 +11,7 @@ import 'review_state.dart';
 
 class ReviewBloc extends Bloc<events.ReviewEvent, ReviewState> {
   final GetDestinationReviews getDestinationReviews;
+  final GetEventReviews getEventReviews;
   final GetMyReviews getMyReviews;
   final CreateReview createReview;
   final UpdateReview updateReview;
@@ -18,6 +20,7 @@ class ReviewBloc extends Bloc<events.ReviewEvent, ReviewState> {
 
   ReviewBloc({
     required this.getDestinationReviews,
+    required this.getEventReviews,
     required this.getMyReviews,
     required this.createReview,
     required this.updateReview,
@@ -25,6 +28,7 @@ class ReviewBloc extends Bloc<events.ReviewEvent, ReviewState> {
     required this.markReviewHelpful,
   }) : super(ReviewInitial()) {
     on<events.GetDestinationReviewsEvent>(_onGetDestinationReviews);
+    on<events.GetEventReviewsEvent>(_onGetEventReviews);
     on<events.GetMyReviewsEvent>(_onGetMyReviews);
     on<events.CreateReviewEvent>(_onCreateReview);
     on<events.UpdateReviewEvent>(_onUpdateReview);
@@ -44,6 +48,34 @@ class ReviewBloc extends Bloc<events.ReviewEvent, ReviewState> {
         page: event.page,
         limit: event.limit,
         sortBy: event.sortBy,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(ReviewError(failure.message)),
+      (data) {
+        final reviews = data['reviews'] as List;
+        emit(ReviewsLoaded(
+          reviews: reviews.cast(),
+          total: data['total'] as int,
+          currentPage: data['currentPage'] as int,
+          totalPages: data['totalPages'] as int,
+        ));
+      },
+    );
+  }
+
+  Future<void> _onGetEventReviews(
+    events.GetEventReviewsEvent event,
+    Emitter<ReviewState> emit,
+  ) async {
+    emit(ReviewLoading());
+
+    final result = await getEventReviews(
+      GetEventReviewsParams(
+        eventId: event.eventId,
+        page: event.page,
+        limit: event.limit,
       ),
     );
 

@@ -24,6 +24,21 @@ class GetDestinationReviewsEvent extends ReviewEvent {
   List<Object?> get props => [destId, page, limit, sortBy];
 }
 
+class GetEventReviewsEvent extends ReviewEvent {
+  final String eventId;
+  final int page;
+  final int limit;
+
+  const GetEventReviewsEvent({
+    required this.eventId,
+    this.page = 1,
+    this.limit = 10,
+  });
+
+  @override
+  List<Object?> get props => [eventId, page, limit];
+}
+
 class GetMyReviewsEvent extends ReviewEvent {
   final int page;
   final int limit;

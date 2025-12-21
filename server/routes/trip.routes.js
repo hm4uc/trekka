@@ -329,6 +329,12 @@ router.patch('/:id/status', authenticate, tripController.changeTripStatus);
  * /trips/{id}/destinations:
  *   post:
  *     summary: Thêm địa điểm vào chuyến đi
+ *     description: |
+ *       Thêm một địa điểm (destination) vào chuyến đi.
+ *       Khác với sự kiện (event), địa điểm cho phép thiết lập:
+ *       - Thời gian ước tính (estimatedTime)
+ *       - Ngày ghé thăm cụ thể (visitDate)
+ *       - Giờ bắt đầu (startTime)
  *     tags: [Trips]
  *     security:
  *       - bearerAuth: []
@@ -339,6 +345,7 @@ router.patch('/:id/status', authenticate, tripController.changeTripStatus);
  *         schema:
  *           type: string
  *           format: uuid
+ *         description: ID của chuyến đi
  *     requestBody:
  *       required: true
  *       content:
@@ -351,22 +358,57 @@ router.patch('/:id/status', authenticate, tripController.changeTripStatus);
  *               destId:
  *                 type: string
  *                 format: uuid
+ *                 description: ID của địa điểm cần thêm
+ *                 example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
  *               visitOrder:
  *                 type: integer
+ *                 description: Thứ tự ghé thăm trong chuyến đi (tự động tăng nếu không cung cấp)
+ *                 example: 1
  *               estimatedTime:
  *                 type: integer
- *                 description: Thời gian ước tính (phút)
+ *                 description: Thời gian ước tính tại địa điểm (phút). Sử dụng recommended_duration của địa điểm nếu không cung cấp
+ *                 example: 90
+ *                 minimum: 0
  *               visitDate:
  *                 type: string
  *                 format: date
+ *                 description: Ngày dự định ghé thăm
+ *                 example: "2025-12-25"
  *               startTime:
  *                 type: string
- *                 format: time
+ *                 description: Giờ bắt đầu ghé thăm (HH:MM:SS hoặc HH:MM)
+ *                 example: "09:00:00"
  *               notes:
  *                 type: string
+ *                 description: Ghi chú về địa điểm
+ *                 example: "Nhớ mang theo máy ảnh"
+ *           example:
+ *             destId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+ *             visitOrder: 1
+ *             estimatedTime: 90
+ *             visitDate: "2025-12-25"
+ *             startTime: "09:00:00"
+ *             notes: "Ghé thăm vào buổi sáng"
  *     responses:
  *       201:
- *         description: Created
+ *         description: Thêm địa điểm thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Destination added to trip"
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Địa điểm đã tồn tại trong chuyến đi hoặc dữ liệu không hợp lệ
+ *       404:
+ *         description: Chuyến đi hoặc địa điểm không tìm thấy
  */
 router.post('/:id/destinations', authenticate, tripController.addDestinationToTrip);
 
@@ -424,10 +466,10 @@ router.delete('/:id/destinations/:destId', authenticate, tripController.removeDe
  *                 items:
  *                   type: object
  *                   properties:
- *                     dest_id:
+ *                     destId:
  *                       type: string
  *                       format: uuid
- *                     visit_order:
+ *                     visitOrder:
  *                       type: integer
  *     responses:
  *       200:
@@ -440,6 +482,13 @@ router.put('/:id/destinations/reorder', authenticate, tripController.reorderDest
  * /trips/{id}/events:
  *   post:
  *     summary: Thêm sự kiện vào chuyến đi
+ *     description: |
+ *       Thêm một sự kiện (event) vào chuyến đi.
+ *       Khác với địa điểm (destination), sự kiện chỉ có:
+ *       - Thứ tự ghé thăm (visitOrder)
+ *       - Ghi chú (notes)
+ *
+ *       Thời gian của sự kiện được xác định bởi event_start và event_end trong dữ liệu sự kiện.
  *     tags: [Trips]
  *     security:
  *       - bearerAuth: []
@@ -450,6 +499,7 @@ router.put('/:id/destinations/reorder', authenticate, tripController.reorderDest
  *         schema:
  *           type: string
  *           format: uuid
+ *         description: ID của chuyến đi
  *     requestBody:
  *       required: true
  *       content:
@@ -462,13 +512,40 @@ router.put('/:id/destinations/reorder', authenticate, tripController.reorderDest
  *               eventId:
  *                 type: string
  *                 format: uuid
+ *                 description: ID của sự kiện cần thêm
+ *                 example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
  *               visitOrder:
  *                 type: integer
+ *                 description: Thứ tự trong chuyến đi (tự động tăng nếu không cung cấp)
+ *                 example: 2
  *               notes:
  *                 type: string
+ *                 description: Ghi chú về sự kiện
+ *                 example: "Nhớ đặt vé trước"
+ *           example:
+ *             eventId: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+ *             visitOrder: 2
+ *             notes: "Sự kiện buổi chiều"
  *     responses:
  *       201:
- *         description: Created
+ *         description: Thêm sự kiện thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "success"
+ *                 message:
+ *                   type: string
+ *                   example: "Event added to trip"
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Sự kiện đã tồn tại trong chuyến đi hoặc dữ liệu không hợp lệ
+ *       404:
+ *         description: Chuyến đi hoặc sự kiện không tìm thấy
  */
 router.post('/:id/events', authenticate, tripController.addEventToTrip);
 
