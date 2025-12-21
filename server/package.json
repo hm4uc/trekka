@@ -10,7 +10,12 @@
     "dev": "nodemon --exec babel-node index.js",
     "start": "node index.js",
     "seed": "babel-node database/seed.js",
-    "test": "../node_modules/.bin/ava"
+    "test": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs tests/*.test.js",
+    "test:trip": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs tests/trip.service.test.js",
+    "test:auth": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs tests/auth.service.test.js",
+    "test:destination": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs tests/destination.service.test.js",
+    "test:verbose": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs --verbose",
+    "test:watch": "node --experimental-modules node_modules/ava/entrypoints/cli.mjs --watch"
   },
   "dependencies": {
     "@babel/node": "^7.23.9",
