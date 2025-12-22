@@ -58,6 +58,24 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> delete(String path, {dynamic data}) async {
+    try {
+      final response = await dio.delete(path, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<dynamic> patch(String path, {dynamic data}) async {
+    try {
+      final response = await dio.patch(path, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Exception _handleDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -75,3 +93,4 @@ class ApiClient {
     }
   }
 }
+

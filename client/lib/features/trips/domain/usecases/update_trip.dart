@@ -3,13 +3,13 @@ import '../../../../core/error/failures.dart';
 import '../entities/trip.dart';
 import '../repositories/trip_repository.dart';
 
-class GetTripDetailUseCase {
+class UpdateTripUseCase {
   final TripRepository repository;
 
-  GetTripDetailUseCase(this.repository);
+  UpdateTripUseCase(this.repository);
 
-  Future<Either<Failure, Trip>> call(String id) async {
-    return await repository.getTripById(id);
+  Future<Either<Failure, Trip>> call(String id, Map<String, dynamic> tripData) async {
+    return await repository.updateTrip(id, tripData);
   }
 }
 

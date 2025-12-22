@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
@@ -36,6 +37,7 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
   late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
   bool _isBottomBarVisible = true;
+  Timer? _autoShowTimer;
 
   @override
   void initState() {
@@ -64,13 +66,34 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
   @override
   void dispose() {
     _animationController.dispose();
+    _autoShowTimer?.cancel();
     super.dispose();
+  }
+
+  void _startAutoShowTimer() {
+    // Cancel any existing timer
+    _autoShowTimer?.cancel();
+
+    // Only start timer if bottom bar is hidden
+    if (!_isBottomBarVisible) {
+      _autoShowTimer = Timer(const Duration(seconds: 2), () {
+        if (mounted && !_isBottomBarVisible) {
+          setState(() {
+            _isBottomBarVisible = true;
+          });
+          _animationController.reverse();
+        }
+      });
+    }
   }
 
   void _onScrollNotification(ScrollNotification notification) {
     if (notification is ScrollUpdateNotification) {
       final scrollPosition = notification.metrics.pixels;
       final scrollDelta = notification.scrollDelta ?? 0;
+
+      // Cancel auto-show timer when user is actively scrolling
+      _autoShowTimer?.cancel();
 
       // Always show bottom bar when near the top (increased threshold to handle bounce)
       if (scrollPosition < 100) {
@@ -104,6 +127,9 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
           }
         }
       }
+    } else if (notification is ScrollEndNotification) {
+      // Start auto-show timer when scrolling ends
+      _startAutoShowTimer();
     }
   }
 

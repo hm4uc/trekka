@@ -24,6 +24,7 @@ import '../../features/destinations/presentation/pages/destination_detail_page.d
 import '../../features/destinations/domain/entities/destination.dart';
 import '../../features/trips/presentation/pages/favorites_page.dart';
 import '../../features/trips/presentation/pages/my_trips_page.dart';
+import '../../features/trips/presentation/pages/create_trip_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -75,6 +76,13 @@ final GoRouter appRouter = GoRouter(
       path: '/trip-timeline/:tripId',
       builder: (context, state) {
         final tripId = state.pathParameters['tripId'] ?? '';
+        return TripTimelinePage(tripId: tripId);
+      },
+    ),
+    GoRoute(
+      path: '/trips/:id',
+      builder: (context, state) {
+        final tripId = state.pathParameters['id'] ?? '';
         return TripTimelinePage(tripId: tripId);
       },
     ),
@@ -153,6 +161,12 @@ final GoRouter appRouter = GoRouter(
       path: '/my-trips',
       builder: (context, state) {
         return const MyTripsPage();
+      },
+    ),
+    GoRoute(
+      path: '/create-trip',
+      builder: (context, state) {
+        return const CreateTripPage();
       },
     ),
   ],

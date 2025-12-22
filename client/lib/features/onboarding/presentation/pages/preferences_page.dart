@@ -692,7 +692,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    "Tôi chưa xác định ngân sách",
+                    "Chưa xác định ngân sách",
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
