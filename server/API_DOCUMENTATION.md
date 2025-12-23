@@ -1159,17 +1159,34 @@ Xóa đánh giá
 
 ---
 
-#### **POST /reviews/:id/helpful**
-Đánh dấu review hữu ích
+#### **POST /reviews/:id/helpful** 🔒
+Đánh dấu/hủy đánh dấu review hữu ích (Toggle)
 
-**Response:**
+**Mô tả:**
+- Nếu user chưa đánh dấu review này là hữu ích → Đánh dấu là hữu ích (helpful_count +1)
+- Nếu user đã đánh dấu → Hủy đánh dấu (helpful_count -1)
+- Mỗi user chỉ được đánh dấu hữu ích 1 lần cho mỗi review
+
+**Response khi đánh dấu:**
 ```json
 {
   "status": "success",
-  "message": "Marked as helpful",
+  "message": "Đã đánh dấu là hữu ích",
   "data": {
-    "id": "uuid",
-    "helpful_count": 11
+    "isHelpful": true,
+    "helpfulCount": 11
+  }
+}
+```
+
+**Response khi hủy đánh dấu:**
+```json
+{
+  "status": "success",
+  "message": "Đã hủy đánh dấu hữu ích",
+  "data": {
+    "isHelpful": false,
+    "helpfulCount": 10
   }
 }
 ```
