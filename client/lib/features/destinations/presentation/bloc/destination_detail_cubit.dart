@@ -21,6 +21,27 @@ class DestinationDetailCubit extends Cubit<DestinationDetailState> {
     required this.checkinDestination,
   }) : super(DestinationDetailInitial());
 
+  /// Set destination data khi đã có sẵn (tránh gọi API duplicate)
+  Future<void> setInitialDestination(destination) async {
+    emit(DestinationDetailLoading());
+
+    // Vẫn cần load nearby destinations
+    final nearbyResult = await getNearbyDestinations(destination.id);
+
+    nearbyResult.fold(
+      (failure) {
+        // Still show destination even if nearby fails
+        emit(DestinationDetailLoaded(destination: destination));
+      },
+      (nearby) {
+        emit(DestinationDetailLoaded(
+          destination: destination,
+          nearbyDestinations: nearby,
+        ));
+      },
+    );
+  }
+
   Future<void> loadDestinationDetail(String destinationId) async {
     emit(DestinationDetailLoading());
 

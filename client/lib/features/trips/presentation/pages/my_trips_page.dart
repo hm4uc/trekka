@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart' hide NumberFormat;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../../injection_container.dart';
@@ -362,7 +363,7 @@ class _MyTripsPageState extends State<MyTripsPage> with SingleTickerProviderStat
                         const Icon(Icons.account_balance_wallet, size: 16, color: AppTheme.textGrey),
                         const SizedBox(width: 4),
                         Text(
-                          'Ngân sách: ${NumberFormat.currency(locale: 'vi', symbol: '₫').format(trip.tripBudget)}',
+                          '${'budget'.tr()}: ${intl.NumberFormat.currency(locale: 'vi', symbol: '₫').format(trip.tripBudget)}',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: AppTheme.textGrey,

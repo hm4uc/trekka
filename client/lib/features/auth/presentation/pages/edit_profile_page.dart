@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart' as easy;
 
 import '../../../../core/theme/app_themes.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -116,7 +117,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   // Picker chọn Nghề nghiệp
   void _showJobPicker() {
     _showSelectionSheet(
-      title: "Chọn nghề nghiệp",
+      title: "job".tr(),
       items: _jobs,
       selectedItem: _selectedJob,
       itemLabelBuilder: (item) => "${item[0].toUpperCase()}${item.substring(1)}",
@@ -129,10 +130,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final List<int> ages = List.generate(_ageMax - _ageMin + 1, (index) => _ageMin + index);
 
     _showSelectionSheet<int>(
-      title: "Chọn độ tuổi",
+      title: "age".tr(),
       items: ages,
       selectedItem: _selectedAge,
-      itemLabelBuilder: (item) => "$item tuổi",
+      itemLabelBuilder: (item) => "$item ${"age_years".tr()}",
       onSelected: (val) => setState(() => _selectedAge = val),
     );
   }
@@ -210,14 +211,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       listener: (context, state) {
         if (state is AuthSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Đã lưu thay đổi!"), backgroundColor: Colors.green));
+              SnackBar(content: Text("changes_saved".tr()), backgroundColor: Colors.green));
           context.pop();
         }
       },
       child: Scaffold(
         backgroundColor: AppTheme.backgroundColor,
         appBar: AppBar(
-          title: Text("Chỉnh sửa Hồ sơ", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          title: Text("edit_profile".tr(), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -244,8 +245,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildAvatarEdit(),
                   const SizedBox(height: 30),
 
-                  _buildLabel("Tên hiển thị"),
-                  _buildCustomTextField(_nameController, "Tên của bạn"),
+                  _buildLabel("display_name".tr()),
+                  _buildCustomTextField(_nameController, "your_name".tr()),
                   const SizedBox(height: 20),
 
                   // SELECTOR: Tuổi & Nghề nghiệp
@@ -257,9 +258,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel("Tuổi"),
+                            _buildLabel("age".tr()),
                             _buildSelectorField(
-                              text: _selectedAge != null ? "$_selectedAge" : "Chọn",
+                              text: _selectedAge != null ? "$_selectedAge" : "choose".tr(),
                               onTap: _showAgePicker,
                             ),
                           ],
@@ -272,11 +273,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel("Nghề nghiệp"),
+                            _buildLabel("job".tr()),
                             _buildSelectorField(
                               text: _selectedJob != null
                                   ? "${_selectedJob![0].toUpperCase()}${_selectedJob!.substring(1)}"
-                                  : "Chọn nghề",
+                                  : "choose_job".tr(),
                               onTap: _showJobPicker,
                             ),
                           ],
@@ -287,25 +288,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   const SizedBox(height: 20),
 
                   // GENDER SELECTION (Giao diện mới: Cards)
-                  _buildLabel("Giới tính"),
+                  _buildLabel("gender".tr()),
                   _buildGenderSelector(),
                   const SizedBox(height: 20),
 
-                  _buildLabel("Giới thiệu (Bio)"),
-                  _buildCustomTextField(_bioController, "Viết gì đó về bạn...", maxLines: 3),
+                  _buildLabel("bio_intro".tr()),
+                  _buildCustomTextField(_bioController, "write_about_yourself".tr(), maxLines: 3),
                   const SizedBox(height: 30),
 
                   // BUDGET VỚI NÚT +/- (Đã fix UI)
                   if (_budgetConfig != null) _buildBudgetControl(),
 
                   const SizedBox(height: 20),
-                  _buildLabel("Sở thích của bạn"),
+                  _buildLabel("your_preferences".tr()),
                   _buildPreferencesChips(),
                   const SizedBox(height: 40),
 
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, authState) => PrimaryButton(
-                        text: "Lưu thay đổi",
+                        text: "save_changes".tr(),
                         isLoading: authState is AuthLoading,
                         onPressed: _onSubmit),
                   ),
@@ -347,11 +348,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildGenderSelector() {
     return Row(
       children: [
-        _buildGenderCard('male', 'Nam', Icons.male),
+        _buildGenderCard('male', 'male'.tr(), Icons.male),
         const SizedBox(width: 12),
-        _buildGenderCard('female', 'Nữ', Icons.female),
+        _buildGenderCard('female', 'female'.tr(), Icons.female),
         const SizedBox(width: 12),
-        _buildGenderCard('other', 'Khác', Icons.transgender),
+        _buildGenderCard('other', 'other'.tr(), Icons.transgender),
       ],
     );
   }
@@ -401,12 +402,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildBudgetControl() {
     return Column(
       children: [
-        _buildLabel("Ngân sách dự kiến mỗi chuyến đi"),
+        _buildLabel("expected_budget_per_trip".tr()),
         const SizedBox(height: 8),
         Center(
           child: Text(
             _isBudgetSkipped
-                ? "Chưa xác định"
+                ? "not_determined".tr()
                 : NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(_currentBudget),
             style: GoogleFonts.inter(
                 fontSize: 26,
@@ -461,7 +462,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Icon(_isBudgetSkipped ? Icons.check_circle : Icons.circle_outlined,
                     color: _isBudgetSkipped ? AppTheme.primaryColor : AppTheme.textGrey, size: 20),
                 const SizedBox(width: 8),
-                Text("Chưa xác định ngân sách",
+                Text("not_determined_budget".tr(),
                     style: GoogleFonts.inter(
                         fontSize: 14, color: _isBudgetSkipped ? Colors.white : AppTheme.textGrey)),
               ],
@@ -506,8 +507,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               backgroundImage: NetworkImage(avatarUrl),
               backgroundColor: AppTheme.surfaceColor),
           const SizedBox(height: 12),
-          const Text("Thay đổi ảnh đại diện",
-              style: TextStyle(
+          Text("change_avatar".tr(),
+              style: const TextStyle(
                   color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 15)),
         ],
       ),

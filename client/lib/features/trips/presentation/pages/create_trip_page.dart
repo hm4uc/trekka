@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart' hide DateFormat;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../../injection_container.dart';
@@ -148,24 +149,24 @@ class _CreateTripPageState extends State<CreateTripPage> {
                       const SizedBox(height: 24),
 
                       // Trip Type
-                      _buildSectionTitle('Loại chuyến đi'),
+                      _buildSectionTitle('trip_type'.tr()),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _buildChoiceChip('solo', 'Một mình', Icons.person),
-                          _buildChoiceChip('couple', 'Cặp đôi', Icons.people),
-                          _buildChoiceChip('family', 'Gia đình', Icons.family_restroom),
-                          _buildChoiceChip('friends', 'Bạn bè', Icons.group),
-                          _buildChoiceChip('group', 'Nhóm', Icons.groups),
+                          _buildChoiceChip('solo', 'solo'.tr(), Icons.person),
+                          _buildChoiceChip('couple', 'couple'.tr(), Icons.people),
+                          _buildChoiceChip('family', 'family'.tr(), Icons.family_restroom),
+                          _buildChoiceChip('friends', 'friends'.tr(), Icons.group),
+                          _buildChoiceChip('group', 'group'.tr(), Icons.groups),
                         ],
                       ),
                       const SizedBox(height: 24),
 
                       // Participant Count
                       if (_tripType != 'solo') ...[
-                        _buildSectionTitle('Số người tham gia'),
+                        _buildSectionTitle('participants'.tr()),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -197,43 +198,43 @@ class _CreateTripPageState extends State<CreateTripPage> {
                       ],
 
                       // Transport
-                      _buildSectionTitle('Phương tiện di chuyển'),
+                      _buildSectionTitle('transport_method'.tr()),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _buildTransportChip('walking', 'Đi bộ', Icons.directions_walk),
-                          _buildTransportChip('bicycle', 'Xe đạp', Icons.directions_bike),
-                          _buildTransportChip('motorbike', 'Xe máy', Icons.two_wheeler),
-                          _buildTransportChip('car', 'Ô tô', Icons.directions_car),
-                          _buildTransportChip('bus', 'Xe buýt', Icons.directions_bus),
-                          _buildTransportChip('train', 'Tàu', Icons.train),
-                          _buildTransportChip('plane', 'Máy bay', Icons.flight),
+                          _buildTransportChip('walking', 'walking'.tr(), Icons.directions_walk),
+                          _buildTransportChip('bicycle', 'bike'.tr(), Icons.directions_bike),
+                          _buildTransportChip('motorbike', 'motorbike'.tr(), Icons.two_wheeler),
+                          _buildTransportChip('car', 'car'.tr(), Icons.directions_car),
+                          _buildTransportChip('bus', 'public_transport'.tr(), Icons.directions_bus),
+                          _buildTransportChip('train', 'public_transport'.tr(), Icons.train),
+                          _buildTransportChip('plane', 'public_transport'.tr(), Icons.flight),
                         ],
                       ),
                       const SizedBox(height: 24),
 
                       // Budget
-                      _buildSectionTitle('Ngân sách (VNĐ)'),
+                      _buildSectionTitle('${'budget'.tr()} (${'vnd'.tr()})'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _budgetController,
                         style: GoogleFonts.inter(color: Colors.white),
-                        decoration: _buildInputDecoration('VD: 1000000'),
+                        decoration: _buildInputDecoration('enter_amount'.tr()),
                         keyboardType: TextInputType.number,
                       ),
                       const SizedBox(height: 24),
 
                       // Visibility
-                      _buildSectionTitle('Quyền riêng tư'),
+                      _buildSectionTitle('visibility'.tr()),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         children: [
-                          _buildVisibilityChip('private', 'Riêng tư', Icons.lock),
-                          _buildVisibilityChip('friends', 'Bạn bè', Icons.people),
-                          _buildVisibilityChip('public', 'Công khai', Icons.public),
+                          _buildVisibilityChip('private', 'private'.tr(), Icons.lock),
+                          _buildVisibilityChip('friends', 'friends'.tr(), Icons.people),
+                          _buildVisibilityChip('public', 'public'.tr(), Icons.public),
                         ],
                       ),
                       const SizedBox(height: 40),
@@ -431,7 +432,7 @@ class _CreateTripPageState extends State<CreateTripPage> {
 
   String _formatDate(DateTime date) {
     try {
-      return DateFormat('dd/MM/yyyy', 'vi_VN').format(date);
+      return intl.DateFormat('dd/MM/yyyy', 'vi_VN').format(date);
     } catch (e) {
       return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
     }
@@ -439,7 +440,7 @@ class _CreateTripPageState extends State<CreateTripPage> {
 
   String _formatDateForApi(DateTime date) {
     try {
-      return DateFormat('yyyy-MM-dd').format(date);
+      return intl.DateFormat('yyyy-MM-dd').format(date);
     } catch (e) {
       return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     }

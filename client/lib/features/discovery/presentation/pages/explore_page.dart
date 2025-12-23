@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../destinations/presentation/bloc/destination_bloc.dart';
 import '../../../destinations/presentation/bloc/destination_event.dart';
 import '../../../destinations/presentation/bloc/destination_state.dart';
@@ -208,7 +210,7 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
       elevation: 0,
       expandedHeight: 110,
       title: Text(
-        "Khám phá",
+        LocaleKeys.exploreTitle.tr(),
         style: GoogleFonts.inter(
           fontSize: 24,
           fontWeight: FontWeight.bold,
@@ -225,7 +227,7 @@ class _ExplorePageState extends State<ExplorePage> with SingleTickerProviderStat
             onSubmitted: _onSearch,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
-              hintText: "Tìm địa điểm, sự kiện...",
+              hintText: LocaleKeys.searchPlaces.tr(),
               hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
               filled: true,
               fillColor: AppTheme.surfaceColor,

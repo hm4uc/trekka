@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/trip.dart';
 import '../bloc/trip_bloc.dart';
@@ -80,7 +82,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Hành trình",
+                      LocaleKeys.journey.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -89,7 +91,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Quản lý các chuyến đi của bạn",
+                      LocaleKeys.manageTrips.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         color: AppTheme.textGrey,
@@ -126,7 +128,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
               },
               icon: const Icon(Icons.add_circle_outline, size: 20),
               label: Text(
-                'Tạo lịch trình mới',
+                LocaleKeys.createNewTrip.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -176,10 +178,10 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           fontWeight: FontWeight.w500,
         ),
         padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: "Nháp"),
-          Tab(text: "Đang đi"),
-          Tab(text: "Hoàn thành"),
+        tabs: [
+          Tab(text: LocaleKeys.draft.tr()),
+          Tab(text: LocaleKeys.active.tr()),
+          Tab(text: LocaleKeys.completed.tr()),
         ],
       ),
     );
@@ -211,7 +213,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
                   onPressed: () {
                     context.read<TripBloc>().add(const GetTripsEvent(status: 'draft'));
                   },
-                  child: const Text('Thử lại'),
+                  child: Text(LocaleKeys.tryAgain.tr()),
                 ),
               ],
             ),
@@ -222,7 +224,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           final draftTrips = state.trips.where((trip) => trip.tripStatus == 'draft').toList();
 
           if (draftTrips.isEmpty) {
-            return _buildEmptyState('Chưa có lịch trình nháp');
+            return _buildEmptyState(LocaleKeys.noTrips.tr());
           }
 
           return ListView.builder(
@@ -234,7 +236,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           );
         }
 
-        return _buildEmptyState('Chưa có lịch trình nháp');
+        return _buildEmptyState(LocaleKeys.noTrips.tr());
       },
     );
   }
@@ -254,7 +256,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           ).toList();
 
           if (activeTrips.isEmpty) {
-            return _buildEmptyState('Chưa có chuyến đi đang diễn ra');
+            return _buildEmptyState(LocaleKeys.noActiveTips.tr());
           }
 
           return ListView.builder(
@@ -266,7 +268,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           );
         }
 
-        return _buildEmptyState('Chưa có chuyến đi đang diễn ra');
+        return _buildEmptyState(LocaleKeys.noActiveTips.tr());
       },
     );
   }
@@ -286,7 +288,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
               .toList();
 
           if (completedTrips.isEmpty) {
-            return _buildEmptyState('Chưa có chuyến đi nào hoàn thành');
+            return _buildEmptyState(LocaleKeys.noCompletedTrips.tr());
           }
 
           return ListView.builder(
@@ -298,7 +300,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
           );
         }
 
-        return _buildEmptyState('Chưa có chuyến đi nào hoàn thành');
+        return _buildEmptyState(LocaleKeys.noCompletedTrips.tr());
       },
     );
   }
@@ -609,7 +611,7 @@ class _JourneyPageState extends State<JourneyPage> with SingleTickerProviderStat
                                 ),
                               ),
                               child: Text(
-                                "Chi tiết",
+                                LocaleKeys.tripDetails.tr(),
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,

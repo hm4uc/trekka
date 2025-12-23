@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/theme/app_themes.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -44,6 +45,19 @@ class _HomePageState extends State<HomePage> {
         setState(() => _isCollapsed = false);
       }
     }
+  }
+
+  String _getGreeting(String displayName) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'good_morning'.tr();
+    } else if (hour < 18) {
+      greeting = 'good_afternoon'.tr();
+    } else {
+      greeting = 'good_evening'.tr();
+    }
+    return '$greeting $displayName 👋';
   }
 
   @override
@@ -203,7 +217,7 @@ class _HomePageState extends State<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Chào $displayName 👋",
+                  Text(_getGreeting(displayName),
                       style: GoogleFonts.inter(
                           fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                   Text("Hôm nay bạn muốn đi đâu?",

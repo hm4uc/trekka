@@ -16,8 +16,9 @@ void main() async {
   // Initialize EasyLocalization
   await EasyLocalization.ensureInitialized();
 
-  // Initialize date formatting for Vietnamese locale
+  // Initialize date formatting for Vietnamese and English locales
   await initializeDateFormatting('vi_VN', null);
+  await initializeDateFormatting('en_US', null);
 
   // Initialize Dependency Injection
   await di.init();

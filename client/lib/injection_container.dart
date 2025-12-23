@@ -1,8 +1,10 @@
+import 'package:chuck_interceptor/chuck_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trekka/core/services/shared_prefs_service.dart';
 import 'core/network/api_client.dart';
+import 'core/router/app_router.dart';
 import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -260,7 +262,15 @@ Future<void> init() async {
   );
 
   //! Core
-  sl.registerLazySingleton(() => ApiClient(sl()));
+  // Chuck - HTTP Inspector
+  final chuck = Chuck(
+    navigatorKey: rootNavigatorKey,
+    showNotification: true,
+    showInspectorOnShake: true,
+  );
+  sl.registerLazySingleton(() => chuck);
+
+  sl.registerLazySingleton(() => ApiClient(sl(), chuck));
 
   //! External
   final sharedPreferences = await SharedPreferences.getInstance();

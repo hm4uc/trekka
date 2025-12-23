@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:chuck_interceptor/chuck_interceptor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../injection_container.dart';
@@ -164,6 +165,16 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
               children: pages,
             ),
           ),
+          // Debug button để mở Chuck HTTP Inspector
+          floatingActionButton: FloatingActionButton(
+            mini: true,
+            backgroundColor: Colors.purple.withValues(alpha: 0.7),
+            onPressed: () {
+              sl<Chuck>().showInspector();
+            },
+            child: const Icon(Icons.bug_report, size: 20),
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
           bottomNavigationBar: SlideTransition(
             position: _offsetAnimation,
             child: TrekkaBottomBar(

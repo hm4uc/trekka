@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../../injection_container.dart';
 import '../../../destinations/presentation/bloc/destination_bloc.dart';
 import '../../../destinations/presentation/bloc/destination_event.dart';
@@ -74,7 +76,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
               child: Row(
                 children: [
                   Text(
-                    'Thêm điểm đến',
+                    'add_destination'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -99,7 +101,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                   children: [
                     // Search and select destination
                     Text(
-                      'Chọn điểm đến',
+                      'choose_destination'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -113,7 +115,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
 
                     // Visit order
                     Text(
-                      'Thứ tự ghé thăm',
+                      'visit_order'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -143,7 +145,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
 
                     // Estimated time
                     Text(
-                      'Thời gian ước tính (phút)',
+                      'estimated_time'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -156,7 +158,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                       min: 15,
                       max: 480,
                       divisions: 31,
-                      label: '$estimatedTime phút',
+                      label: '$estimatedTime ${'minutes'.tr()}',
                       activeColor: AppTheme.primaryColor,
                       onChanged: (value) {
                         setState(() {
@@ -165,7 +167,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                       },
                     ),
                     Text(
-                      '$estimatedTime phút (${(estimatedTime / 60).toStringAsFixed(1)} giờ)',
+                      '$estimatedTime ${'minutes'.tr()} (${(estimatedTime / 60).toStringAsFixed(1)} ${'hours'.tr()})',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: AppTheme.textGrey,
@@ -176,7 +178,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
 
                     // Visit date
                     Text(
-                      'Ngày ghé thăm',
+                      'visit_date'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -211,7 +213,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                             Text(
                               visitDate != null
                                   ? DateFormat('dd/MM/yyyy').format(visitDate!)
-                                  : 'Chọn ngày',
+                                  : 'select_date'.tr(),
                               style: GoogleFonts.inter(
                                 color: visitDate != null ? Colors.white : AppTheme.textGrey,
                               ),
@@ -225,7 +227,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
 
                     // Start time
                     Text(
-                      'Giờ bắt đầu',
+                      'start_time'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -258,7 +260,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                             Text(
                               startTime != null
                                   ? startTime!.format(context)
-                                  : 'Chọn giờ',
+                                  : 'select_time'.tr(),
                               style: GoogleFonts.inter(
                                 color: startTime != null ? Colors.white : AppTheme.textGrey,
                               ),
@@ -272,7 +274,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
 
                     // Notes
                     Text(
-                      'Ghi chú',
+                      'notes'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -284,7 +286,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                       controller: notesController,
                       style: GoogleFonts.inter(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: 'VD: Ghé thăm vào buổi sáng',
+                        hintText: 'example_visit_morning'.tr(),
                         hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
                         filled: true,
                         fillColor: AppTheme.backgroundColor,
@@ -319,7 +321,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                     ),
                   ),
                   child: Text(
-                    'Thêm điểm đến',
+                    'add_destination_button'.tr(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -363,7 +365,7 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      selectedDestinationName ?? 'Chọn điểm đến',
+                      selectedDestinationName ?? 'choose_destination'.tr(),
                       style: GoogleFonts.inter(
                         color: selectedDestinationId != null ? Colors.white : AppTheme.textGrey,
                       ),
@@ -410,32 +412,32 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Chọn điểm đến',
-                            style: GoogleFonts.inter(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                        Row(
+                          children: [
+                            Text(
+                              'choose_destination'.tr(),
+                              style: GoogleFonts.inter(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${filteredDestinations.length} điểm',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: AppTheme.textGrey,
+                            const Spacer(),
+                            Text(
+                              '${filteredDestinations.length} ${'destinations_count'.tr()}',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: AppTheme.textGrey,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       const SizedBox(height: 12),
                       // Search field
                       TextField(
                         style: GoogleFonts.inter(color: Colors.white),
                         decoration: InputDecoration(
-                          hintText: 'Tìm kiếm điểm đến...',
+                          hintText: 'search_destination_placeholder'.tr(),
                           hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
                           prefixIcon: const Icon(Icons.search, color: AppTheme.primaryColor),
                           filled: true,
@@ -530,8 +532,8 @@ class _AddDestinationToTripDialogState extends State<AddDestinationToTripDialog>
   void _addDestination() {
     if (selectedDestinationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng chọn điểm đến'),
+        SnackBar(
+          content: Text(LocaleKeys.pleaseChooseDestination.tr()),
           backgroundColor: Colors.red,
         ),
       );

@@ -1,5 +1,6 @@
 import 'dart:ui'; // Cần import để dùng ImageFilter
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_themes.dart';
 
 class TrekkaBottomBar extends StatelessWidget {
@@ -43,11 +44,11 @@ class TrekkaBottomBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, "Home"),
-                _buildNavItem(1, Icons.explore_rounded, Icons.explore_outlined, "Explore"),
-                _buildNavItem(2, Icons.map_rounded, Icons.map_outlined, "Trips"),
-                _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_border_rounded, "Saved"),
-                _buildNavItem(4, Icons.person_rounded, Icons.person_outline_rounded, "Profile"),
+                _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, "home".tr()),
+                _buildNavItem(1, Icons.explore_rounded, Icons.explore_outlined, "explore".tr()),
+                _buildNavItem(2, Icons.map_rounded, Icons.map_outlined, "journey".tr()),
+                _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_border_rounded, "favorites".tr()),
+                _buildNavItem(4, Icons.person_rounded, Icons.person_outline_rounded, "profile".tr()),
               ],
             ),
           ),

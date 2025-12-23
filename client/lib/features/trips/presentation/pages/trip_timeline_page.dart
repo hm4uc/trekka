@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/trip.dart' hide TripEvent;
@@ -313,9 +314,9 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
         Expanded(
           child: _buildSummaryCard(
             icon: Icons.attach_money,
-            title: 'Ngân sách',
+            title: 'budget'.tr(),
             value: budget > 0 ? '${(totalCost / 1000).toStringAsFixed(0)}K' : '0K',
-            subtitle: budget > 0 ? 'của ${(budget / 1000).toStringAsFixed(0)}K' : 'Chưa đặt',
+            subtitle: budget > 0 ? '${'from'.tr()} ${(budget / 1000).toStringAsFixed(0)}K' : 'not_set_yet'.tr(),
             percentage: budget > 0 ? budgetPercentage / 100 : null,
             color: budgetPercentage > 80 ? Colors.red : AppTheme.primaryColor,
           ),
@@ -324,9 +325,9 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
         Expanded(
           child: _buildSummaryCard(
             icon: Icons.schedule,
-            title: 'Thời gian',
+            title: 'total_duration'.tr(),
             value: totalTime > 0 ? '${(totalTime / 60).toStringAsFixed(1)}h' : '0h',
-            subtitle: '$totalTime phút',
+            subtitle: '$totalTime ${'minutes'.tr()}',
             percentage: null,
             color: Colors.blue,
           ),
@@ -444,7 +445,7 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
                 Icon(Icons.map_outlined, size: 60, color: AppTheme.textGrey),
                 const SizedBox(height: 16),
                 Text(
-                  'Chưa có điểm đến nào trong lịch trình',
+                  'no_destinations_in_trip'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: AppTheme.textGrey,
@@ -655,7 +656,7 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
                       Icon(Icons.schedule_outlined, size: 14, color: AppTheme.textGrey),
                       const SizedBox(width: 4),
                       Text(
-                        '${tripDest.estimatedTime} phút',
+                        '${tripDest.estimatedTime} ${'minutes'.tr()}',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppTheme.textGrey,
@@ -753,7 +754,7 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
                   Icon(Icons.access_time, size: 14, color: AppTheme.textGrey),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormat('dd/MM/yyyy HH:mm').format(event!.eventStart!),
+                    intl.DateFormat('dd/MM/yyyy HH:mm').format(event!.eventStart!),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppTheme.textGrey,
@@ -884,7 +885,7 @@ class _TripTimelinePageState extends State<TripTimelinePage> {
 
   String _formatDate(DateTime date, String format) {
     try {
-      return DateFormat(format, 'vi_VN').format(date);
+      return intl.DateFormat(format, 'vi_VN').format(date);
     } catch (e) {
       // Fallback formatting
       if (format == 'dd/MM') {

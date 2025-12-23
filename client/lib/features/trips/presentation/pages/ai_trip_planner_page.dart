@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_themes.dart';
 
 class AITripPlannerPage extends StatefulWidget {
@@ -51,7 +52,7 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'AI Trip Planner',
+          'ai_trip_planner'.tr(),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -70,32 +71,32 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
 
             // Trip Name
             _buildInputField(
-              label: 'Tên chuyến đi',
+              label: 'trip_title'.tr(),
               controller: _tripNameController,
-              hint: 'VD: Khám phá Hà Nội cuối tuần',
+              hint: 'trip_name_hint'.tr(),
               icon: Icons.edit_outlined,
             ),
             const SizedBox(height: 20),
 
             // Destination
             _buildInputField(
-              label: 'Điểm đến',
+              label: 'destination_city'.tr(),
               controller: _destinationController,
-              hint: 'VD: Hà Nội, Đà Nẵng, Hội An...',
+              hint: 'enter_destination'.tr(),
               icon: Icons.location_on_outlined,
             ),
             const SizedBox(height: 24),
 
             // Duration
-            _buildLabel('Thời lượng'),
+            _buildLabel('number_of_days'.tr()),
             _buildDurationPicker(),
             const SizedBox(height: 24),
 
             // Travel Style
-            _buildLabel('Phong cách du lịch'),
+            _buildLabel('travel_style'.tr()),
             const SizedBox(height: 8),
             Text(
-              'Chọn ít nhất 1 phong cách',
+              'please_select_style'.tr(),
               style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textGrey),
             ),
             const SizedBox(height: 12),
@@ -103,17 +104,17 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
             const SizedBox(height: 24),
 
             // Budget
-            _buildLabel('Ngân sách mỗi người / ngày'),
+            _buildLabel('budget'.tr()),
             _buildBudgetSlider(),
             const SizedBox(height: 24),
 
             // Transport
-            _buildLabel('Phương tiện di chuyển'),
+            _buildLabel('transport_method'.tr()),
             _buildTransportPicker(),
             const SizedBox(height: 24),
 
             // Group Size
-            _buildLabel('Số người tham gia'),
+            _buildLabel('participants'.tr()),
             _buildGroupSizePicker(),
             const SizedBox(height: 32),
 
@@ -155,7 +156,7 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tạo lịch trình thông minh',
+                  'ai_creation'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -164,7 +165,7 @@ class _AITripPlannerPageState extends State<AITripPlannerPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'AI sẽ giúp bạn lên kế hoạch chi tiết',
+                  'ai_creation_desc'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppTheme.textGrey,

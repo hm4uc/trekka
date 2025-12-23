@@ -1,7 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_themes.dart';
@@ -48,8 +49,8 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
         listener: (context, state) {
           if (state is TripCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tạo chuyến đi thành công!'),
+              SnackBar(
+                content: Text('trip_created_successfully'.tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -79,7 +80,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                   onPressed: isLoading ? null : () => Navigator.pop(context),
                 ),
                 title: Text(
-                  'Tạo chuyến đi',
+                  'manual_trip_creation'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -105,7 +106,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                     TextButton(
                       onPressed: () => _saveTrip(context),
                       child: Text(
-                        'Lưu',
+                        'save'.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -126,7 +127,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
 
                     // Trip Name
                     Text(
-                      'Tên chuyến đi',
+                      'trip_title'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -138,7 +139,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                       controller: _tripNameController,
                       style: GoogleFonts.inter(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: 'VD: Khám phá Hà Nội cuối tuần',
+                        hintText: 'trip_name_hint'.tr(),
                         hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
                         prefixIcon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
                         filled: true,
@@ -158,7 +159,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Vui lòng nhập tên chuyến đi';
+                          return 'please_enter_trip_name'.tr();
                         }
                         return null;
                       },
@@ -167,7 +168,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
 
                     // Date Range
                     Text(
-                      'Thời gian',
+                      'dates_and_budget'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -179,7 +180,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                       children: [
                         Expanded(
                           child: _buildDatePicker(
-                            label: 'Ngày đi',
+                            label: 'start_date'.tr(),
                             date: _startDate,
                             onTap: () => _selectDate(context, true),
                           ),
@@ -187,7 +188,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildDatePicker(
-                            label: 'Ngày về',
+                            label: 'end_date'.tr(),
                             date: _endDate,
                             onTap: () => _selectDate(context, false),
                           ),
@@ -198,7 +199,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
 
                     // Budget
                     Text(
-                      'Ngân sách',
+                      'budget'.tr(),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -250,7 +251,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tạo lịch trình thủ công',
+                  'create_manually'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -259,7 +260,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Tự do tùy chỉnh theo ý bạn',
+                  'manual_creation_desc'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppTheme.textGrey,
@@ -278,10 +279,10 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
     required DateTime? date,
     required VoidCallback onTap,
   }) {
-    String dateText = 'Chọn ngày';
+    String dateText = 'select_date'.tr();
     if (date != null) {
       try {
-        dateText = DateFormat('dd/MM/yyyy', 'vi_VN').format(date);
+        dateText = intl.DateFormat('dd/MM/yyyy', 'vi_VN').format(date);
       } catch (e) {
         // Fallback to simple format if locale not ready
         dateText = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
@@ -423,7 +424,7 @@ class _ManualTripCreatorPageState extends State<ManualTripCreatorPage> {
                 onPressed: _addDestination,
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
-                  'Thêm điểm đến',
+                  'add_destination'.tr(),
                   style: GoogleFonts.inter(fontSize: 14),
                 ),
                 style: OutlinedButton.styleFrom(

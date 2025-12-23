@@ -26,12 +26,28 @@ import '../../features/trips/presentation/pages/favorites_page.dart';
 import '../../features/trips/presentation/pages/my_trips_page.dart';
 import '../../features/trips/presentation/pages/create_trip_page.dart';
 
-final GoRouter appRouter = GoRouter(
-  initialLocation: '/',
-  redirect: (context, state) {
-    return null; // No redirect
-  },
-  routes: [
+// Global navigator key shared with Chuck
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+// Lazy initialization để tránh circular dependency
+GoRouter? _appRouter;
+
+GoRouter get appRouter {
+  if (_appRouter == null) {
+    _appRouter = GoRouter(
+      navigatorKey: rootNavigatorKey,
+      initialLocation: '/',
+      redirect: (context, state) {
+        return null; // No redirect
+      },
+      routes: _buildRoutes(),
+    );
+  }
+  return _appRouter!;
+}
+
+List<RouteBase> _buildRoutes() {
+  return [
     GoRoute(
       path: '/',
       builder: (context, state) => const SplashPage(),
@@ -169,5 +185,5 @@ final GoRouter appRouter = GoRouter(
         return const CreateTripPage();
       },
     ),
-  ],
-);
+  ];
+}

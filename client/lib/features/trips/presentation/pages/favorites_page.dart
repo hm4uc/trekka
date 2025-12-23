@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../destinations/domain/entities/destination.dart';
 import '../../../destinations/presentation/bloc/destination_bloc.dart';
 import '../../../destinations/presentation/bloc/destination_event.dart';
@@ -91,7 +93,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
       expandedHeight: 100,
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          "Yêu thích",
+          LocaleKeys.favoritesTitle.tr(),
           style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -130,9 +132,9 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
             fontSize: 13,
             fontWeight: FontWeight.normal,
           ),
-          tabs: const [
-            Tab(text: "Đã thích"),
-            Tab(text: "Đã check-in"),
+          tabs: [
+            Tab(text: LocaleKeys.liked.tr()),
+            Tab(text: LocaleKeys.checkedIn.tr()),
           ],
         ),
       ),
@@ -148,19 +150,19 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
           scrollDirection: Axis.horizontal,
           children: [
             _buildFilterChip(
-              label: 'Tất cả',
+              label: LocaleKeys.allItems.tr(),
               value: null,
               isSelected: _selectedTypeFilter == null,
             ),
             const SizedBox(width: 8),
             _buildFilterChip(
-              label: 'Địa điểm',
+              label: LocaleKeys.destinations.tr(),
               value: 'destination',
               isSelected: _selectedTypeFilter == 'destination',
             ),
             const SizedBox(width: 8),
             _buildFilterChip(
-              label: 'Sự kiện',
+              label: LocaleKeys.events.tr(),
               value: 'event',
               isSelected: _selectedTypeFilter == 'event',
             ),
@@ -236,7 +238,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                   ),
-                  child: const Text("Thử lại", style: TextStyle(color: Colors.black)),
+                  child: Text(LocaleKeys.tryAgain.tr(), style: const TextStyle(color: Colors.black)),
                 ),
               ],
             ),
@@ -247,8 +249,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
           if (state.items.isEmpty) {
             return _buildEmptyState(
               icon: Icons.favorite_border,
-              title: "Chưa có địa điểm hay sự kiện\nyêu thích",
-              subtitle: "Khám phá và lưu các địa điểm hoặc sự kiện\nbạn yêu thích để xem lại sau",
+              title: LocaleKeys.noFavoriteDestinations.tr(),
+              subtitle: LocaleKeys.startExploring.tr(),
             );
           }
 
@@ -270,8 +272,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
         return _buildEmptyState(
           icon: Icons.favorite_border,
-          title: "Chưa có địa điểm hay sự kiện\nyêu thích",
-          subtitle: "Khám phá và lưu các địa điểm hoặc sự kiện\nbạn yêu thích để xem lại sau",
+          title: LocaleKeys.noFavoriteDestinations.tr(),
+          subtitle: LocaleKeys.startExploring.tr(),
         );
       },
     );
@@ -308,7 +310,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                   ),
-                  child: const Text("Thử lại", style: TextStyle(color: Colors.black)),
+                  child: Text(LocaleKeys.tryAgain.tr(), style: const TextStyle(color: Colors.black)),
                 ),
               ],
             ),
@@ -319,8 +321,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
           if (state.items.isEmpty) {
             return _buildEmptyState(
               icon: Icons.location_on_outlined,
-              title: "Chưa check-in địa điểm hay sự kiện nào",
-              subtitle: "Check-in tại các địa điểm hoặc sự kiện\nbạn ghé thăm để lưu lại kỷ niệm",
+              title: LocaleKeys.noVisitedDestinations.tr(),
+              subtitle: LocaleKeys.checkInToDestinations.tr(),
             );
           }
 
@@ -336,8 +338,8 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
 
         return _buildEmptyState(
           icon: Icons.location_on_outlined,
-          title: "Chưa check-in địa điểm hay sự kiện nào",
-          subtitle: "Check-in tại các địa điểm hoặc sự kiện\nbạn ghé thăm để lưu lại kỷ niệm",
+          title: LocaleKeys.noVisitedDestinations.tr(),
+          subtitle: LocaleKeys.checkInToDestinations.tr(),
         );
       },
     );
@@ -455,7 +457,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${destination.totalCheckins} lần',
+                                '${destination.totalCheckins} ${LocaleKeys.times.tr()}',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -559,7 +561,7 @@ class _FavoritesPageState extends State<FavoritesPage> with SingleTickerProvider
             ),
             icon: const Icon(Icons.explore, color: Colors.black),
             label: Text(
-              "Khám phá ngay",
+              LocaleKeys.exploreNow.tr(),
               style: GoogleFonts.inter(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
