@@ -123,7 +123,7 @@ async function getAllDestinations({
     };
 }
 
-async function getDestinationById(id) {
+async function getDestinationById(id, userId = null) {
     const destination = await Destination.findOne({
         where: {id, is_active: true},
         include: [
@@ -139,6 +139,23 @@ async function getDestinationById(id) {
         const error = new Error('Destination not found');
         error.statusCode = 404;
         throw error;
+    }
+
+    // If user is authenticated, check if they liked this destination
+    if (userId) {
+        const isLiked = await UserFeedback.findOne({
+            where: {
+                user_id: userId,
+                target_id: id,
+                feedback_target_type: 'destination',
+                feedback_type: 'like'
+            }
+        });
+
+        return {
+            ...destination.toJSON(),
+            isLiked: !!isLiked
+        };
     }
 
     return destination;

@@ -55,3 +55,42 @@ export async function authenticate(req, res, next) {
         });
     }
 }
+
+// Optional authentication - doesn't fail if no token is provided
+export async function optionalAuthenticate(req, res, next) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // No token provided, continue without user info
+        return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    try {
+        // Verify JWT signature and expiration
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Check if token is blacklisted
+        const blacklistedToken = await TokenBlacklist.findOne({
+            where: { token }
+        });
+
+        if (blacklistedToken) {
+            // Token is blacklisted, continue without user info
+            return next();
+        }
+
+        // Attach user info to request
+        req.user = {
+            profileId: payload.profileId,
+            usr_email: payload.usr_email
+        };
+        req.token = token;
+
+        next();
+    } catch (error) {
+        // Invalid token, continue without user info
+        next();
+    }
+}

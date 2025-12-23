@@ -36,7 +36,8 @@ async function getDestinations(req, res, next) {
 async function getDestinationDetail(req, res, next) {
     try {
         const { id } = req.params;
-        const result = await destinationService.getDestinationById(id);
+        const userId = req.user?.profileId; // Optional from optionalAuthenticate middleware
+        const result = await destinationService.getDestinationById(id, userId);
 
         res.status(StatusCodes.OK).json({
             status: 'success',

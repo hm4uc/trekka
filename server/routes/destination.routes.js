@@ -1,6 +1,6 @@
 import express from 'express';
 import destinationController from '../controllers/destination.controller.js';
-import {authenticate} from '../middleware/authenticate.js';
+import {authenticate, optionalAuthenticate} from '../middleware/authenticate.js';
 import {authorize} from '../middleware/authorize.js';
 
 const router = express.Router();
@@ -393,7 +393,7 @@ router.get('/ai-picks', authenticate, destinationController.getAiPicks);
  *       404:
  *         description: Destination not found
  */
-router.get('/:id', destinationController.getDestinationDetail);
+router.get('/:id', optionalAuthenticate, destinationController.getDestinationDetail);
 
 /**
  * @swagger
