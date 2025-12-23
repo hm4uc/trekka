@@ -4,8 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../../core/utils/image_helper.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../domain/entities/travel_constants.dart';
@@ -106,13 +108,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white), onPressed: _onBack)
             : null,
-        title: Text("Bước $_currentStep/3",
+        title: Text("${LocaleKeys.step.tr()} $_currentStep/3",
             style: GoogleFonts.inter(fontSize: 16, color: AppTheme.textGrey)),
         centerTitle: true,
         actions: [
           TextButton(
             onPressed: () => context.go('/location-permission'),
-            child: Text("Bỏ qua", style: GoogleFonts.inter(color: AppTheme.primaryColor)),
+            child: Text(LocaleKeys.skip.tr(), style: GoogleFonts.inter(color: AppTheme.primaryColor)),
           )
         ],
       ),
@@ -586,11 +588,11 @@ class _PreferencesPageState extends State<PreferencesPage> {
           Center(
             child: Column(
               children: [
-                Text("Ngân sách mỗi chuyến đi",
+                Text(LocaleKeys.budgetPerTrip.tr(),
                     style: GoogleFonts.inter(fontSize: 14, color: AppTheme.textGrey)),
                 const SizedBox(height: 16),
                 Text(
-                  _isBudgetSkipped ? "Chưa xác định" : _formatCurrency(_currentBudget),
+                  _isBudgetSkipped ? LocaleKeys.notSetYet.tr() : _formatCurrency(_currentBudget),
                   style: GoogleFonts.inter(
                       fontSize: 40, fontWeight: FontWeight.bold, color: contentColor),
                 ),
@@ -650,9 +652,9 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Tiết kiệm",
+                        Text(LocaleKeys.economical.tr(),
                             style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
-                        Text("Sang trọng",
+                        Text(LocaleKeys.luxury.tr(),
                             style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 12)),
                       ],
                     ),
@@ -692,7 +694,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    "Tôi chưa xác định ngân sách",
+                    "Chưa xác định ngân sách",
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

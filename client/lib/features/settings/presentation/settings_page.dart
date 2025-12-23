@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
 import '../../auth/presentation/bloc/auth_event.dart';
@@ -36,7 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
             icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
             onPressed: () => context.pop(),
           ),
-          title: Text("Cài đặt", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          title: Text("settings".tr(), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -44,44 +45,46 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionHeader("Chung"),
+              _buildSectionHeader("settings_general".tr()),
               _buildSettingItem(
                 icon: Icons.language,
-                title: "Ngôn ngữ",
-                subtitle: "Tiếng Việt",
-                onTap: () {},
+                title: "settings_language".tr(),
+                subtitle: context.locale.languageCode == 'vi'
+                    ? "language_vietnamese".tr()
+                    : "language_english".tr(),
+                onTap: () => _showLanguageDialog(context),
               ),
               _buildSwitchItem(
                 icon: Icons.location_on,
-                title: "Cho phép định vị",
+                title: "settings_allow_location".tr(),
                 value: _locationEnabled,
                 onChanged: (val) => setState(() => _locationEnabled = val),
               ),
 
               const SizedBox(height: 24),
-              _buildSectionHeader("Tài khoản & Bảo mật"),
+              _buildSectionHeader("settings_account".tr()),
               _buildSettingItem(
                 icon: Icons.lock,
-                title: "Đổi mật khẩu",
+                title: "settings_change_password".tr(),
                 onTap: () {},
               ),
               _buildSettingItem(
                 icon: Icons.privacy_tip,
-                title: "Quyền riêng tư",
+                title: "settings_privacy".tr(),
                 onTap: () {},
               ),
 
               const SizedBox(height: 24),
-              _buildSectionHeader("Hỗ trợ"),
+              _buildSectionHeader("settings_support".tr()),
               _buildSettingItem(
                 icon: Icons.headset_mic,
-                title: "Liên hệ hỗ trợ",
+                title: "settings_contact".tr(),
                 onTap: () {},
               ),
               _buildSettingItem(
                 icon: Icons.info,
-                title: "Về Trekka",
-                subtitle: "Phiên bản 1.0.0",
+                title: "settings_about".tr(),
+                subtitle: "settings_version".tr(),
                 onTap: () {},
               ),
 
@@ -94,12 +97,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text("Đăng xuất?"),
-                          content: const Text("Bạn có chắc chắn muốn đăng xuất không?"),
+                          title: Text("logout_title".tr()),
+                          content: Text("logout_message".tr()),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("Hủy"),
+                              child: Text("cancel".tr()),
                             ),
                             TextButton(
                               onPressed: () {
@@ -107,19 +110,105 @@ class _SettingsPageState extends State<SettingsPage> {
                                 // 👇 Gọi sự kiện Logout
                                 context.read<AuthBloc>().add(AuthLogoutRequested());
                               },
-                              child: const Text("Đăng xuất", style: TextStyle(color: Colors.red)),
+                              child: Text("logout".tr(), style: const TextStyle(color: Colors.red)),
                             ),
                           ],
                         ),
                     );
                   },
-                  child: Text("Đăng xuất",
+                  child: Text("logout".tr(),
                       style: GoogleFonts.inter(
                           color: Colors.redAccent, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               )
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surfaceColor,
+          title: Text(
+            "language_dialog_title".tr(),
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLanguageOption(
+                dialogContext,
+                "language_vietnamese".tr(),
+                const Locale('vi', 'VN'),
+                context.locale.languageCode == 'vi',
+              ),
+              const SizedBox(height: 12),
+              _buildLanguageOption(
+                dialogContext,
+                "language_english".tr(),
+                const Locale('en', 'US'),
+                context.locale.languageCode == 'en',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(
+    BuildContext dialogContext,
+    String title,
+    Locale locale,
+    bool isSelected,
+  ) {
+    return InkWell(
+      onTap: () async {
+        await dialogContext.setLocale(locale);
+        // Update the parent context's locale as well
+        if (mounted) {
+          await context.setLocale(locale);
+          setState(() {}); // Rebuild to update the subtitle
+        }
+        Navigator.of(dialogContext).pop();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryColor.withOpacity(0.2)
+              : AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? AppTheme.primaryColor : AppTheme.textGrey,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );

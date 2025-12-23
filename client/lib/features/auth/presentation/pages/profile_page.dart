@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -57,7 +59,7 @@ class _ProfilePageState extends State<ProfilePage> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Text("Hồ sơ", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+            title: Text(LocaleKeys.profile.tr(), style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
             centerTitle: true,
             actions: [
               IconButton(
@@ -105,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Thống kê hoạt động',
+                        LocaleKeys.activityStats.tr(),
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -121,12 +123,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Expanded(child: _buildStatCard(
                         "${user.totalDestinationsJoined ?? 0}",
-                        "Điểm đến"
+                        LocaleKeys.destinationsVisited.tr()
                       )),
                       const SizedBox(width: 12),
                       Expanded(child: _buildStatCard(
                         "${user.totalEventsJoined ?? 0}",
-                        "Sự kiện"
+                        LocaleKeys.eventsAttended.tr()
                       )),
                     ],
                   ),
@@ -137,19 +139,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 30),
 
                   // 6. MENU
-                  _buildMenuItem(Icons.calendar_today, "Lịch trình của tôi",
+                  _buildMenuItem(Icons.calendar_today, LocaleKeys.myTrips.tr(),
                       () => context.push('/my-trips')),
                   _buildMenuItem(
                       Icons.favorite,
-                      "Địa điểm yêu thích",
+                      LocaleKeys.favoriteDestinations.tr(),
                       () => context.push('/favorites', extra: {'initialTab': 0})),
                   _buildMenuItem(
                       Icons.location_on,
-                      "Địa điểm đã đi",
+                      LocaleKeys.visitedDestinations.tr(),
                       () => context.push('/favorites', extra: {'initialTab': 1})),
                   _buildMenuItem(
                       Icons.celebration,
-                      "Sự kiện đã tham gia",
+                      LocaleKeys.attendedEvents.tr(),
                       () => context.push('/favorites', extra: {'initialTab': 1})),
 
                   const SizedBox(height: 100),
@@ -198,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Tuổi
     if (user.age != null && user.age! > 0) {
-      chips.add(_buildInfoChip(Icons.cake_outlined, "${user.age} tuổi"));
+      chips.add(_buildInfoChip(Icons.cake_outlined, "${user.age} ${LocaleKeys.ageYears.tr()}"));
     }
     // Giới tính
     if (user.gender != null) {
@@ -256,8 +258,8 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         },
         icon: const Icon(Icons.edit, size: 16, color: Colors.black),
-        label: const Text("Chỉnh sửa hồ sơ",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 15)),
+        label: Text(LocaleKeys.editProfile.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 15)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -284,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               const Icon(Icons.travel_explore, color: AppTheme.primaryColor),
               const SizedBox(width: 10),
-              Text("Hồ sơ du lịch",
+              Text(LocaleKeys.travelProfile.tr(),
                   style: GoogleFonts.inter(
                       fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             ],
@@ -292,7 +294,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 20),
 
           // Ngân sách
-          _buildSectionTitle("Ngân sách dự kiến"),
+          _buildSectionTitle(LocaleKeys.expectedBudget.tr()),
           const SizedBox(height: 8),
           _buildBudgetDisplay(user.budget),
 
@@ -300,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: EdgeInsets.symmetric(vertical: 20), child: Divider(color: Colors.white10)),
 
           // Sở thích
-          _buildSectionTitle("Sở thích & Phong cách"),
+          _buildSectionTitle(LocaleKeys.preferencesStyle.tr()),
           const SizedBox(height: 12),
           BlocBuilder<PreferencesBloc, PreferencesState>(
             builder: (context, prefState) {
@@ -316,7 +318,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildBudgetDisplay(double? budget) {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
-    final budgetText = budget != null ? currencyFormat.format(budget) : "Chưa thiết lập";
+    final budgetText = budget != null ? currencyFormat.format(budget) : LocaleKeys.notSetYet.tr();
 
     return Text(
       budgetText,
@@ -327,8 +329,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildPreferencesWrap(List<String>? preferences, List<TravelStyle> styles) {
     if (preferences == null || preferences.isEmpty) {
-      return const Text("Chưa chọn sở thích",
-          style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
+      return Text(LocaleKeys.noPreferences.tr(),
+          style: const TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
     }
 
     return Wrap(
@@ -481,9 +483,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _formatGender(String? gender) {
-    if (gender == 'male') return "Nam";
-    if (gender == 'female') return "Nữ";
-    if (gender == 'other') return "Khác";
-    return "Chưa chọn";
+    if (gender == 'male') return LocaleKeys.male.tr();
+    if (gender == 'female') return LocaleKeys.female.tr();
+    if (gender == 'other') return LocaleKeys.other.tr();
+    return LocaleKeys.notSelected.tr();
   }
 }

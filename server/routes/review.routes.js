@@ -313,8 +313,16 @@ router.delete('/:id', authenticate, reviewController.deleteReview);
  * @swagger
  * /reviews/{id}/helpful:
  *   post:
- *     summary: Đánh dấu đánh giá hữu ích
+ *     summary: Đánh dấu/hủy đánh dấu đánh giá hữu ích (Toggle)
+ *     description: |
+ *       Toggle trạng thái "hữu ích" cho một đánh giá.
+ *       - Nếu chưa đánh dấu: sẽ đánh dấu là hữu ích
+ *       - Nếu đã đánh dấu: sẽ hủy đánh dấu
+ *
+ *       Mỗi user chỉ được đánh dấu hữu ích 1 lần cho mỗi đánh giá.
  *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -322,6 +330,7 @@ router.delete('/:id', authenticate, reviewController.deleteReview);
  *         schema:
  *           type: string
  *           format: uuid
+ *         description: ID của đánh giá
  *     responses:
  *       200:
  *         description: Success
@@ -332,15 +341,23 @@ router.delete('/:id', authenticate, reviewController.deleteReview);
  *               properties:
  *                 status:
  *                   type: string
+ *                   example: success
  *                 message:
  *                   type: string
+ *                   example: Đã đánh dấu là hữu ích
  *                 data:
  *                   type: object
  *                   properties:
- *                     helpful_count:
+ *                     isHelpful:
+ *                       type: boolean
+ *                       description: true nếu đã đánh dấu, false nếu đã hủy
+ *                     helpfulCount:
  *                       type: integer
+ *                       description: Tổng số lượt đánh dấu hữu ích hiện tại
+ *       404:
+ *         description: Review not found
  */
-router.post('/:id/helpful', reviewController.markReviewHelpful);
+router.post('/:id/helpful', authenticate, reviewController.markReviewHelpful);
 
 export default router;
 

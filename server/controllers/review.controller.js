@@ -113,13 +113,17 @@ async function deleteReview(req, res, next) {
 async function markReviewHelpful(req, res, next) {
     try {
         const {id} = req.params;
+        const userId = req.user.profileId;
 
-        const result = await reviewService.markReviewHelpful(id);
+        const result = await reviewService.markReviewHelpful(id, userId);
 
         res.status(StatusCodes.OK).json({
             status: 'success',
-            message: 'Marked as helpful',
-            data: result
+            message: result.message,
+            data: {
+                isHelpful: result.isHelpful,
+                helpfulCount: result.helpfulCount
+            }
         });
     } catch (error) {
         next(error);

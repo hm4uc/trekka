@@ -3,6 +3,7 @@ import DestinationCategory from './destinationCategory.model.js';
 import Profile from './profile.model.js';
 import Event from './event.model.js';
 import Review from './review.model.js';
+import ReviewHelpful from './reviewHelpful.model.js';
 import Trip from './trip.model.js';
 import TripDestination from './tripDestination.model.js';
 import TripEvent from './tripEvent.model.js';
@@ -68,6 +69,15 @@ Review.belongsTo(Event, { foreignKey: 'event_id', as: 'event' });
 Event.hasMany(TripEvent, { foreignKey: 'event_id', as: 'tripEvents' });
 TripEvent.belongsTo(Event, { foreignKey: 'event_id', as: 'event' });
 
+// ==================== REVIEW HELPFUL RELATIONSHIPS ====================
+// Review -> ReviewHelpful
+Review.hasMany(ReviewHelpful, { foreignKey: 'review_id', as: 'helpfulMarks' });
+ReviewHelpful.belongsTo(Review, { foreignKey: 'review_id', as: 'review' });
+
+// Profile -> ReviewHelpful
+Profile.hasMany(ReviewHelpful, { foreignKey: 'user_id', as: 'helpfulReviews' });
+ReviewHelpful.belongsTo(Profile, { foreignKey: 'user_id', as: 'user' });
+
 // ==================== TRIP RELATIONSHIPS ====================
 // Trip -> TripDestinations
 Trip.hasMany(TripDestination, { foreignKey: 'trip_id', as: 'tripDestinations' });
@@ -122,6 +132,7 @@ export {
     Profile,
     Event,
     Review,
+    ReviewHelpful,
     Trip,
     TripDestination,
     TripEvent,

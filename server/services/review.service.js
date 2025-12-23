@@ -1,4 +1,4 @@
-import {Review, Destination, Event, Profile} from '../models/associations.js';
+import {Review, Destination, Event, Profile, ReviewHelpful} from '../models/associations.js';
 
 // Create review
 async function createReview(userId, {destId, eventId, rating, comment, images}) {
@@ -294,8 +294,8 @@ async function deleteReview(reviewId, userId) {
     return {message: 'Review deleted successfully'};
 }
 
-// Mark review as helpful
-async function markReviewHelpful(reviewId) {
+// Mark review as helpful (toggle)
+async function markReviewHelpful(reviewId, userId) {
     const review = await Review.findOne({where: {id: reviewId}});
 
     if (!review) {
@@ -304,8 +304,44 @@ async function markReviewHelpful(reviewId) {
         throw error;
     }
 
-    await review.increment('helpful_count');
-    return review;
+    // Check if user already marked this review as helpful
+    const existingMark = await ReviewHelpful.findOne({
+        where: {
+            review_id: reviewId,
+            user_id: userId
+        }
+    });
+
+    if (existingMark) {
+        // Remove the helpful mark (toggle off)
+        await existingMark.destroy();
+        await review.decrement('helpful_count');
+
+        // Reload to get updated count
+        await review.reload();
+
+        return {
+            message: 'Đã hủy đánh dấu hữu ích',
+            isHelpful: false,
+            helpfulCount: review.helpful_count
+        };
+    } else {
+        // Add helpful mark (toggle on)
+        await ReviewHelpful.create({
+            review_id: reviewId,
+            user_id: userId
+        });
+        await review.increment('helpful_count');
+
+        // Reload to get updated count
+        await review.reload();
+
+        return {
+            message: 'Đã đánh dấu là hữu ích',
+            isHelpful: true,
+            helpfulCount: review.helpful_count
+        };
+    }
 }
 
 export default {

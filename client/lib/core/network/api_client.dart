@@ -2,13 +2,15 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:trekka/core/error/exceptions.dart';
+import 'package:chuck_interceptor/chuck_interceptor.dart';
 
 import '../constants/constants.dart';
 
 class ApiClient {
   final Dio dio;
+  final Chuck chuck;
 
-  ApiClient(this.dio) {
+  ApiClient(this.dio, this.chuck) {
     dio.options.baseUrl = AppConstants.baseUrl;
     dio.options.connectTimeout = const Duration(milliseconds: AppConstants.connectTimeout);
     dio.options.receiveTimeout = const Duration(milliseconds: AppConstants.receiveTimeout);
@@ -18,6 +20,9 @@ class ApiClient {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+
+    // Thêm Chuck interceptor - tự động track tất cả HTTP requests
+    dio.interceptors.add(chuck.dioInterceptor);
 
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
@@ -32,7 +37,7 @@ class ApiClient {
       final response = await dio.get(
         path,
         queryParameters: queryParameters,
-        options: Options(headers: headers), // Truyền headers vào đây
+        options: Options(headers: headers),
       );
       return response.data;
     } on DioException catch (e) {
@@ -58,6 +63,24 @@ class ApiClient {
     }
   }
 
+  Future<dynamic> delete(String path, {dynamic data}) async {
+    try {
+      final response = await dio.delete(path, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<dynamic> patch(String path, {dynamic data}) async {
+    try {
+      final response = await dio.patch(path, data: data);
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   Exception _handleDioError(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
@@ -75,3 +98,4 @@ class ApiClient {
     }
   }
 }
+

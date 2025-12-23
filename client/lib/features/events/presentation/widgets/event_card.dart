@@ -1,6 +1,7 @@
+import 'package:easy_localization/easy_localization.dart' hide DateFormat, NumberFormat;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../domain/entities/event.dart';
@@ -264,8 +265,8 @@ class EventCard extends StatelessWidget {
   }
 
   String _formatEventDate(DateTime start, DateTime end) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
-    final timeFormat = DateFormat('HH:mm');
+    final dateFormat = intl.DateFormat('dd/MM/yyyy');
+    final timeFormat = intl.DateFormat('HH:mm');
 
     if (start.year == end.year &&
         start.month == end.month &&
@@ -280,9 +281,9 @@ class EventCard extends StatelessWidget {
 
   String _formatPrice(double price) {
     if (price == 0) {
-      return 'Miễn phí';
+      return 'free'.tr();
     }
-    final formatter = NumberFormat('#,###', 'vi_VN');
+    final formatter = intl.NumberFormat('#,###', 'vi_VN');
     return '${formatter.format(price)}đ';
   }
 }

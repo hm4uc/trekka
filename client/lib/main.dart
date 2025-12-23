@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -14,6 +15,10 @@ void main() async {
 
   // Initialize EasyLocalization
   await EasyLocalization.ensureInitialized();
+
+  // Initialize date formatting for Vietnamese and English locales
+  await initializeDateFormatting('vi_VN', null);
+  await initializeDateFormatting('en_US', null);
 
   // Initialize Dependency Injection
   await di.init();

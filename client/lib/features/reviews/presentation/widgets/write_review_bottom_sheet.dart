@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../core/utils/locale_keys.dart';
 import '../../../../core/widgets/custom_rating_bar.dart';
 import '../bloc/review_bloc.dart';
 import '../bloc/review_event.dart' as events;
@@ -37,7 +39,7 @@ class _WriteReviewBottomSheetState extends State<WriteReviewBottomSheet> {
   void _submitReview() {
     if (_commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập nội dung đánh giá')),
+        SnackBar(content: Text(LocaleKeys.pleaseEnterReview.tr())),
       );
       return;
     }
@@ -63,7 +65,7 @@ class _WriteReviewBottomSheetState extends State<WriteReviewBottomSheet> {
         if (state is ReviewCreated) {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đánh giá đã được gửi thành công!')),
+            SnackBar(content: Text(LocaleKeys.reviewSubmittedSuccessfully.tr())),
           );
         } else if (state is ReviewError) {
           setState(() {

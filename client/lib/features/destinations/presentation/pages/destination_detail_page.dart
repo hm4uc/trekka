@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../../injection_container.dart';
 import '../../domain/entities/destination.dart';
 import '../bloc/destination_detail_cubit.dart';
 import '../bloc/destination_detail_state.dart';
 import '../../../discovery/presentation/pages/destination_reviews_page.dart';
+import '../../../reviews/presentation/bloc/review_bloc.dart';
+import '../../../reviews/presentation/bloc/review_event.dart';
+import '../../../reviews/presentation/bloc/review_state.dart';
+import '../../../reviews/domain/entities/review.dart' as ReviewEntity;
 
 class DestinationDetailPage extends StatelessWidget {
   final String destinationId;
@@ -21,9 +26,31 @@ class DestinationDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<DestinationDetailCubit>()
-        ..loadDestinationDetail(destinationId),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) {
+            final cubit = sl<DestinationDetailCubit>();
+            // Chỉ gọi API nếu chưa có dữ liệu destination
+            if (destination == null) {
+              cubit.loadDestinationDetail(destinationId);
+            } else {
+              // Sử dụng dữ liệu đã có, không gọi API
+              cubit.setInitialDestination(destination);
+            }
+            return cubit;
+          },
+        ),
+        BlocProvider(
+          create: (context) => sl<ReviewBloc>()
+            ..add(GetDestinationReviewsEvent(
+              destId: destinationId,
+              page: 1,
+              limit: 5,
+              sortBy: 'recent',
+            )),
+        ),
+      ],
       child: _DestinationDetailPageContent(
         destinationId: destinationId,
         initialDestination: destination,
@@ -559,7 +586,7 @@ class _DestinationDetailPageContentState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Giới thiệu',
+            'about'.tr(),
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -748,7 +775,7 @@ class _DestinationDetailPageContentState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Đánh giá',
+                'reviews'.tr(),
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -760,14 +787,17 @@ class _DestinationDetailPageContentState
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => DestinationReviewsPage(
-                        destination: destination,
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<ReviewBloc>(),
+                        child: DestinationReviewsPage(
+                          destination: destination,
+                        ),
                       ),
                     ),
                   );
                 },
                 child: Text(
-                  'Xem tất cả',
+                  'see_all'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppTheme.primaryColor,
@@ -777,14 +807,41 @@ class _DestinationDetailPageContentState
             ],
           ),
           const SizedBox(height: 8),
-          // Review preview cards
-          _buildReviewPreview(),
+          // Review preview cards from API
+          BlocBuilder<ReviewBloc, ReviewState>(
+            builder: (context, state) {
+              if (state is ReviewLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  ),
+                );
+              }
+
+              if (state is ReviewsLoaded && state.reviews.isNotEmpty) {
+                return Column(
+                  children: state.reviews.take(3).map((review) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildReviewCard(review),
+                    );
+                  }).toList(),
+                );
+              }
+
+              return _buildEmptyReviewsState();
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildReviewPreview() {
+  Widget _buildReviewCard(ReviewEntity.Review review) {
+    final timeAgo = _getTimeAgo(review.createdAt);
+    final reviewUser = review.user;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -799,14 +856,21 @@ class _DestinationDetailPageContentState
             children: [
               CircleAvatar(
                 radius: 20,
+                backgroundImage: reviewUser?.avatar != null
+                    ? NetworkImage(reviewUser!.avatar!)
+                    : null,
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                child: Text(
-                  'N',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
+                child: reviewUser?.avatar == null
+                    ? Text(
+                        reviewUser?.fullname.isNotEmpty == true
+                            ? reviewUser!.fullname[0].toUpperCase()
+                            : '?',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -814,7 +878,7 @@ class _DestinationDetailPageContentState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nguyễn Văn A',
+                      reviewUser?.fullname ?? 'Anonymous',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -825,14 +889,14 @@ class _DestinationDetailPageContentState
                       children: [
                         ...List.generate(5, (index) {
                           return Icon(
-                            index < 4 ? Icons.star : Icons.star_border,
+                            index < review.rating ? Icons.star : Icons.star_border,
                             size: 14,
                             color: Colors.amber,
                           );
                         }),
                         const SizedBox(width: 8),
                         Text(
-                          '2 tuần trước',
+                          timeAgo,
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: AppTheme.textGrey,
@@ -846,20 +910,24 @@ class _DestinationDetailPageContentState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.2),
+                  color: _getSentimentColor(review.sentiment).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.sentiment_satisfied, size: 12, color: Colors.green),
+                    Icon(
+                      _getSentimentIcon(review.sentiment),
+                      size: 12,
+                      color: _getSentimentColor(review.sentiment),
+                    ),
                     const SizedBox(width: 4),
                     Text(
-                      'Positive',
+                      review.sentiment.toLowerCase().tr(),
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: _getSentimentColor(review.sentiment),
                       ),
                     ),
                   ],
@@ -869,16 +937,114 @@ class _DestinationDetailPageContentState
           ),
           const SizedBox(height: 12),
           Text(
-            'Quán cafe đẹp, view hồ tuyệt vời. Đồ uống ngon, giá cả hợp lý. Nhân viên thân thiện.',
+            review.comment,
             style: GoogleFonts.inter(
               fontSize: 13,
               color: AppTheme.textGrey,
               height: 1.4,
             ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (review.images.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 60,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.images.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: NetworkImage(review.images[index]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyReviewsState() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.rate_review_outlined, size: 48, color: AppTheme.textGrey),
+          const SizedBox(height: 12),
+          Text(
+            'no_reviews'.tr(),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppTheme.textGrey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => _showWriteReviewDialog(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.black,
+            ),
+            child: Text('write_review'.tr()),
           ),
         ],
       ),
     );
+  }
+
+  Color _getSentimentColor(String sentiment) {
+    switch (sentiment.toLowerCase()) {
+      case 'positive':
+        return Colors.green;
+      case 'negative':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  IconData _getSentimentIcon(String sentiment) {
+    switch (sentiment.toLowerCase()) {
+      case 'positive':
+        return Icons.sentiment_satisfied;
+      case 'negative':
+        return Icons.sentiment_dissatisfied;
+      default:
+        return Icons.sentiment_neutral;
+    }
+  }
+
+  String _getTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 7) {
+      return '${(difference.inDays / 7).floor()} ${"weeks_ago".tr()}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ${"days_ago".tr()}';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${"hours_ago".tr()}';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${"minutes_ago".tr()}';
+    } else {
+      return 'just_now'.tr();
+    }
   }
 
 
@@ -901,18 +1067,9 @@ class _DestinationDetailPageContentState
                 border: Border.all(color: Colors.white10),
               ),
               child: IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DestinationReviewsPage(
-                        destination: destination,
-                      ),
-                    ),
-                  );
-                },
+                onPressed: () => _showWriteReviewDialog(),
                 icon: const Icon(Icons.rate_review_outlined, color: Colors.white),
-                tooltip: 'Viết đánh giá',
+                tooltip: 'write_review'.tr(),
               ),
             ),
             const SizedBox(width: 12),
@@ -932,7 +1089,7 @@ class _DestinationDetailPageContentState
                   ),
                 ),
                 child: Text(
-                  'Check-in',
+                  'check_in'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -949,7 +1106,7 @@ class _DestinationDetailPageContentState
                 onPressed: () => _addToTrip(destination),
                 icon: const Icon(Icons.add_circle_outline, size: 18),
                 label: Text(
-                  'Lên lịch',
+                  'add_destination'.tr(),
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -986,6 +1143,175 @@ class _DestinationDetailPageContentState
       SnackBar(
         content: Text('Đã thêm ${destination.name} vào lịch trình!'),
         backgroundColor: AppTheme.primaryColor,
+      ),
+    );
+  }
+
+  void _showWriteReviewDialog() {
+    final ratingController = ValueNotifier<int>(5);
+    final commentController = TextEditingController();
+    final scaffoldContext = context; // Store context
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ReviewBloc>(),
+        child: BlocListener<ReviewBloc, ReviewState>(
+          listener: (context, state) {
+            if (state is ReviewCreated) {
+              Navigator.of(dialogContext).pop();
+              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                SnackBar(
+                  content: Text('review_submitted_successfully'.tr()),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Reload reviews
+              context.read<ReviewBloc>().add(GetDestinationReviewsEvent(
+                destId: widget.destinationId,
+                page: 1,
+                limit: 5,
+                sortBy: 'recent',
+              ));
+            } else if (state is ReviewError) {
+              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: AlertDialog(
+            backgroundColor: AppTheme.surfaceColor,
+            title: Text(
+              'write_review'.tr(),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'rating'.tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ValueListenableBuilder<int>(
+                    valueListenable: ratingController,
+                    builder: (context, rating, _) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return IconButton(
+                            onPressed: () {
+                              ratingController.value = index + 1;
+                            },
+                            icon: Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 32,
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'comment'.tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 4,
+                    style: GoogleFonts.inter(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'please_enter_review'.tr(),
+                      hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
+                      filled: true,
+                      fillColor: AppTheme.backgroundColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  'cancel'.tr(),
+                  style: GoogleFonts.inter(color: AppTheme.textGrey),
+                ),
+              ),
+              BlocBuilder<ReviewBloc, ReviewState>(
+                builder: (context, state) {
+                  final isLoading = state is ReviewLoading;
+                  return ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            if (commentController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('please_enter_review'.tr()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            context.read<ReviewBloc>().add(CreateReviewEvent(
+                                  destId: widget.destinationId,
+                                  rating: ratingController.value,
+                                  comment: commentController.text.trim(),
+                                  images: [],
+                                ));
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Text('submit_review'.tr()),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

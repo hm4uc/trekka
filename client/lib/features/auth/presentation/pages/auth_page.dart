@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../../../../core/theme/app_themes.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -69,7 +70,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   void _onRegisterPressed() {
     if (_registerPasswordController.text != _registerConfirmPassController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Mật khẩu xác nhận không khớp"), backgroundColor: Colors.red),
+        SnackBar(content: Text('password_mismatch'.tr()), backgroundColor: Colors.red),
       );
       return;
     }
@@ -84,13 +85,13 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   void _onGoogleSignInPressed() {
     // context.read<AuthBloc>().add(AuthGoogleSignInRequested());
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Tính năng Google Sign In đang phát triển")));
+        .showSnackBar(SnackBar(content: Text('google_signin_dev'.tr())));
   }
 
   void _onAppleSignInPressed() {
     // context.read<AuthBloc>().add(AuthAppleSignInRequested());
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Tính năng Apple Sign In đang phát triển")));
+        .showSnackBar(SnackBar(content: Text('apple_signin_dev'.tr())));
   }
 
   @override
@@ -136,7 +137,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                                 fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white))),
                     const SizedBox(height: 8),
                     Center(
-                        child: Text("Hành trình của bạn, theo cách của bạn.",
+                        child: Text('your_journey_your_way'.tr().replaceAll('\\n', ' '),
                             style: GoogleFonts.inter(color: AppTheme.primaryColor, fontSize: 14))),
                     const SizedBox(height: 40),
 
@@ -158,7 +159,10 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                         labelColor: Colors.white,
                         unselectedLabelColor: AppTheme.textGrey,
                         labelStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
-                        tabs: const [Tab(text: "Đăng nhập"), Tab(text: "Đăng ký")],
+                        tabs: [
+                          Tab(text: 'login'.tr()),
+                          Tab(text: 'register'.tr()),
+                        ],
                       ),
                     ),
 
@@ -241,7 +245,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         Expanded(child: Divider(color: AppTheme.textGrey.withOpacity(0.3), thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text("Hoặc tiếp tục với",
+          child: Text('or_continue_with'.tr(),
               style: GoogleFonts.inter(color: AppTheme.textGrey, fontSize: 13)),
         ),
         Expanded(child: Divider(color: AppTheme.textGrey.withOpacity(0.3), thickness: 1)),
@@ -299,18 +303,18 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('email'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(
             controller: _emailController,
-            hintText: "Nhập email",
+            hintText: 'enter_email'.tr(),
             keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
-        const Text("Mật khẩu", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('password'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(
           controller: _passwordController,
-          hintText: "Mật khẩu",
+          hintText: 'enter_password'.tr(),
           obscureText: _obscureLoginPass,
           suffixIcon: IconButton(
             icon: Icon(_obscureLoginPass ? Icons.visibility_off : Icons.visibility,
@@ -322,11 +326,12 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           alignment: Alignment.centerRight,
           child: TextButton(
               onPressed: () => context.push('/forgot-password'),
-              child: const Text("Quên mật khẩu?", style: TextStyle(color: AppTheme.primaryColor))),
+              child: Text('forgot_password'.tr(),
+                  style: const TextStyle(color: AppTheme.primaryColor))),
         ),
         const SizedBox(height: 10),
         PrimaryButton(
-          text: "Đăng nhập",
+          text: 'login'.tr(),
           isLoading: isLoading,
           onPressed: _onLoginPressed,
         ),
@@ -338,22 +343,22 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text("Họ tên", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('full_name'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        AuthTextField(controller: _nameController, hintText: "Họ và tên"),
+        AuthTextField(controller: _nameController, hintText: 'enter_full_name'.tr()),
         const SizedBox(height: 20),
-        const Text("Email", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('email'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(
             controller: _registerEmailController,
-            hintText: "Email",
+            hintText: 'enter_email'.tr(),
             keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 20),
-        const Text("Mật khẩu", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('password'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(
           controller: _registerPasswordController,
-          hintText: "Mật khẩu ít nhất 6 ký tự",
+          hintText: 'enter_password_hint'.tr(),
           obscureText: _obscureRegisterPass,
           suffixIcon: IconButton(
             icon: Icon(_obscureRegisterPass ? Icons.visibility_off : Icons.visibility,
@@ -362,11 +367,11 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
           ),
         ),
         const SizedBox(height: 20),
-        const Text("Xác nhận", style: TextStyle(fontWeight: FontWeight.w600)),
+        Text('confirm_password'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         AuthTextField(
           controller: _registerConfirmPassController,
-          hintText: "Nhập lại mật khẩu",
+          hintText: 're_enter_password'.tr(),
           obscureText: _obscureRegisterConfirmPass,
           suffixIcon: IconButton(
             icon: Icon(_obscureRegisterConfirmPass ? Icons.visibility_off : Icons.visibility,
@@ -377,7 +382,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         ),
         const SizedBox(height: 30),
         PrimaryButton(
-          text: "Đăng ký",
+          text: 'register'.tr(),
           isLoading: isLoading,
           onPressed: _onRegisterPressed,
         ),

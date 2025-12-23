@@ -1,8 +1,10 @@
+import 'package:chuck_interceptor/chuck_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trekka/core/services/shared_prefs_service.dart';
 import 'core/network/api_client.dart';
+import 'core/router/app_router.dart';
 import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
@@ -53,6 +55,18 @@ import 'features/reviews/domain/usecases/get_my_reviews.dart';
 import 'features/reviews/domain/usecases/mark_review_helpful.dart';
 import 'features/reviews/domain/usecases/update_review.dart';
 import 'features/reviews/presentation/bloc/review_bloc.dart';
+import 'features/trips/data/datasources/trip_remote_data_source.dart';
+import 'features/trips/data/repositories/trip_repository_impl.dart';
+import 'features/trips/domain/repositories/trip_repository.dart';
+import 'features/trips/domain/usecases/add_destination_to_trip.dart';
+import 'features/trips/domain/usecases/add_event_to_trip.dart';
+import 'features/trips/domain/usecases/create_trip.dart';
+import 'features/trips/domain/usecases/delete_trip.dart';
+import 'features/trips/domain/usecases/get_trip_detail.dart';
+import 'features/trips/domain/usecases/get_trips.dart';
+import 'features/trips/domain/usecases/update_trip.dart';
+import 'features/trips/domain/usecases/update_trip_status.dart';
+import 'features/trips/presentation/bloc/trip_bloc.dart';
 
 // Biến toàn cục để truy cập dependency
 final sl = GetIt.instance;
@@ -214,8 +228,49 @@ Future<void> init() async {
     () => ReviewRemoteDataSourceImpl(sl()),
   );
 
+  //! Features - Trips
+  // Bloc
+  sl.registerFactory(() => TripBloc(
+        getTripsUseCase: sl(),
+        getTripDetailUseCase: sl(),
+        createTripUseCase: sl(),
+        updateTripUseCase: sl(),
+        deleteTripUseCase: sl(),
+        updateTripStatusUseCase: sl(),
+        addDestinationToTripUseCase: sl(),
+        addEventToTripUseCase: sl(),
+      ));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetTripsUseCase(sl()));
+  sl.registerLazySingleton(() => GetTripDetailUseCase(sl()));
+  sl.registerLazySingleton(() => CreateTripUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTripUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteTripUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateTripStatusUseCase(sl()));
+  sl.registerLazySingleton(() => AddDestinationToTripUseCase(sl()));
+  sl.registerLazySingleton(() => AddEventToTripUseCase(sl()));
+
+  // Repository
+  sl.registerLazySingleton<TripRepository>(
+    () => TripRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<TripRemoteDataSource>(
+    () => TripRemoteDataSourceImpl(apiClient: sl()),
+  );
+
   //! Core
-  sl.registerLazySingleton(() => ApiClient(sl()));
+  // Chuck - HTTP Inspector
+  final chuck = Chuck(
+    navigatorKey: rootNavigatorKey,
+    showNotification: true,
+    showInspectorOnShake: true,
+  );
+  sl.registerLazySingleton(() => chuck);
+
+  sl.registerLazySingleton(() => ApiClient(sl(), chuck));
 
   //! External
   final sharedPreferences = await SharedPreferences.getInstance();

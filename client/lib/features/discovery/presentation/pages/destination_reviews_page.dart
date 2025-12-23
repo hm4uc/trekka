@@ -1,7 +1,15 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_themes.dart';
 import '../../../destinations/domain/entities/destination.dart';
+import '../../../reviews/presentation/bloc/review_bloc.dart';
+import '../../../reviews/presentation/bloc/review_event.dart';
+import '../../../reviews/presentation/bloc/review_state.dart';
+import '../../../reviews/domain/entities/review.dart' as ReviewEntity;
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 
 class DestinationReviewsPage extends StatefulWidget {
   final Destination destination;
@@ -13,60 +21,31 @@ class DestinationReviewsPage extends StatefulWidget {
 }
 
 class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
-  String _selectedFilter = 'all'; // all, 5star, 4star, 3star, positive, negative
+  String _selectedFilter = 'recent'; // recent, rating_high, rating_low, helpful
+  int _currentPage = 1;
+  final int _pageSize = 10;
 
-  // Mock review data (replace with actual API data)
-  final List<Review> _mockReviews = [
-    Review(
-      id: '1',
-      userName: 'An Nguyen',
-      userAvatar: null,
-      rating: 5,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      comment: 'Cảnh đẹp thật sự xuất sắc! Không khí trong lành, phù hợp để đi vào cuối tuần. Tuy phải đi qua một đoạn đường đất nhưng rất đáng để trải nghiệm. Chắc chắn sẽ quay lại!',
-      likes: 32,
-      images: [],
-    ),
-    Review(
-      id: '2',
-      userName: 'Bình Tran',
-      userAvatar: null,
-      rating: 4,
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      comment: 'Đẹp nhưng giá hơi đắt một chút. Overall thì vẫn rất ổn để đi một lần. Nên đến vào mùa thu sẽ đẹp hơn.',
-      likes: 15,
-      images: [],
-    ),
-    Review(
-      id: '3',
-      userName: 'Chi Vo',
-      userAvatar: null,
-      rating: 5,
-      date: DateTime.now().subtract(const Duration(days: 10)),
-      comment: 'Tuyệt vời! Rất đáng để khám phá. Nhân viên thân thiện, hỗ trợ nhiệt tình. Sẽ giới thiệu cho bạn bè.',
-      likes: 28,
-      images: [],
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
 
-  List<Review> get _filteredReviews {
-    if (_selectedFilter == 'all') return _mockReviews;
-    if (_selectedFilter == '5star') {
-      return _mockReviews.where((r) => r.rating == 5).toList();
-    }
-    if (_selectedFilter == '4star') {
-      return _mockReviews.where((r) => r.rating == 4).toList();
-    }
-    if (_selectedFilter == '3star') {
-      return _mockReviews.where((r) => r.rating == 3).toList();
-    }
-    if (_selectedFilter == 'positive') {
-      return _mockReviews.where((r) => r.rating >= 4).toList();
-    }
-    if (_selectedFilter == 'negative') {
-      return _mockReviews.where((r) => r.rating <= 2).toList();
-    }
-    return _mockReviews;
+  void _loadReviews() {
+    context.read<ReviewBloc>().add(GetDestinationReviewsEvent(
+          destId: widget.destination.id,
+          page: _currentPage,
+          limit: _pageSize,
+          sortBy: _selectedFilter,
+        ));
+  }
+
+  void _changeFilter(String newFilter) {
+    setState(() {
+      _selectedFilter = newFilter;
+      _currentPage = 1;
+    });
+    _loadReviews();
   }
 
   @override
@@ -81,57 +60,134 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Đánh giá',
+          'reviews'.tr(),
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: () => _showFilterBottomSheet(),
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          // Rating Summary
-          _buildRatingSummary(),
+      body: BlocBuilder<ReviewBloc, ReviewState>(
+        builder: (context, reviewState) {
+          final authState = context.watch<AuthBloc>().state;
+          final currentUserId = authState is AuthSuccess ? authState.user.id : null;
 
-          // Filter Chips
-          _buildFilterChips(),
+          return Column(
+            children: [
+              // Rating Summary - pass reviews data
+              if (reviewState is ReviewsLoaded)
+                _buildRatingSummary(reviewState.reviews)
+              else
+                _buildRatingSummary([]),
 
-          // Reviews List
-          Expanded(
-            child: _filteredReviews.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-                    itemCount: _filteredReviews.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      return _buildReviewCard(_filteredReviews[index]);
-                    },
-                  ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showWriteReviewDialog(),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.black,
-        icon: const Icon(Icons.edit),
-        label: Text(
-          'Viết đánh giá',
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
+              // Filter Chips
+              _buildFilterChips(),
+
+              // Reviews List
+              Expanded(
+                child: _buildReviewsList(reviewState, currentUserId),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildRatingSummary() {
+  Widget _buildReviewsList(ReviewState state, String? currentUserId) {
+    if (state is ReviewLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      );
+    }
+
+    if (state is ReviewError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              'error'.tr(),
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.message,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppTheme.textGrey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadReviews,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.black,
+              ),
+              child: Text('try_again'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is ReviewsLoaded) {
+      if (state.reviews.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.rate_review_outlined,
+                  size: 64, color: AppTheme.textGrey),
+              const SizedBox(height: 16),
+              Text(
+                'no_reviews'.tr(),
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: AppTheme.textGrey,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return ListView.separated(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        itemCount: state.reviews.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 16),
+        itemBuilder: (context, index) {
+          return _buildReviewCard(state.reviews[index], currentUserId);
+        },
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildRatingSummary(List<ReviewEntity.Review> reviews) {
+    // Calculate rating distribution
+    final ratingCounts = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    for (var review in reviews) {
+      if (review.rating >= 1 && review.rating <= 5) {
+        ratingCounts[review.rating] = (ratingCounts[review.rating] ?? 0) + 1;
+      }
+    }
+
+    final totalReviews = reviews.length;
+    final overallRating = totalReviews > 0
+        ? reviews.fold<double>(0, (sum, review) => sum + review.rating) / totalReviews
+        : widget.destination.rating;
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
@@ -146,7 +202,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
           Column(
             children: [
               Text(
-                widget.destination.rating.toStringAsFixed(1),
+                overallRating.toStringAsFixed(1),
                 style: GoogleFonts.inter(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
@@ -156,9 +212,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
               Row(
                 children: List.generate(5, (index) {
                   return Icon(
-                    index < widget.destination.rating.floor()
-                        ? Icons.star
-                        : Icons.star_border,
+                    index < overallRating.floor() ? Icons.star : Icons.star_border,
                     color: AppTheme.primaryColor,
                     size: 16,
                   );
@@ -166,7 +220,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${widget.destination.totalReviews} đánh giá',
+                '${totalReviews > 0 ? totalReviews : widget.destination.totalReviews} ${"reviews".tr()}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppTheme.textGrey,
@@ -175,13 +229,14 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
             ],
           ),
           const SizedBox(width: 24),
-          // Rating bars
+          // Rating bars with actual data
           Expanded(
             child: Column(
               children: List.generate(5, (index) {
                 final star = 5 - index;
-                // Mock percentage
-                final percentage = (star == 5) ? 0.7 : (star == 4) ? 0.2 : 0.05;
+                final count = ratingCounts[star] ?? 0;
+                final percentage = totalReviews > 0 ? count / totalReviews : 0.0;
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
@@ -210,11 +265,15 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${(percentage * 100).toInt()}%',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppTheme.textGrey,
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          totalReviews > 0 ? '${(percentage * 100).toInt()}%' : '0%',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppTheme.textGrey,
+                          ),
+                          textAlign: TextAlign.right,
                         ),
                       ),
                     ],
@@ -235,17 +294,13 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _buildFilterChip('Tất cả', 'all'),
+          _buildFilterChip('recent'.tr(), 'recent'),
           const SizedBox(width: 8),
-          _buildFilterChip('5 sao', '5star'),
+          _buildFilterChip('highest_rated'.tr(), 'rating_high'),
           const SizedBox(width: 8),
-          _buildFilterChip('4 sao', '4star'),
+          _buildFilterChip('lowest_rated'.tr(), 'rating_low'),
           const SizedBox(width: 8),
-          _buildFilterChip('3 sao', '3star'),
-          const SizedBox(width: 8),
-          _buildFilterChip('Tích cực', 'positive'),
-          const SizedBox(width: 8),
-          _buildFilterChip('Tiêu cực', 'negative'),
+          _buildFilterChip('most_helpful'.tr(), 'helpful'),
         ],
       ),
     );
@@ -263,11 +318,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
         ),
       ),
       selected: isSelected,
-      onSelected: (_) {
-        setState(() {
-          _selectedFilter = value;
-        });
-      },
+      onSelected: (_) => _changeFilter(value),
       backgroundColor: AppTheme.surfaceColor,
       selectedColor: AppTheme.primaryColor,
       showCheckmark: false,
@@ -277,7 +328,10 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
     );
   }
 
-  Widget _buildReviewCard(Review review) {
+  Widget _buildReviewCard(ReviewEntity.Review review, String? currentUserId) {
+    final reviewUser = review.user;
+    final isOwnReview = currentUserId != null && review.userId == currentUserId;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -293,17 +347,22 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
             children: [
               CircleAvatar(
                 radius: 20,
+                backgroundImage: reviewUser?.avatar != null
+                    ? NetworkImage(reviewUser!.avatar!)
+                    : null,
                 backgroundColor: AppTheme.primaryColor,
-                child: review.userAvatar != null
-                    ? null
-                    : Text(
-                        review.userName[0].toUpperCase(),
+                child: reviewUser?.avatar == null
+                    ? Text(
+                        reviewUser?.fullname.isNotEmpty == true
+                            ? reviewUser!.fullname[0].toUpperCase()
+                            : '?',
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
-                      ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -311,7 +370,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review.userName,
+                      reviewUser?.fullname ?? 'Anonymous',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -319,7 +378,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
                       ),
                     ),
                     Text(
-                      _formatDate(review.date),
+                      _formatDate(review.createdAt),
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: AppTheme.textGrey,
@@ -328,57 +387,164 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
                   ],
                 ),
               ),
-              // Rating stars
-              Row(
-                children: List.generate(5, (index) {
-                  return Icon(
-                    index < review.rating ? Icons.star : Icons.star_border,
-                    color: AppTheme.primaryColor,
-                    size: 16,
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Comment
-          Text(
-            review.comment,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: Colors.white,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Actions
-          Row(
-            children: [
-              InkWell(
-                onTap: () {},
-                child: Row(
-                  children: [
-                    const Icon(Icons.thumb_up_outlined, size: 16, color: AppTheme.textGrey),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Hữu ích (${review.likes})',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppTheme.textGrey,
+              // Sentiment badge
+              if (review.sentiment.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getSentimentColor(review.sentiment).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    review.sentiment.toLowerCase().tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: _getSentimentColor(review.sentiment),
+                    ),
+                  ),
+                ),
+              // Edit/Delete buttons for own review
+              if (isOwnReview) ...[
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+                  color: AppTheme.surfaceColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Colors.white10),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showEditReviewDialog(review);
+                    } else if (value == 'delete') {
+                      _showDeleteConfirmation(review);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit, size: 18, color: AppTheme.primaryColor),
+                          const SizedBox(width: 12),
+                          Text(
+                            'edit'.tr(),
+                            style: GoogleFonts.inter(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete, size: 18, color: Colors.red),
+                          const SizedBox(width: 12),
+                          Text(
+                            'delete'.tr(),
+                            style: GoogleFonts.inter(color: Colors.white),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+              ],
+            ],
+          ),
+          // ...existing code for stars, comment, images, actions...
+          const SizedBox(height: 12),
+
+          // Stars
+          Row(
+            children: List.generate(5, (index) {
+              return Icon(
+                index < review.rating ? Icons.star : Icons.star_border,
+                size: 18,
+                color: AppTheme.primaryColor,
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+
+          // Comment
+          Text(
+            review.comment,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.white,
+              height: 1.5,
+            ),
+          ),
+
+          // Images
+          if (review.images.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: review.images.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(review.images[index]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(width: 16),
-              InkWell(
-                onTap: () {},
-                child: Text(
-                  'Trả lời',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppTheme.primaryColor,
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          // Actions (helpful count)
+          Row(
+            children: [
+              if (review.isVerifiedVisit)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                   ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle, size: 12, color: Colors.green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'verified_visit'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {
+                  // TODO: Mark as helpful API call
+                },
+                icon: const Icon(Icons.thumb_up_outlined, size: 16),
+                label: Text(
+                  '${"helpful".tr()} (${review.helpfulCount})',
+                  style: GoogleFonts.inter(fontSize: 12),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.textGrey,
                 ),
               ),
             ],
@@ -388,184 +554,270 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.rate_review_outlined, size: 64, color: AppTheme.textGrey),
-          const SizedBox(height: 16),
-          Text(
-            'Chưa có đánh giá nào',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              color: AppTheme.textGrey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => _showWriteReviewDialog(),
-            child: Text(
-              'Hãy là người đầu tiên đánh giá!',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays == 0) {
-      if (diff.inHours == 0) {
-        return '${diff.inMinutes} phút trước';
-      }
-      return '${diff.inHours} giờ trước';
-    } else if (diff.inDays < 7) {
-      return '${diff.inDays} ngày trước';
-    } else if (diff.inDays < 30) {
-      return '${diff.inDays ~/ 7} tuần trước';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
+  Color _getSentimentColor(String sentiment) {
+    switch (sentiment.toLowerCase()) {
+      case 'positive':
+        return Colors.green;
+      case 'negative':
+        return Colors.red;
+      default:
+        return Colors.orange;
     }
   }
 
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surfaceColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Sắp xếp theo',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildFilterOption('Mới nhất', Icons.access_time),
-              _buildFilterOption('Hữu ích nhất', Icons.thumb_up),
-              _buildFilterOption('Đánh giá cao nhất', Icons.star),
-              _buildFilterOption('Đánh giá thấp nhất', Icons.star_border),
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 7) {
+      return '${(difference.inDays / 7).floor()} ${"weeks_ago".tr()}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} ${"days_ago".tr()}';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${"hours_ago".tr()}';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${"minutes_ago".tr()}';
+    } else {
+      return 'just_now'.tr();
+    }
   }
 
-  Widget _buildFilterOption(String label, IconData icon) {
-    return ListTile(
-      leading: Icon(icon, color: AppTheme.primaryColor),
-      title: Text(
-        label,
-        style: GoogleFonts.inter(color: Colors.white),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  void _showWriteReviewDialog() {
-    int selectedRating = 5;
-    final commentController = TextEditingController();
+  void _showEditReviewDialog(ReviewEntity.Review review) {
+    final ratingController = ValueNotifier<int>(review.rating);
+    final commentController = TextEditingController(text: review.comment);
+    final scaffoldContext = context; // Store context
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: AppTheme.surfaceColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Viết đánh giá',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Star rating
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < selectedRating ? Icons.star : Icons.star_border,
-                      color: AppTheme.primaryColor,
-                      size: 32,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        selectedRating = index + 1;
-                      });
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              // Comment field
-              TextField(
-                controller: commentController,
-                maxLines: 5,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Chia sẻ trải nghiệm của bạn...',
-                  hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
-                  filled: true,
-                  fillColor: AppTheme.backgroundColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ReviewBloc>(),
+        child: BlocListener<ReviewBloc, ReviewState>(
+          listener: (context, state) {
+            if (state is ReviewUpdated) {
+              Navigator.of(dialogContext).pop();
+              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                SnackBar(
+                  content: Text('review_updated_successfully'.tr()),
+                  backgroundColor: Colors.green,
                 ),
+              );
+              _loadReviews(); // Reload reviews
+            } else if (state is ReviewError) {
+              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: AlertDialog(
+            backgroundColor: AppTheme.surfaceColor,
+            title: Text(
+              'edit_review'.tr(),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'rating'.tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ValueListenableBuilder<int>(
+                    valueListenable: ratingController,
+                    builder: (context, rating, _) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return IconButton(
+                            onPressed: () {
+                              ratingController.value = index + 1;
+                            },
+                            icon: Icon(
+                              index < rating ? Icons.star : Icons.star_border,
+                              color: Colors.amber,
+                              size: 32,
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'comment'.tr(),
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 4,
+                    style: GoogleFonts.inter(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'please_enter_review'.tr(),
+                      hintStyle: GoogleFonts.inter(color: AppTheme.textGrey),
+                      filled: true,
+                      fillColor: AppTheme.backgroundColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  'cancel'.tr(),
+                  style: GoogleFonts.inter(color: AppTheme.textGrey),
+                ),
+              ),
+              BlocBuilder<ReviewBloc, ReviewState>(
+                builder: (context, state) {
+                  final isLoading = state is ReviewLoading;
+                  return ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            if (commentController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('please_enter_review'.tr()),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            context.read<ReviewBloc>().add(UpdateReviewEvent(
+                                  id: review.id,
+                                  rating: ratingController.value,
+                                  comment: commentController.text.trim(),
+                                  images: review.images,
+                                ));
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Text('update'.tr()),
+                  );
+                },
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(ReviewEntity.Review review) {
+    final scaffoldContext = context; // Store context
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ReviewBloc>(),
+        child: AlertDialog(
+          backgroundColor: AppTheme.surfaceColor,
+          title: Text(
+            'delete_review'.tr(),
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          content: Text(
+            'delete_review_confirmation'.tr(),
+            style: GoogleFonts.inter(color: Colors.white),
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                'Hủy',
+                'cancel'.tr(),
                 style: GoogleFonts.inter(color: AppTheme.textGrey),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                // Submit review
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cảm ơn bạn đã đánh giá!'),
-                    backgroundColor: AppTheme.primaryColor,
+            BlocConsumer<ReviewBloc, ReviewState>(
+              listener: (context, state) {
+                if (state is ReviewDeleted) {
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                    SnackBar(
+                      content: Text('review_deleted_successfully'.tr()),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  _loadReviews(); // Reload reviews
+                } else if (state is ReviewError) {
+                  Navigator.of(dialogContext).pop();
+                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              builder: (context, state) {
+                final isLoading = state is ReviewLoading;
+                return ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          context.read<ReviewBloc>().add(DeleteReviewEvent(review.id));
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
                   ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text('delete'.tr()),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.black,
-              ),
-              child: Text(
-                'Gửi',
-                style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-              ),
             ),
           ],
         ),
@@ -573,27 +825,3 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
     );
   }
 }
-
-// Review model
-class Review {
-  final String id;
-  final String userName;
-  final String? userAvatar;
-  final int rating;
-  final DateTime date;
-  final String comment;
-  final int likes;
-  final List<String> images;
-
-  Review({
-    required this.id,
-    required this.userName,
-    this.userAvatar,
-    required this.rating,
-    required this.date,
-    required this.comment,
-    required this.likes,
-    required this.images,
-  });
-}
-

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/services/shared_prefs_service.dart';
 import '../../../../core/theme/app_themes.dart';
 
@@ -32,30 +33,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _isNavigating = false;
 
   // Dữ liệu nội dung
-  final List<OnboardingItem> _contents = [
+  List<OnboardingItem> get _contents => [
     OnboardingItem(
       image: 'assets/images/welcome.jpg',
-      title: 'Hành trình của bạn,\ntheo cách của bạn',
-      description: 'Trợ lý du lịch thông minh giúp bạn khám phá điểm đến độc đáo và cá nhân hóa mọi lịch trình.',
-      buttonText: 'Tiếp tục',
+      title: 'your_journey_your_way'.tr(),
+      description: 'onboarding_1_description'.tr(),
+      buttonText: 'continue'.tr(),
     ),
     OnboardingItem(
       image: 'assets/images/onboarding_intro_2.jpg',
-      title: 'Gợi ý chuẩn xác từ AI',
-      description: 'Phân tích sâu sở thích và ngữ cảnh để thiết kế những chuyến đi "độc bản" dành riêng cho bạn.',
-      buttonText: 'Tiếp tục',
+      title: 'onboarding_2_title'.tr(),
+      description: 'onboarding_2_description'.tr(),
+      buttonText: 'continue'.tr(),
     ),
     OnboardingItem(
       image: 'assets/images/onboarding_intro_3.jpg',
-      title: 'Linh hoạt theo thực tế',
-      description: 'Tự động điều chỉnh kế hoạch ngay tức thì theo thay đổi của thời tiết, giao thông và cảm hứng của bạn.',
-      buttonText: 'Tiếp tục',
+      title: 'onboarding_3_title'.tr(),
+      description: 'onboarding_3_description'.tr(),
+      buttonText: 'continue'.tr(),
     ),
     OnboardingItem(
       image: 'assets/images/onboarding_intro_4.jpg',
-      title: 'Bắt đầu cùng Trekka',
-      description: 'Sẵn sàng khởi tạo hành trình mang đậm dấu ấn cá nhân của bạn.',
-      buttonText: 'Bắt đầu ngay',
+      title: 'onboarding_4_title'.tr(),
+      description: 'onboarding_4_description'.tr(),
+      buttonText: 'get_started'.tr(),
     ),
   ];
 
