@@ -24,6 +24,7 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
   String _selectedFilter = 'recent'; // recent, rating_high, rating_low, helpful
   int _currentPage = 1;
   final int _pageSize = 10;
+  final Set<String> _helpfulReviewIds = {}; // Track reviews marked as helpful by current user
 
   @override
   void initState() {
@@ -534,18 +535,67 @@ class _DestinationReviewsPageState extends State<DestinationReviewsPage> {
                   ),
                 ),
               const Spacer(),
-              TextButton.icon(
-                onPressed: () {
-                  // TODO: Mark as helpful API call
+              BlocConsumer<ReviewBloc, ReviewState>(
+                listener: (context, state) {
+                  if (state is ReviewMarkedHelpful && state.reviewId == review.id) {
+                    // Update local tracking state
+                    setState(() {
+                      if (state.isHelpful) {
+                        _helpfulReviewIds.add(review.id);
+                      } else {
+                        _helpfulReviewIds.remove(review.id);
+                      }
+                    });
+
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          state.isHelpful
+                            ? 'marked_as_helpful'.tr()
+                            : 'unmarked_as_helpful'.tr(),
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                    // Reload reviews để cập nhật helpful count
+                    _loadReviews();
+                  } else if (state is ReviewError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
-                icon: const Icon(Icons.thumb_up_outlined, size: 16),
-                label: Text(
-                  '${"helpful".tr()} (${review.helpfulCount})',
-                  style: GoogleFonts.inter(fontSize: 12),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textGrey,
-                ),
+                builder: (context, state) {
+                  final isLoading = state is ReviewLoading;
+                  final isMarkedHelpful = _helpfulReviewIds.contains(review.id);
+
+                  return TextButton.icon(
+                    onPressed: isLoading ? null : () {
+                      context.read<ReviewBloc>().add(MarkReviewHelpfulEvent(review.id));
+                    },
+                    icon: Icon(
+                      isMarkedHelpful ? Icons.thumb_up : Icons.thumb_up_outlined,
+                      size: 16,
+                      color: isMarkedHelpful ? AppTheme.primaryColor : AppTheme.textGrey,
+                    ),
+                    label: Text(
+                      '${"helpful".tr()} (${review.helpfulCount})',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isMarkedHelpful ? AppTheme.primaryColor : AppTheme.textGrey,
+                        fontWeight: isMarkedHelpful ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: isMarkedHelpful ? AppTheme.primaryColor : AppTheme.textGrey,
+                    ),
+                  );
+                },
               ),
             ],
           ),

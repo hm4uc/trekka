@@ -185,7 +185,14 @@ class ReviewBloc extends Bloc<events.ReviewEvent, ReviewState> {
 
     result.fold(
       (failure) => emit(ReviewError(failure.message)),
-      (data) => emit(ReviewMarkedHelpful(data['data']['helpful_count'] as int)),
+      (data) {
+        final responseData = data['data'] as Map<String, dynamic>;
+        emit(ReviewMarkedHelpful(
+          reviewId: event.id,
+          isHelpful: responseData['isHelpful'] as bool,
+          helpfulCount: responseData['helpfulCount'] as int,
+        ));
+      },
     );
   }
 }

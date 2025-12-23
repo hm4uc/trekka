@@ -46,8 +46,8 @@ class DestinationDetailPage extends StatelessWidget {
             ..add(GetDestinationReviewsEvent(
               destId: destinationId,
               page: 1,
-              limit: 5,
-              sortBy: 'recent',
+              limit: 2,
+              sortBy: 'helpful',
             )),
         ),
       ],
@@ -794,7 +794,15 @@ class _DestinationDetailPageContentState
                         ),
                       ),
                     ),
-                  );
+                  ).then((_) {
+                    // Reload reviews với helpful sort khi quay lại
+                    context.read<ReviewBloc>().add(GetDestinationReviewsEvent(
+                      destId: widget.destinationId,
+                      page: 1,
+                      limit: 2,
+                      sortBy: 'helpful',
+                    ));
+                  });
                 },
                 child: Text(
                   'see_all'.tr(),
@@ -821,7 +829,7 @@ class _DestinationDetailPageContentState
 
               if (state is ReviewsLoaded && state.reviews.isNotEmpty) {
                 return Column(
-                  children: state.reviews.take(3).map((review) {
+                  children: state.reviews.take(2).map((review) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _buildReviewCard(review),
@@ -970,6 +978,61 @@ class _DestinationDetailPageContentState
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          // Helpful count display
+          Row(
+            children: [
+              if (review.isVerifiedVisit)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle, size: 12, color: Colors.green),
+                      const SizedBox(width: 4),
+                      Text(
+                        'verified_visit'.tr(),
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (review.isVerifiedVisit) const SizedBox(width: 8),
+              // Helpful count badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.thumb_up, size: 12, color: AppTheme.primaryColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${review.helpfulCount} ${"helpful".tr()}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1170,8 +1233,8 @@ class _DestinationDetailPageContentState
               context.read<ReviewBloc>().add(GetDestinationReviewsEvent(
                 destId: widget.destinationId,
                 page: 1,
-                limit: 5,
-                sortBy: 'recent',
+                limit: 2,
+                sortBy: 'helpful',
               ));
             } else if (state is ReviewError) {
               ScaffoldMessenger.of(scaffoldContext).showSnackBar(

@@ -9,6 +9,7 @@ class TrekkaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      key: ValueKey(context.locale.toString()), // Force rebuild when locale changes
       title: 'Trekka',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,

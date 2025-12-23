@@ -50,12 +50,18 @@ class ReviewUpdated extends ReviewState {
 class ReviewDeleted extends ReviewState {}
 
 class ReviewMarkedHelpful extends ReviewState {
+  final String reviewId;
+  final bool isHelpful;
   final int helpfulCount;
 
-  const ReviewMarkedHelpful(this.helpfulCount);
+  const ReviewMarkedHelpful({
+    required this.reviewId,
+    required this.isHelpful,
+    required this.helpfulCount,
+  });
 
   @override
-  List<Object?> get props => [helpfulCount];
+  List<Object?> get props => [reviewId, isHelpful, helpfulCount];
 }
 
 class ReviewError extends ReviewState {

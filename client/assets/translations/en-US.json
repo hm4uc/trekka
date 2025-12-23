@@ -245,6 +245,8 @@
   "just_now": "Just now",
   "verified_visit": "Verified Visit",
   "helpful": "Helpful",
+  "marked_as_helpful": "Marked as helpful",
+  "unmarked_as_helpful": "Unmarked as helpful",
   "positive": "Positive",
   "neutral": "Neutral",
   "negative": "Negative",
