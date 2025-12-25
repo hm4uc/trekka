@@ -82,18 +82,24 @@ class DestinationCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.star,
                                   size: 14,
-                                  color: AppTheme.primaryColor,
+                                  color: destination.totalReviews > 0
+                                      ? AppTheme.primaryColor
+                                      : AppTheme.textGrey,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  destination.rating.toStringAsFixed(1),
+                                  destination.totalReviews > 0
+                                      ? destination.rating.toStringAsFixed(1)
+                                      : '0.0',
                                   style: GoogleFonts.inter(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: destination.totalReviews > 0
+                                        ? Colors.white
+                                        : AppTheme.textGrey,
                                   ),
                                 ),
                               ],

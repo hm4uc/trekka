@@ -23,6 +23,7 @@ class EventModel extends Event {
     required super.isFeatured,
     required super.createdAt,
     required super.updatedAt,
+    super.isLiked,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +53,7 @@ class EventModel extends Event {
       isFeatured: json['is_featured'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isLiked: json['is_liked'] as bool?,
     );
   }
 

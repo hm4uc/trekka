@@ -22,6 +22,7 @@ class Event extends Equatable {
   final bool isFeatured;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool? isLiked; // User's like status (only present when authenticated)
 
   const Event({
     required this.id,
@@ -45,6 +46,7 @@ class Event extends Equatable {
     required this.isFeatured,
     required this.createdAt,
     required this.updatedAt,
+    this.isLiked,
   });
 
   @override
@@ -70,6 +72,7 @@ class Event extends Equatable {
         isFeatured,
         createdAt,
         updatedAt,
+        isLiked,
       ];
 }
 

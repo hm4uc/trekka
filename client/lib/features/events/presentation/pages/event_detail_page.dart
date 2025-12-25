@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
 import '../../../../core/theme/app_themes.dart';
+import '../../../../injection_container.dart';
 import '../../domain/entities/event.dart';
 import '../bloc/event_bloc.dart';
 import '../bloc/event_event.dart';
@@ -16,38 +17,62 @@ class EventDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: BlocListener<EventBloc, EventState>(
-        listener: (context, state) {
-          if (state is EventActionSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-          if (state is EventError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: CustomScrollView(
-          slivers: [
-            _buildSliverAppBar(context),
-            _buildEventInfo(context),
-          ],
+    return BlocProvider(
+      create: (context) => sl<EventBloc>()..add(SetEventDetailEvent(event)),
+      child: Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: BlocListener<EventBloc, EventState>(
+          listener: (context, state) {
+            if (state is EventActionSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+            if (state is EventError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: _EventDetailContent(event: event),
         ),
       ),
     );
   }
+}
 
-  Widget _buildSliverAppBar(BuildContext context) {
+class _EventDetailContent extends StatelessWidget {
+  final Event event;
+
+  const _EventDetailContent({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<EventBloc, EventState>(
+      builder: (context, state) {
+        // Get isLiked from state, fallback to event's isLiked
+        bool isLiked = event.isLiked ?? false;
+        if (state is EventDetailLoaded) {
+          isLiked = state.isLiked;
+        }
+
+        return CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context, isLiked),
+            _buildEventInfo(context, isLiked),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSliverAppBar(BuildContext context, bool isLiked) {
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -63,6 +88,24 @@ class EventDetailPage extends StatelessWidget {
         ),
         onPressed: () => Navigator.pop(context),
       ),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              color: isLiked ? Colors.red : Colors.white,
+            ),
+          ),
+          onPressed: () {
+            context.read<EventBloc>().add(LikeEventEvent(event.id));
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -109,7 +152,7 @@ class EventDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEventInfo(BuildContext context) {
+  Widget _buildEventInfo(BuildContext context, bool isLiked) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -302,9 +345,12 @@ class EventDetailPage extends StatelessWidget {
                         side: BorderSide(color: Colors.red.shade400),
                       ),
                     ),
-                    icon: Icon(Icons.favorite_border, color: Colors.red.shade400),
+                    icon: Icon(
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.red.shade400,
+                    ),
                     label: Text(
-                      'Yêu thích',
+                      isLiked ? 'Đã thích' : 'Yêu thích',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

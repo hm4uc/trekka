@@ -14,24 +14,47 @@ class FavoritesPageWrapper extends StatefulWidget {
   State<FavoritesPageWrapper> createState() => _FavoritesPageWrapperState();
 }
 
-class _FavoritesPageWrapperState extends State<FavoritesPageWrapper> {
+class _FavoritesPageWrapperState extends State<FavoritesPageWrapper>
+    with AutomaticKeepAliveClientMixin {
+  bool _hasInitialized = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
     // Trigger initial fetch when page is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        if (widget.initialTab == 0) {
-          context.read<DestinationBloc>().add(const GetLikedItemsEvent(limit: 20));
-        } else {
-          context.read<DestinationBloc>().add(const GetCheckedInItemsEvent(limit: 20));
-        }
+        _refreshData();
       }
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Refresh data when tab becomes visible (but not on first build)
+    if (_hasInitialized) {
+      _refreshData();
+    } else {
+      _hasInitialized = true;
+    }
+  }
+
+  void _refreshData() {
+    if (widget.initialTab == 0) {
+      context.read<DestinationBloc>().add(const GetLikedItemsEvent(limit: 20));
+    } else {
+      context.read<DestinationBloc>().add(const GetCheckedInItemsEvent(limit: 20));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return FavoritesPage(initialTab: widget.initialTab);
   }
 }

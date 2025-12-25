@@ -112,11 +112,26 @@ class LocaleKeys {
   static const String exploreTitle = 'explore_title';
   static const String searchPlaces = 'search_places';
   static const String categories = 'categories';
+  static const String category = 'category';
   static const String nearby = 'nearby';
   static const String popular = 'popular';
   static const String recommended = 'recommended';
   static const String exploreNow = 'explore_now';
   static const String times = 'times';
+  static const String filters = 'filters';
+  static const String sortBy = 'sort_by';
+  static const String travelStyle = 'travel_style';
+  static const String budgetFriendly = 'budget_friendly';
+  static const String topRated = 'top_rated';
+  static const String reset = 'reset';
+  static const String applyFilters = 'apply_filters';
+  static const String clearAll = 'clear_all';
+  static const String allCategories = 'all_categories';
+  static const String allStyles = 'all_styles';
+  static const String nature = 'nature';
+  static const String food = 'food';
+  static const String culture = 'culture';
+  static const String adventure = 'adventure';
 
   // Favorites
   static const String favoritesTitle = 'favorites_title';

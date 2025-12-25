@@ -39,6 +39,7 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
   late Animation<Offset> _offsetAnimation;
   bool _isBottomBarVisible = true;
   Timer? _autoShowTimer;
+  int _previousIndex = 0; // Track previous tab index
 
   @override
   void initState() {
@@ -87,6 +88,24 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
       });
     }
   }
+
+  void _onTabChanged(int newIndex) {
+    // Only process if actually switching to a different tab
+    if (_previousIndex != newIndex) {
+      _previousIndex = newIndex;
+    }
+
+    context.read<MainCubit>().changeTab(newIndex);
+
+    // Show bottom bar when user taps
+    if (!_isBottomBarVisible) {
+      setState(() {
+        _isBottomBarVisible = true;
+      });
+      _animationController.reverse();
+    }
+  }
+
 
   void _onScrollNotification(ScrollNotification notification) {
     if (notification is ScrollUpdateNotification) {
@@ -179,16 +198,7 @@ class _MainViewState extends State<MainView> with SingleTickerProviderStateMixin
             position: _offsetAnimation,
             child: TrekkaBottomBar(
               currentIndex: currentIndex,
-              onTap: (index) {
-                context.read<MainCubit>().changeTab(index);
-                // Show bottom bar when user taps
-                if (!_isBottomBarVisible) {
-                  setState(() {
-                    _isBottomBarVisible = true;
-                  });
-                  _animationController.reverse();
-                }
-              },
+              onTap: _onTabChanged,
             ),
           ),
         );

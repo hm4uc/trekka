@@ -23,6 +23,7 @@ class EventBloc extends Bloc<EventBlocEvent, EventState> {
   }) : super(EventInitial()) {
     on<GetEventsEvent>(_onGetEvents);
     on<GetUpcomingEventsEvent>(_onGetUpcomingEvents);
+    on<SetEventDetailEvent>(_onSetEventDetail);
     on<LikeEventEvent>(_onLikeEvent);
     on<CheckinEventEvent>(_onCheckinEvent);
   }
@@ -108,23 +109,75 @@ class EventBloc extends Bloc<EventBlocEvent, EventState> {
     );
   }
 
+  Future<void> _onSetEventDetail(
+    SetEventDetailEvent event,
+    Emitter<EventState> emit,
+  ) async {
+    // Reload event from API to get fresh isLiked status
+    // because event from list may not have isLiked field
+    final result = await getEventById(event.event.id);
+
+    result.fold(
+      (failure) {
+        // Fallback to initial event if API fails
+        emit(EventDetailLoaded(
+          event: event.event,
+          isLiked: event.event.isLiked ?? false,
+        ));
+      },
+      (freshEvent) {
+        emit(EventDetailLoaded(
+          event: freshEvent,
+          isLiked: freshEvent.isLiked ?? false,
+        ));
+      },
+    );
+  }
+
   Future<void> _onLikeEvent(
     LikeEventEvent event,
     Emitter<EventState> emit,
   ) async {
-    final result = await likeEvent(event.eventId);
+    // If we have EventDetailLoaded state, do optimistic update
+    if (state is EventDetailLoaded) {
+      final currentState = state as EventDetailLoaded;
+      final isCurrentlyLiked = currentState.isLiked;
 
-    result.fold(
-      (failure) => emit(EventError(failure.message)),
-      (response) {
-        final isLiked = response['isLiked'] as bool;
-        final totalLikes = response['total_likes'] as int;
+      // Optimistically update UI
+      emit(currentState.copyWith(isLiked: !isCurrentlyLiked));
 
-        // Note: Since Event is immutable, we'll just show success message
-        // The list will be refreshed when user navigates back
-        emit(EventActionSuccess(isLiked ? 'Đã like sự kiện' : 'Đã bỏ like sự kiện'));
-      },
-    );
+      final result = await likeEvent(event.eventId);
+
+      result.fold(
+        (failure) {
+          // Revert on failure
+          emit(currentState.copyWith(isLiked: isCurrentlyLiked));
+          emit(EventError(failure.message));
+        },
+        (response) {
+          final isLiked = response['isLiked'] as bool;
+          // Keep the optimistic update
+          emit(EventActionSuccess(isLiked ? 'Đã like sự kiện' : 'Đã bỏ like sự kiện'));
+          // Restore the loaded state after showing success
+          Future.delayed(const Duration(seconds: 1), () {
+            if (state is EventActionSuccess) {
+              emit(currentState.copyWith(isLiked: isLiked));
+            }
+          });
+        },
+      );
+    } else {
+      // Legacy behavior for list views
+      final result = await likeEvent(event.eventId);
+
+      result.fold(
+        (failure) => emit(EventError(failure.message)),
+        (response) {
+          final isLiked = response['isLiked'] as bool;
+          emit(EventActionSuccess(isLiked ? 'Đã like sự kiện' : 'Đã bỏ like sự kiện'));
+        },
+      );
+    }
   }
 
   Future<void> _onCheckinEvent(

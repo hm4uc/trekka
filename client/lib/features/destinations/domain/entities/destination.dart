@@ -28,6 +28,7 @@ class Destination extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DestinationCategory? category;
+  final bool? isLiked; // User's like status (only present when authenticated)
 
   const Destination({
     required this.id,
@@ -57,6 +58,7 @@ class Destination extends Equatable {
     required this.createdAt,
     required this.updatedAt,
     this.category,
+    this.isLiked,
   });
 
   @override
@@ -88,6 +90,7 @@ class Destination extends Equatable {
         createdAt,
         updatedAt,
         category,
+        isLiked,
       ];
 }
 

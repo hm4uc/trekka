@@ -25,19 +25,38 @@ class DestinationDetailCubit extends Cubit<DestinationDetailState> {
   Future<void> setInitialDestination(destination) async {
     emit(DestinationDetailLoading());
 
-    // Vẫn cần load nearby destinations
-    final nearbyResult = await getNearbyDestinations(destination.id);
+    // Always reload from API to get fresh isLiked status
+    // because the destination from list may not have isLiked field
+    final result = await getDestinationById(destination.id);
 
-    nearbyResult.fold(
+    result.fold(
       (failure) {
-        // Still show destination even if nearby fails
-        emit(DestinationDetailLoaded(destination: destination));
-      },
-      (nearby) {
+        // Fallback to initial destination if API fails
         emit(DestinationDetailLoaded(
           destination: destination,
-          nearbyDestinations: nearby,
+          isLiked: destination.isLiked ?? false,
         ));
+      },
+      (freshDestination) async {
+        // Load nearby destinations in parallel
+        final nearbyResult = await getNearbyDestinations(destination.id);
+
+        nearbyResult.fold(
+          (failure) {
+            // Still show destination even if nearby fails
+            emit(DestinationDetailLoaded(
+              destination: freshDestination,
+              isLiked: freshDestination.isLiked ?? false,
+            ));
+          },
+          (nearby) {
+            emit(DestinationDetailLoaded(
+              destination: freshDestination,
+              nearbyDestinations: nearby,
+              isLiked: freshDestination.isLiked ?? false,
+            ));
+          },
+        );
       },
     );
   }
@@ -56,12 +75,16 @@ class DestinationDetailCubit extends Cubit<DestinationDetailState> {
         nearbyResult.fold(
           (failure) {
             // Still show destination even if nearby fails
-            emit(DestinationDetailLoaded(destination: destination));
+            emit(DestinationDetailLoaded(
+              destination: destination,
+              isLiked: destination.isLiked ?? false,
+            ));
           },
           (nearby) {
             emit(DestinationDetailLoaded(
               destination: destination,
               nearbyDestinations: nearby,
+              isLiked: destination.isLiked ?? false,
             ));
           },
         );

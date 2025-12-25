@@ -356,14 +356,20 @@ class _DestinationDetailPageContentState
                 ),
               ),
               const Spacer(),
-              Icon(Icons.star, color: Colors.amber, size: 20),
+              Icon(
+                Icons.star,
+                color: destination.totalReviews > 0 ? Colors.amber : AppTheme.textGrey,
+                size: 20,
+              ),
               const SizedBox(width: 4),
               Text(
-                destination.rating.toStringAsFixed(1),
+                destination.totalReviews > 0
+                    ? destination.rating.toStringAsFixed(1)
+                    : '0.0',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: destination.totalReviews > 0 ? Colors.white : AppTheme.textGrey,
                 ),
               ),
               Text(

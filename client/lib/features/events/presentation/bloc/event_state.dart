@@ -67,6 +67,29 @@ class UpcomingEventsLoaded extends EventState {
   List<Object?> get props => [events];
 }
 
+class EventDetailLoaded extends EventState {
+  final Event event;
+  final bool isLiked;
+
+  const EventDetailLoaded({
+    required this.event,
+    this.isLiked = false,
+  });
+
+  EventDetailLoaded copyWith({
+    Event? event,
+    bool? isLiked,
+  }) {
+    return EventDetailLoaded(
+      event: event ?? this.event,
+      isLiked: isLiked ?? this.isLiked,
+    );
+  }
+
+  @override
+  List<Object?> get props => [event, isLiked];
+}
+
 class EventError extends EventState {
   final String message;
 

@@ -29,6 +29,7 @@ class DestinationModel extends Destination {
     required super.createdAt,
     required super.updatedAt,
     super.category,
+    super.isLiked,
   });
 
   factory DestinationModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +63,7 @@ class DestinationModel extends Destination {
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
       category:
           json['category'] != null ? DestinationCategoryModel.fromJson(json['category']) : null,
+      isLiked: json['isLiked'] as bool?,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/event.dart';
 
 abstract class EventBlocEvent extends Equatable {
   const EventBlocEvent();
@@ -71,6 +72,15 @@ class GetUpcomingEventsEvent extends EventBlocEvent {
 
   @override
   List<Object?> get props => [lat, lng, radius, limit];
+}
+
+class SetEventDetailEvent extends EventBlocEvent {
+  final Event event;
+
+  const SetEventDetailEvent(this.event);
+
+  @override
+  List<Object?> get props => [event];
 }
 
 class LikeEventEvent extends EventBlocEvent {
