@@ -4,6 +4,7 @@ import eventService from '../services/event.service.js';
 async function getAllEvents(req, res, next) {
     try {
         const {page, limit, search, eventType, lat, lng, radius, startDate, endDate, minPrice, maxPrice, sortBy} = req.query;
+        const userId = req.user?.profileId; // Get userId if authenticated
 
         const result = await eventService.getAllEvents({
             page: parseInt(page) || 1,
@@ -17,7 +18,8 @@ async function getAllEvents(req, res, next) {
             endDate,
             minPrice: minPrice ? parseFloat(minPrice) : undefined,
             maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-            sortBy
+            sortBy,
+            userId
         });
 
         res.status(StatusCodes.OK).json({
@@ -32,7 +34,9 @@ async function getAllEvents(req, res, next) {
 async function getEventById(req, res, next) {
     try {
         const {id} = req.params;
-        const result = await eventService.getEventById(id);
+        const userId = req.user?.profileId; // Get userId if authenticated
+
+        const result = await eventService.getEventById(id, userId);
 
         res.status(StatusCodes.OK).json({
             status: 'success',
@@ -46,12 +50,14 @@ async function getEventById(req, res, next) {
 async function getUpcomingEvents(req, res, next) {
     try {
         const {lat, lng, radius, limit} = req.query;
+        const userId = req.user?.profileId; // Get userId if authenticated
 
         const result = await eventService.getUpcomingEvents({
             lat: lat ? parseFloat(lat) : undefined,
             lng: lng ? parseFloat(lng) : undefined,
             radius: radius ? parseFloat(radius) : undefined,
-            limit: limit ? parseInt(limit) : 10
+            limit: limit ? parseInt(limit) : 10,
+            userId
         });
 
         res.status(StatusCodes.OK).json({

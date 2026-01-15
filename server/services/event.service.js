@@ -14,7 +14,8 @@ async function getAllEvents({
                                 endDate,
                                 minPrice,
                                 maxPrice,
-                                sortBy = 'date'
+                                sortBy = 'date',
+                                userId = null
                             }) {
     const offset = (page - 1) * limit;
     const whereClause = {is_active: true};
@@ -83,16 +84,36 @@ async function getAllEvents({
         order: orderClause
     });
 
+    // Add is_liked status for authenticated users
+    let eventsData = rows;
+    if (userId) {
+        const eventIds = rows.map(event => event.id);
+        const userLikes = await UserFeedback.findAll({
+            where: {
+                user_id: userId,
+                target_id: {[Op.in]: eventIds},
+                feedback_target_type: 'event',
+                feedback_type: 'like'
+            }
+        });
+
+        const likedEventIds = new Set(userLikes.map(like => like.target_id));
+        eventsData = rows.map(event => ({
+            ...event.toJSON(),
+            is_liked: likedEventIds.has(event.id)
+        }));
+    }
+
     return {
         total: count,
         currentPage: page,
         totalPages: Math.ceil(count / limit),
-        data: rows
+        data: eventsData
     };
 }
 
 // Get event by ID
-async function getEventById(id) {
+async function getEventById(id, userId = null) {
     const event = await Event.findOne({
         where: {id, is_active: true}
     });
@@ -103,11 +124,28 @@ async function getEventById(id) {
         throw error;
     }
 
+    // Check if user has liked this event
+    if (userId) {
+        const isLiked = await UserFeedback.findOne({
+            where: {
+                user_id: userId,
+                target_id: id,
+                feedback_target_type: 'event',
+                feedback_type: 'like'
+            }
+        });
+
+        return {
+            ...event.toJSON(),
+            is_liked: !!isLiked
+        };
+    }
+
     return event;
 }
 
 // Get upcoming events near location
-async function getUpcomingEvents({lat, lng, radius = 5000, limit = 10}) {
+async function getUpcomingEvents({lat, lng, radius = 5000, limit = 10, userId = null}) {
     const whereClause = {
         is_active: true,
         event_start: {[Op.gte]: new Date()}
@@ -124,6 +162,25 @@ async function getUpcomingEvents({lat, lng, radius = 5000, limit = 10}) {
         limit,
         order: [['event_start', 'ASC']]
     });
+
+    // Add is_liked status for authenticated users
+    if (userId && events.length > 0) {
+        const eventIds = events.map(event => event.id);
+        const userLikes = await UserFeedback.findAll({
+            where: {
+                user_id: userId,
+                target_id: {[Op.in]: eventIds},
+                feedback_target_type: 'event',
+                feedback_type: 'like'
+            }
+        });
+
+        const likedEventIds = new Set(userLikes.map(like => like.target_id));
+        return events.map(event => ({
+            ...event.toJSON(),
+            is_liked: likedEventIds.has(event.id)
+        }));
+    }
 
     return events;
 }

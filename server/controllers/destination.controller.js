@@ -7,6 +7,7 @@ async function getDestinations(req, res, next) {
             page, limit, search, categoryId, minPrice, maxPrice,
             lat, lng, radius, isOpenNow, context, sortBy, hiddenGemsOnly
         } = req.query;
+        const userId = req.user?.profileId; // Get userId if authenticated
 
         const result = await destinationService.getAllDestinations({
             page: parseInt(page) || 1,
@@ -21,7 +22,8 @@ async function getDestinations(req, res, next) {
             isOpenNow: isOpenNow === 'true',
             context,
             sortBy,
-            hiddenGemsOnly: hiddenGemsOnly === 'true'
+            hiddenGemsOnly: hiddenGemsOnly === 'true',
+            userId
         });
 
         res.status(StatusCodes.OK).json({

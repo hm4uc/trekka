@@ -15,7 +15,8 @@ async function getAllDestinations({
                                       isOpenNow,
                                       context,
                                       sortBy = 'distance',
-                                      hiddenGemsOnly = false
+                                      hiddenGemsOnly = false,
+                                      userId = null
                                   }) {
     const offset = (page - 1) * limit;
     const whereClause = {is_active: true};
@@ -115,11 +116,31 @@ async function getAllDestinations({
         order: orderClause
     });
 
+    // Add is_liked status for authenticated users
+    let destinationsData = rows;
+    if (userId && rows.length > 0) {
+        const destinationIds = rows.map(dest => dest.id);
+        const userLikes = await UserFeedback.findAll({
+            where: {
+                user_id: userId,
+                target_id: {[Op.in]: destinationIds},
+                feedback_target_type: 'destination',
+                feedback_type: 'like'
+            }
+        });
+
+        const likedDestIds = new Set(userLikes.map(like => like.target_id));
+        destinationsData = rows.map(dest => ({
+            ...dest.toJSON(),
+            is_liked: likedDestIds.has(dest.id)
+        }));
+    }
+
     return {
         total: count,
         currentPage: page,
         totalPages: Math.ceil(count / limit),
-        data: rows
+        data: destinationsData
     };
 }
 
